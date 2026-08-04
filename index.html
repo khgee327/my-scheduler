@@ -50,6 +50,11 @@
     gap:12px;
     flex-wrap:wrap;
   }
+  .share-btns{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+  }
   .share-btn{
     border:none;
     background:var(--accent);
@@ -63,7 +68,29 @@
     transition:background .15s;
   }
   .share-btn:hover{ background:var(--accent-dark); }
-  .share-btn.copied{ background:var(--accent-2); }
+  .share-btn.copied{ background:var(--accent-2); color:#fff; }
+  .share-btn.view-btn{
+    background:#f3e8ff;
+    color:#7c3aed;
+  }
+  .share-btn.view-btn:hover{ background:#e9d5ff; }
+
+  /* 보고용(읽기 전용) 모드 */
+  .view-mode-banner{
+    display:none;
+    text-align:center;
+    padding:10px 16px;
+    font-size:13px;
+    font-weight:700;
+    color:var(--accent-dark);
+    background:linear-gradient(90deg, #fdf2f8, #f3e8ff);
+    border-bottom:1px solid var(--border);
+  }
+  body.view-mode .view-mode-banner{ display:block; }
+  body.view-mode #todoAddRow,
+  body.view-mode #memoAddRow{ display:none; }
+  body.view-mode .day-badge,
+  body.view-mode .cal-bar{ cursor:default; }
   .dashboard-stack{
     display:flex;
     flex-direction:column;
@@ -861,10 +888,15 @@
 </head>
 <body>
 
+<div id="viewModeBanner" class="view-mode-banner">👀 보고용 모드입니다 (수정 불가)</div>
+
 <header>
   <div class="header-top">
     <h1>📋 스케줄러</h1>
-    <button id="shareBtn" class="share-btn">🔗 내 스케줄 공유하기</button>
+    <div class="share-btns">
+      <button id="shareEditBtn" class="share-btn edit-btn">✏️ 편집용 링크 복사</button>
+      <button id="shareViewBtn" class="share-btn view-btn">🔒 보고용 링크 복사</button>
+    </div>
   </div>
   <p id="todayLabel"></p>
 </header>
@@ -876,7 +908,7 @@
     <div class="card-header">
       <h2><span class="dot"></span>MEMO</h2>
     </div>
-    <div class="add-row simple">
+    <div class="add-row simple" id="memoAddRow">
       <input type="text" id="memoInput" placeholder="메모를 입력하고 Enter">
       <button id="addMemoBtn">추가</button>
     </div>
@@ -895,7 +927,7 @@
       </div>
     </div>
     <span class="today-date-badge" id="todoDateBadge"></span>
-    <div class="add-row simple">
+    <div class="add-row simple" id="todoAddRow">
       <select class="cat-select" id="todoCategorySelect"></select>
       <input type="text" id="todoInput" placeholder="할 일을 입력하고 Enter">
       <input type="url" class="link-input" id="todoLinkInput" placeholder="링크 URL (선택)">
@@ -1094,33 +1126,63 @@
     return parsed;
   }
 
+  // ---------- 공유 링크 모드 판별 (edit: 내 브라우저로 가져오기 / view: 읽기 전용 미리보기) ----------
+  const urlParams = new URLSearchParams(location.search);
+  const urlMode = urlParams.get("mode");
+  const urlDataRaw = urlParams.get("data");
+  let isViewMode = false;
+
+  function decodeSharedPayload(raw){
+    try{
+      const json = decodeURIComponent(escape(atob(raw)));
+      const obj = JSON.parse(json);
+      if(!obj || !Array.isArray(obj.taskList)) return null;
+      return obj;
+    }catch(e){
+      return null;
+    }
+  }
+
   function saveData(){
+    if(isViewMode) return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
   }
 
-  const data = loadData();
-  saveData();
-
-  // ---------- 공유 링크로 접속한 경우 데이터 복원 ----------
-  (function tryLoadSharedData(){
-    const params = new URLSearchParams(location.search);
-    const raw = params.get("data");
-    if(!raw) return;
-    try{
-      const json = decodeURIComponent(escape(atob(raw)));
-      const shared = JSON.parse(json);
-      if(!shared || !Array.isArray(shared.taskList)) return;
-      const ok = confirm("공유된 스케줄 데이터를 불러오시겠습니까?\n(현재 저장된 업무 데이터가 공유 데이터로 대체됩니다)");
-      if(ok){
-        data.taskList = shared.taskList;
-        if(Array.isArray(shared.customCategories)) data.customCategories = shared.customCategories;
-        saveData();
-      }
-    }catch(e){
+  let data;
+  if(urlMode === "view" && urlDataRaw){
+    const shared = decodeSharedPayload(urlDataRaw);
+    if(shared){
+      isViewMode = true;
+      data = {
+        taskList: shared.taskList,
+        customCategories: Array.isArray(shared.customCategories) ? shared.customCategories : [],
+        memoCards: Array.isArray(shared.memoCards) ? shared.memoCards : []
+      };
+    }else{
       alert("공유 링크의 데이터를 불러오지 못했습니다.");
+      data = loadData();
+      saveData();
     }
-    history.replaceState({}, "", location.pathname);
-  })();
+  }else{
+    data = loadData();
+    saveData();
+    if(urlMode === "edit" && urlDataRaw){
+      const shared = decodeSharedPayload(urlDataRaw);
+      if(shared){
+        const ok = confirm("공유된 스케줄 데이터를 불러오시겠습니까?\n(현재 저장된 업무 데이터가 공유 데이터로 대체됩니다)");
+        if(ok){
+          data.taskList = shared.taskList;
+          data.customCategories = Array.isArray(shared.customCategories) ? shared.customCategories : [];
+          data.memoCards = Array.isArray(shared.memoCards) ? shared.memoCards : [];
+          saveData();
+        }
+      }else{
+        alert("공유 링크의 데이터를 불러오지 못했습니다.");
+      }
+    }
+  }
+  history.replaceState({}, "", location.pathname);
+  if(isViewMode) document.body.classList.add("view-mode");
 
   const today = new Date();
   let calYear = today.getFullYear();
@@ -1280,6 +1342,7 @@
     renderAll();
   }
   function attachDraggable(el, task){
+    if(isViewMode) return;
     el.draggable = true;
     el.addEventListener("dragstart", (e)=>{
       e.dataTransfer.setData("text/plain", task.id);
@@ -1291,6 +1354,7 @@
     });
   }
   function attachDropTarget(el, getDropDateKey){
+    if(isViewMode) return;
     el.addEventListener("dragover", (e)=>{
       e.preventDefault();
       e.dataTransfer.dropEffect = e.ctrlKey ? "copy" : "move";
@@ -1313,31 +1377,34 @@
   document.getElementById("todayLabel").textContent =
     `오늘은 ${today.getFullYear()}년 ${today.getMonth()+1}월 ${today.getDate()}일 (${DOW[today.getDay()]}요일) 입니다.`;
 
-  // ---------- 스케줄 공유 링크 생성 ----------
-  const SHARE_BTN_LABEL = "🔗 내 스케줄 공유하기";
-  const shareBtn = document.getElementById("shareBtn");
-  shareBtn.addEventListener("click", async ()=>{
-    const payload = { taskList: data.taskList, customCategories: data.customCategories };
+  // ---------- 편집용 / 보고용 공유 링크 생성 ----------
+  function buildShareUrl(mode){
+    const payload = { taskList: data.taskList, customCategories: data.customCategories, memoCards: data.memoCards };
     const json = JSON.stringify(payload);
     const b64 = btoa(unescape(encodeURIComponent(json)));
-    const shareUrl = location.origin + location.pathname + "?data=" + encodeURIComponent(b64);
-
-    function showCopied(){
-      shareBtn.textContent = "✓ 링크가 복사되었습니다!";
-      shareBtn.classList.add("copied");
-      setTimeout(()=>{
-        shareBtn.textContent = SHARE_BTN_LABEL;
-        shareBtn.classList.remove("copied");
-      }, 2000);
-    }
-
-    try{
-      await navigator.clipboard.writeText(shareUrl);
-      showCopied();
-    }catch(e){
-      prompt("아래 링크를 복사하세요:", shareUrl);
-    }
-  });
+    return location.origin + location.pathname + "?mode=" + mode + "&data=" + encodeURIComponent(b64);
+  }
+  function wireShareButton(btn, mode, originalLabel){
+    btn.addEventListener("click", async ()=>{
+      const shareUrl = buildShareUrl(mode);
+      function showCopied(){
+        btn.textContent = "✓ 링크가 복사되었습니다!";
+        btn.classList.add("copied");
+        setTimeout(()=>{
+          btn.textContent = originalLabel;
+          btn.classList.remove("copied");
+        }, 2000);
+      }
+      try{
+        await navigator.clipboard.writeText(shareUrl);
+        showCopied();
+      }catch(e){
+        prompt("아래 링크를 복사하세요:", shareUrl);
+      }
+    });
+  }
+  wireShareButton(document.getElementById("shareEditBtn"), "edit", "✏️ 편집용 링크 복사");
+  wireShareButton(document.getElementById("shareViewBtn"), "view", "🔒 보고용 링크 복사");
 
   const todoCategorySelect = document.getElementById("todoCategorySelect");
   fillCategorySelect(todoCategorySelect, CATEGORIES[0]);
@@ -1405,19 +1472,21 @@
       const span = document.createElement("div");
       span.className = "txt";
       span.textContent = txt;
-
-      const del = document.createElement("button");
-      del.className = "del";
-      del.textContent = "✕";
-      del.title = "삭제";
-      del.addEventListener("click", ()=>{
-        data.memoCards.splice(idx, 1);
-        saveData();
-        renderMemos();
-      });
-
       card.appendChild(span);
-      card.appendChild(del);
+
+      if(!isViewMode){
+        const del = document.createElement("button");
+        del.className = "del";
+        del.textContent = "✕";
+        del.title = "삭제";
+        del.addEventListener("click", ()=>{
+          data.memoCards.splice(idx, 1);
+          saveData();
+          renderMemos();
+        });
+        card.appendChild(del);
+      }
+
       memoList.appendChild(card);
     });
   }
@@ -1481,13 +1550,15 @@
       num.textContent = day;
       el.appendChild(num);
 
-      const addBtn = document.createElement("button");
-      addBtn.className = "day-add-btn";
-      addBtn.type = "button";
-      addBtn.textContent = "+";
-      addBtn.title = "일정 추가";
-      addBtn.addEventListener("click", ()=> openModal(key, dateObj));
-      el.appendChild(addBtn);
+      if(!isViewMode){
+        const addBtn = document.createElement("button");
+        addBtn.className = "day-add-btn";
+        addBtn.type = "button";
+        addBtn.textContent = "+";
+        addBtn.title = "일정 추가";
+        addBtn.addEventListener("click", ()=> openModal(key, dateObj));
+        el.appendChild(addBtn);
+      }
 
       const dayTasks = getTasksForDate(key);
       const multiDay = dayTasks.filter(t => t.startDate !== t.endDate);
@@ -1510,7 +1581,7 @@
           const c = isToday ? { bg:"rgba(255,255,255,0.35)", fg:"#fff" } : categoryColor(t.category);
           bar.style.background = c.bg;
           bar.style.color = c.fg;
-          bar.addEventListener("click", ()=> openEditModal(t));
+          if(!isViewMode) bar.addEventListener("click", ()=> openEditModal(t));
           attachDraggable(bar, t);
 
           if(segStart){
@@ -1525,7 +1596,7 @@
             }
           }
 
-          if(isTaskStart){
+          if(isTaskStart && !isViewMode){
             const del = document.createElement("button");
             del.className = "cal-bar-del";
             del.type = "button";
@@ -1554,7 +1625,7 @@
           const c = isToday ? { bg:"rgba(255,255,255,0.28)", fg:"#fff" } : categoryColor(t.category);
           badge.style.background = c.bg;
           badge.style.color = c.fg;
-          badge.addEventListener("click", ()=> openEditModal(t));
+          if(!isViewMode) badge.addEventListener("click", ()=> openEditModal(t));
           attachDraggable(badge, t);
 
           const txt = document.createElement("span");
@@ -1568,17 +1639,19 @@
             badge.appendChild(link);
           }
 
-          const del = document.createElement("button");
-          del.className = "day-badge-del";
-          del.type = "button";
-          del.textContent = "×";
-          del.addEventListener("click", (e)=>{
-            e.stopPropagation();
-            deleteTask(t.id);
-            saveData();
-            renderAll();
-          });
-          badge.appendChild(del);
+          if(!isViewMode){
+            const del = document.createElement("button");
+            del.className = "day-badge-del";
+            del.type = "button";
+            del.textContent = "×";
+            del.addEventListener("click", (e)=>{
+              e.stopPropagation();
+              deleteTask(t.id);
+              saveData();
+              renderAll();
+            });
+            badge.appendChild(del);
+          }
 
           badgeWrap.appendChild(badge);
         });
@@ -1765,13 +1838,15 @@
       dayLabel.textContent = `${DOW[colDate.getDay()]}(${colDate.getMonth()+1}.${colDate.getDate()})`;
       header.appendChild(dayLabel);
 
-      const addBtn = document.createElement("button");
-      addBtn.className = "week-add-btn";
-      addBtn.type = "button";
-      addBtn.textContent = "+";
-      addBtn.title = "업무 추가";
-      addBtn.addEventListener("click", ()=> openModal(colKey, colDate));
-      header.appendChild(addBtn);
+      if(!isViewMode){
+        const addBtn = document.createElement("button");
+        addBtn.className = "week-add-btn";
+        addBtn.type = "button";
+        addBtn.textContent = "+";
+        addBtn.title = "업무 추가";
+        addBtn.addEventListener("click", ()=> openModal(colKey, colDate));
+        header.appendChild(addBtn);
+      }
 
       col.appendChild(header);
 
@@ -1857,6 +1932,7 @@
         const cb = document.createElement("input");
         cb.type = "checkbox";
         cb.checked = task.done;
+        cb.disabled = isViewMode;
         cb.addEventListener("change", ()=>{
           task.done = cb.checked;
           saveData();
@@ -1869,15 +1945,6 @@
         label.className = "label";
         label.textContent = task.text;
 
-        const editBtn = document.createElement("button");
-        editBtn.className = "edit";
-        editBtn.textContent = "✎";
-        editBtn.title = "수정";
-        editBtn.addEventListener("click", ()=>{
-          weekEditing = { id: task.id, colKey };
-          renderWeekTasks();
-        });
-
         row.appendChild(cb);
         row.appendChild(tag);
         if(isMultiDay){
@@ -1889,7 +1956,17 @@
         }
         row.appendChild(label);
         if(task.link) row.appendChild(makeLinkIcon(task.link));
-        row.appendChild(editBtn);
+        if(!isViewMode){
+          const editBtn = document.createElement("button");
+          editBtn.className = "edit";
+          editBtn.textContent = "✎";
+          editBtn.title = "수정";
+          editBtn.addEventListener("click", ()=>{
+            weekEditing = { id: task.id, colKey };
+            renderWeekTasks();
+          });
+          row.appendChild(editBtn);
+        }
         attachDraggable(row, task);
         tasksWrap.appendChild(row);
       });
@@ -2008,6 +2085,7 @@
       const cb = document.createElement("input");
       cb.type = "checkbox";
       cb.checked = todo.done;
+      cb.disabled = isViewMode;
       cb.addEventListener("change", ()=>{
         todo.done = cb.checked;
         saveData();
@@ -2020,32 +2098,35 @@
       label.className = "label";
       label.textContent = todo.text;
 
-      const editBtn = document.createElement("button");
-      editBtn.className = "edit";
-      editBtn.textContent = "✎";
-      editBtn.title = "수정";
-      editBtn.addEventListener("click", ()=>{
-        dailyEditingId = todo.id;
-        renderDaily();
-      });
-
-      const del = document.createElement("button");
-      del.className = "del";
-      del.textContent = "✕";
-      del.title = "삭제";
-      del.addEventListener("click", ()=>{
-        deleteTask(todo.id);
-        if(dailyEditingId === todo.id) dailyEditingId = null;
-        saveData();
-        renderAll();
-      });
-
       row.appendChild(cb);
       row.appendChild(tag);
       row.appendChild(label);
       if(todo.link) row.appendChild(makeLinkIcon(todo.link));
-      row.appendChild(editBtn);
-      row.appendChild(del);
+
+      if(!isViewMode){
+        const editBtn = document.createElement("button");
+        editBtn.className = "edit";
+        editBtn.textContent = "✎";
+        editBtn.title = "수정";
+        editBtn.addEventListener("click", ()=>{
+          dailyEditingId = todo.id;
+          renderDaily();
+        });
+        row.appendChild(editBtn);
+
+        const del = document.createElement("button");
+        del.className = "del";
+        del.textContent = "✕";
+        del.title = "삭제";
+        del.addEventListener("click", ()=>{
+          deleteTask(todo.id);
+          if(dailyEditingId === todo.id) dailyEditingId = null;
+          saveData();
+          renderAll();
+        });
+        row.appendChild(del);
+      }
+
       attachDraggable(row, todo);
       todoList.appendChild(row);
     });
