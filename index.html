@@ -43,6 +43,27 @@
     color:var(--text-soft);
     font-size:14px;
   }
+  .header-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .share-btn{
+    border:none;
+    background:var(--accent);
+    color:#fff;
+    padding:8px 16px;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:700;
+    cursor:pointer;
+    white-space:nowrap;
+    transition:background .15s;
+  }
+  .share-btn:hover{ background:var(--accent-dark); }
+  .share-btn.copied{ background:var(--accent-2); }
   .dashboard-stack{
     display:flex;
     flex-direction:column;
@@ -841,7 +862,10 @@
 <body>
 
 <header>
-  <h1>📋 스케줄러</h1>
+  <div class="header-top">
+    <h1>📋 스케줄러</h1>
+    <button id="shareBtn" class="share-btn">🔗 내 스케줄 공유하기</button>
+  </div>
   <p id="todayLabel"></p>
 </header>
 
@@ -1077,6 +1101,27 @@
   const data = loadData();
   saveData();
 
+  // ---------- 공유 링크로 접속한 경우 데이터 복원 ----------
+  (function tryLoadSharedData(){
+    const params = new URLSearchParams(location.search);
+    const raw = params.get("data");
+    if(!raw) return;
+    try{
+      const json = decodeURIComponent(escape(atob(raw)));
+      const shared = JSON.parse(json);
+      if(!shared || !Array.isArray(shared.taskList)) return;
+      const ok = confirm("공유된 스케줄 데이터를 불러오시겠습니까?\n(현재 저장된 업무 데이터가 공유 데이터로 대체됩니다)");
+      if(ok){
+        data.taskList = shared.taskList;
+        if(Array.isArray(shared.customCategories)) data.customCategories = shared.customCategories;
+        saveData();
+      }
+    }catch(e){
+      alert("공유 링크의 데이터를 불러오지 못했습니다.");
+    }
+    history.replaceState({}, "", location.pathname);
+  })();
+
   const today = new Date();
   let calYear = today.getFullYear();
   let calMonth = today.getMonth(); // 0-based
@@ -1267,6 +1312,32 @@
   // ---------- Header ----------
   document.getElementById("todayLabel").textContent =
     `오늘은 ${today.getFullYear()}년 ${today.getMonth()+1}월 ${today.getDate()}일 (${DOW[today.getDay()]}요일) 입니다.`;
+
+  // ---------- 스케줄 공유 링크 생성 ----------
+  const SHARE_BTN_LABEL = "🔗 내 스케줄 공유하기";
+  const shareBtn = document.getElementById("shareBtn");
+  shareBtn.addEventListener("click", async ()=>{
+    const payload = { taskList: data.taskList, customCategories: data.customCategories };
+    const json = JSON.stringify(payload);
+    const b64 = btoa(unescape(encodeURIComponent(json)));
+    const shareUrl = location.origin + location.pathname + "?data=" + encodeURIComponent(b64);
+
+    function showCopied(){
+      shareBtn.textContent = "✓ 링크가 복사되었습니다!";
+      shareBtn.classList.add("copied");
+      setTimeout(()=>{
+        shareBtn.textContent = SHARE_BTN_LABEL;
+        shareBtn.classList.remove("copied");
+      }, 2000);
+    }
+
+    try{
+      await navigator.clipboard.writeText(shareUrl);
+      showCopied();
+    }catch(e){
+      prompt("아래 링크를 복사하세요:", shareUrl);
+    }
+  });
 
   const todoCategorySelect = document.getElementById("todoCategorySelect");
   fillCategorySelect(todoCategorySelect, CATEGORIES[0]);
