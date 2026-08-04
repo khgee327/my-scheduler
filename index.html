@@ -142,6 +142,32 @@
   }
   select.cat-select:focus{ border-color:var(--accent); }
 
+  /* Date range picker */
+  .date-range-row{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    flex-basis:100%;
+  }
+  .date-range-row .date-input{
+    flex:1;
+    min-width:0;
+    padding:7px 8px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    font-size:11.5px;
+    font-family:inherit;
+    color:var(--text);
+    background:#fff;
+    outline:none;
+  }
+  .date-range-row .date-input:focus{ border-color:var(--accent); }
+  .date-range-row .sep{
+    color:var(--text-soft);
+    font-size:12px;
+    flex-shrink:0;
+  }
+
   /* Calendar */
   .cal-nav{
     display:flex;
@@ -179,12 +205,13 @@
   }
   .cal-day{
     position:relative;
-    min-height:92px;
+    min-height:96px;
     border-radius:10px;
     padding:6px 6px;
     background:#fdf7f9;
     border:1px solid transparent;
     transition:background .15s, border-color .15s;
+    overflow:visible;
   }
   .cal-day:hover{
     border-color:var(--accent);
@@ -226,14 +253,66 @@
     align-items:center;
     justify-content:center;
     padding:0;
+    z-index:2;
   }
   .cal-day:hover .day-add-btn{ display:flex; }
   .cal-day.today .day-add-btn{ background:#fff; color:var(--accent-dark); }
+
+  /* Multi-day continuous bars */
+  .cal-bars{
+    margin-top:4px;
+    display:flex;
+    flex-direction:column;
+    gap:2px;
+    position:relative;
+    z-index:1;
+  }
+  .cal-bar{
+    position:relative;
+    display:flex;
+    align-items:center;
+    height:15px;
+    font-size:9.5px;
+    font-weight:700;
+    padding:0 5px;
+    overflow:hidden;
+    white-space:nowrap;
+  }
+  .cal-bar.seg-start{
+    border-top-left-radius:5px;
+    border-bottom-left-radius:5px;
+  }
+  .cal-bar.seg-end{
+    border-top-right-radius:5px;
+    border-bottom-right-radius:5px;
+  }
+  .cal-bar:not(.seg-start){ margin-left:-8px; padding-left:9px; }
+  .cal-bar:not(.seg-end){ margin-right:-8px; }
+  .cal-bar .txt{ overflow:hidden; text-overflow:ellipsis; }
+  .cal-bar.done .txt{ text-decoration:line-through; opacity:.7; }
+  .cal-bar-del{
+    position:absolute;
+    right:3px;
+    top:50%;
+    transform:translateY(-50%);
+    border:none;
+    background:transparent;
+    color:inherit;
+    font-size:10px;
+    line-height:1;
+    cursor:pointer;
+    display:none;
+  }
+  .cal-bar:hover .cal-bar-del{ display:inline; }
+
+  /* Single-day badges */
   .day-badges{
     margin-top:4px;
     display:flex;
     flex-direction:column;
     gap:2px;
+    max-height:130px;
+    overflow-y:auto;
   }
   .day-badge{
     display:flex;
@@ -245,6 +324,7 @@
     padding:2px 5px;
     border-radius:5px;
     overflow:hidden;
+    flex-shrink:0;
   }
   .day-badge .txt{
     overflow:hidden;
@@ -268,12 +348,6 @@
     flex-shrink:0;
   }
   .day-badge:hover .day-badge-del{ display:inline; }
-  .day-badge-more{
-    font-size:9px;
-    color:var(--text-soft);
-    font-weight:700;
-    padding-left:2px;
-  }
 
   /* Add-task modal */
   .modal-overlay{
@@ -314,6 +388,13 @@
     margin-top:10px;
     padding:10px 12px;
     font-size:14px;
+  }
+  .modal-box .date-range-row{
+    margin-top:10px;
+  }
+  .modal-box .date-range-row .date-input{
+    padding:9px 8px;
+    font-size:12.5px;
   }
   .modal-actions{
     display:flex;
@@ -461,6 +542,10 @@
     border-radius:6px;
     outline:none;
   }
+  .week-task-item .date-range-row .date-input{
+    font-size:11px;
+    padding:6px 6px;
+  }
   .week-task-item .edit-actions{
     display:flex;
     justify-content:flex-end;
@@ -510,11 +595,13 @@
 
   .add-row.simple{
     display:flex;
+    flex-wrap:wrap;
     gap:8px;
     margin-bottom:14px;
   }
   .add-row.simple input[type=text]{
     flex:1;
+    min-width:120px;
     padding:9px 10px;
     border:1px solid var(--border);
     border-radius:8px;
@@ -525,6 +612,14 @@
   .add-row.simple select.cat-select{
     width:112px;
     flex-shrink:0;
+  }
+  .add-row.simple .date-range-row{
+    flex-basis:auto;
+    width:auto;
+  }
+  .add-row.simple .date-range-row .date-input{
+    width:128px;
+    flex:none;
   }
   .add-row.simple button{
     background:var(--accent);
@@ -541,6 +636,7 @@
   /* Todo */
   .todo-item{
     display:flex;
+    flex-wrap:wrap;
     align-items:center;
     gap:8px;
     padding:10px 12px;
@@ -587,6 +683,7 @@
   }
   .todo-item .edit-input{
     flex:1;
+    min-width:120px;
     font-size:14px;
     padding:6px 8px;
     border:1px solid var(--accent);
@@ -598,6 +695,10 @@
     flex-shrink:0;
     padding:6px 8px;
     font-size:12px;
+  }
+  .todo-item .date-range-row .date-input{
+    font-size:11.5px;
+    padding:6px 8px;
   }
   .todo-item button.save{
     border:none;
@@ -668,6 +769,11 @@
     <div class="add-row simple">
       <select class="cat-select" id="todoCategorySelect"></select>
       <input type="text" id="todoInput" placeholder="할 일을 입력하고 Enter">
+      <div class="date-range-row">
+        <input type="date" class="date-input" id="todoStartDate">
+        <span class="sep">~</span>
+        <input type="date" class="date-input" id="todoEndDate">
+      </div>
       <button id="addTodoBtn">추가</button>
     </div>
     <div id="todoList"></div>
@@ -711,6 +817,11 @@
     <h3 id="modalDateLabel"></h3>
     <input type="text" id="modalTaskInput" placeholder="일정을 입력하세요">
     <select class="cat-select" id="modalCategorySelect"></select>
+    <div class="date-range-row">
+      <input type="date" class="date-input" id="modalStartDate">
+      <span class="sep">~</span>
+      <input type="date" class="date-input" id="modalEndDate">
+    </div>
     <div class="modal-actions">
       <button class="cancel-btn" id="modalCancelBtn">취소</button>
       <button class="confirm-btn" id="modalAddBtn">추가</button>
@@ -760,6 +871,10 @@
     return fmtDate(date);
   }
 
+  function genId(){
+    return "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+
   function loadData(){
     let raw = null;
     try{ raw = localStorage.getItem(STORAGE_KEY); }catch(e){}
@@ -768,8 +883,8 @@
       try{ parsed = JSON.parse(raw); }catch(e){ parsed = {}; }
     }
 
-    // 통합 데이터 구조(tasks: 날짜별 업무 배열)로 일회성 마이그레이션
-    if(!parsed.tasks){
+    // 통합 데이터 구조(tasks: 날짜별 업무 배열)로 일회성 마이그레이션 (구버전)
+    if(!parsed.tasks && !parsed.taskList){
       parsed.tasks = {};
 
       if(parsed.todos){
@@ -807,6 +922,27 @@
       delete parsed.events;
       delete parsed.weekTasks;
     }
+
+    // 기간(시작일~종료일) 지원 flat 리스트(taskList)로 일회성 마이그레이션
+    if(!parsed.taskList){
+      parsed.taskList = [];
+      if(parsed.tasks){
+        Object.keys(parsed.tasks).forEach(dk=>{
+          parsed.tasks[dk].forEach(t=>{
+            parsed.taskList.push({
+              id: genId(),
+              text: t.text,
+              done: !!t.done,
+              category: t.category || CATEGORIES[0],
+              startDate: dk,
+              endDate: dk
+            });
+          });
+        });
+      }
+      delete parsed.tasks;
+    }
+
     if(!parsed.memoCards){
       parsed.memoCards = [];
       if(parsed.memos){
@@ -833,13 +969,33 @@
   let calMonth = today.getMonth(); // 0-based
   const todayKey = fmtDate(today);
 
-  // ---------- 통합 데이터 접근 헬퍼 ----------
-  function getTasks(dateKey){
-    return data.tasks[dateKey] || [];
+  // ---------- 통합 데이터 접근 헬퍼 (taskList: 시작일~종료일을 갖는 flat 리스트) ----------
+  function getTasksForDate(dateKey){
+    return data.taskList.filter(t => t.startDate <= dateKey && dateKey <= t.endDate);
   }
-  function addTask(dateKey, text, category){
-    if(!data.tasks[dateKey]) data.tasks[dateKey] = [];
-    data.tasks[dateKey].push({ text: text, done:false, category: category || CATEGORIES[0] });
+  function findTask(id){
+    return data.taskList.find(t => t.id === id);
+  }
+  function deleteTask(id){
+    const idx = data.taskList.findIndex(t => t.id === id);
+    if(idx > -1) data.taskList.splice(idx, 1);
+  }
+  function clampRange(start, end){
+    const s = start || todayKey;
+    let e = end || s;
+    if(e < s) e = s;
+    return { start:s, end:e };
+  }
+  function addTask(text, category, startDate, endDate){
+    const r = clampRange(startDate, endDate);
+    data.taskList.push({
+      id: genId(),
+      text: text,
+      done:false,
+      category: category || CATEGORIES[0],
+      startDate: r.start,
+      endDate: r.end
+    });
   }
   function allCategories(){
     return CATEGORIES.concat(data.customCategories);
@@ -895,6 +1051,29 @@
     tag.style.color = c.fg;
     return tag;
   }
+  function makeDateRangeRow(startVal, endVal){
+    const wrap = document.createElement("div");
+    wrap.className = "date-range-row";
+
+    const startInput = document.createElement("input");
+    startInput.type = "date";
+    startInput.className = "date-input start-date";
+    startInput.value = startVal;
+
+    const sep = document.createElement("span");
+    sep.className = "sep";
+    sep.textContent = "~";
+
+    const endInput = document.createElement("input");
+    endInput.type = "date";
+    endInput.className = "date-input end-date";
+    endInput.value = endVal;
+
+    wrap.appendChild(startInput);
+    wrap.appendChild(sep);
+    wrap.appendChild(endInput);
+    return { wrap, startInput, endInput };
+  }
 
   // ---------- Header ----------
   document.getElementById("todayLabel").textContent =
@@ -905,6 +1084,11 @@
   const todoCategorySelect = document.getElementById("todoCategorySelect");
   fillCategorySelect(todoCategorySelect, CATEGORIES[0]);
   attachAddCategoryHandler(todoCategorySelect);
+
+  const todoStartDate = document.getElementById("todoStartDate");
+  const todoEndDate = document.getElementById("todoEndDate");
+  todoStartDate.value = todayKey;
+  todoEndDate.value = todayKey;
 
   // ---------- Quick Memo (날짜 무관 영구 보관, 카드형) ----------
   const memoList = document.getElementById("memoList");
@@ -1009,12 +1193,58 @@
       addBtn.addEventListener("click", ()=> openModal(key, dateObj));
       el.appendChild(addBtn);
 
-      const tasks = getTasks(key);
-      if(tasks.length > 0){
+      const dayTasks = getTasksForDate(key);
+      const multiDay = dayTasks.filter(t => t.startDate !== t.endDate);
+      const singleDay = dayTasks.filter(t => t.startDate === t.endDate);
+
+      if(multiDay.length > 0){
+        const barsWrap = document.createElement("div");
+        barsWrap.className = "cal-bars";
+
+        multiDay.forEach(t=>{
+          const isRowStart = dateObj.getDay() === 0;
+          const isRowEnd = dateObj.getDay() === 6;
+          const isTaskStart = key === t.startDate;
+          const isTaskEnd = key === t.endDate;
+          const segStart = isTaskStart || isRowStart;
+          const segEnd = isTaskEnd || isRowEnd;
+
+          const bar = document.createElement("div");
+          bar.className = "cal-bar" + (t.done ? " done" : "") + (segStart ? " seg-start" : "") + (segEnd ? " seg-end" : "");
+          const c = isToday ? { bg:"rgba(255,255,255,0.35)", fg:"#fff" } : categoryColor(t.category);
+          bar.style.background = c.bg;
+          bar.style.color = c.fg;
+
+          if(segStart){
+            const txt = document.createElement("span");
+            txt.className = "txt";
+            txt.textContent = t.text;
+            bar.appendChild(txt);
+          }
+
+          if(isTaskStart){
+            const del = document.createElement("button");
+            del.className = "cal-bar-del";
+            del.type = "button";
+            del.textContent = "×";
+            del.addEventListener("click", ()=>{
+              deleteTask(t.id);
+              saveData();
+              renderAll();
+            });
+            bar.appendChild(del);
+          }
+
+          barsWrap.appendChild(bar);
+        });
+
+        el.appendChild(barsWrap);
+      }
+
+      if(singleDay.length > 0){
         const badgeWrap = document.createElement("div");
         badgeWrap.className = "day-badges";
-        const visible = tasks.slice(0, 2);
-        visible.forEach((t, idx)=>{
+        singleDay.forEach(t=>{
           const badge = document.createElement("div");
           badge.className = "day-badge" + (t.done ? " done" : "");
           const c = isToday ? { bg:"rgba(255,255,255,0.28)", fg:"#fff" } : categoryColor(t.category);
@@ -1030,7 +1260,7 @@
           del.type = "button";
           del.textContent = "×";
           del.addEventListener("click", ()=>{
-            tasks.splice(idx, 1);
+            deleteTask(t.id);
             saveData();
             renderAll();
           });
@@ -1039,12 +1269,6 @@
           badge.appendChild(del);
           badgeWrap.appendChild(badge);
         });
-        if(tasks.length > 2){
-          const more = document.createElement("div");
-          more.className = "day-badge-more";
-          more.textContent = `+${tasks.length - 2}`;
-          badgeWrap.appendChild(more);
-        }
         el.appendChild(badgeWrap);
       }
 
@@ -1068,6 +1292,8 @@
   const modalDateLabel = document.getElementById("modalDateLabel");
   const modalTaskInput = document.getElementById("modalTaskInput");
   const modalCategorySelect = document.getElementById("modalCategorySelect");
+  const modalStartDate = document.getElementById("modalStartDate");
+  const modalEndDate = document.getElementById("modalEndDate");
   attachAddCategoryHandler(modalCategorySelect);
   let modalDateKey = null;
 
@@ -1076,6 +1302,8 @@
     modalDateLabel.textContent = `${dateObj.getFullYear()}년 ${dateObj.getMonth()+1}월 ${dateObj.getDate()}일 (${DOW[dateObj.getDay()]}) 업무 추가`;
     modalTaskInput.value = "";
     fillCategorySelect(modalCategorySelect, CATEGORIES[0]);
+    modalStartDate.value = dateKey;
+    modalEndDate.value = dateKey;
     modalOverlay.classList.add("open");
     modalTaskInput.focus();
   }
@@ -1086,7 +1314,7 @@
   function submitModal(){
     const val = modalTaskInput.value.trim();
     if(!val || !modalDateKey) return;
-    addTask(modalDateKey, val, modalCategorySelect.value);
+    addTask(val, modalCategorySelect.value, modalStartDate.value, modalEndDate.value);
     saveData();
     closeModal();
     renderAll();
@@ -1103,7 +1331,7 @@
 
   // ---------- Weekly tasks (Mon-Fri columns) ----------
   const weekKey = getWeekKey(today);
-  let weekEditing = null; // { colKey, idx } | null
+  let weekEditing = null; // { id, colKey } | null
   const weekColsGrid = document.getElementById("weekColsGrid");
   const weekProgressBar = document.getElementById("weekProgressBar");
   const weekProgressText = document.getElementById("weekProgressText");
@@ -1117,12 +1345,16 @@
     weekRangeLabel.textContent = `${fmt(start)} - ${fmt(end)}`;
   }
 
-  function saveWeekEdit(colKey, idx, newVal, newCategory){
+  function saveWeekEdit(id, newVal, newCategory, newStart, newEnd){
     const val = newVal.trim();
     if(!val) return;
-    const tasks = getTasks(colKey);
-    tasks[idx].text = val;
-    tasks[idx].category = newCategory || CATEGORIES[0];
+    const task = findTask(id);
+    if(!task) return;
+    const r = clampRange(newStart, newEnd);
+    task.text = val;
+    task.category = newCategory || CATEGORIES[0];
+    task.startDate = r.start;
+    task.endDate = r.end;
     weekEditing = null;
     saveData();
     renderAll();
@@ -1138,7 +1370,7 @@
       colDate.setDate(colDate.getDate() + wd.offset);
       const colKey = fmtDate(colDate);
       const isToday = colKey === todayKey;
-      const tasks = getTasks(colKey);
+      const tasks = getTasksForDate(colKey);
 
       const col = document.createElement("div");
       col.className = "week-col" + (isToday ? " today-col" : "");
@@ -1170,11 +1402,11 @@
         tasksWrap.appendChild(empty);
       }
 
-      tasks.forEach((task, idx)=>{
+      tasks.forEach(task=>{
         totalAll++;
         if(task.done) doneAll++;
 
-        const isEditing = weekEditing && weekEditing.colKey === colKey && weekEditing.idx === idx;
+        const isEditing = weekEditing && weekEditing.id === task.id && weekEditing.colKey === colKey;
         const row = document.createElement("div");
         row.className = "week-task-item" + (task.done ? " done" : "") + (isEditing ? " editing" : "");
 
@@ -1191,6 +1423,9 @@
           textInput.value = task.text;
           row.appendChild(textInput);
 
+          const dr = makeDateRangeRow(task.startDate, task.endDate);
+          row.appendChild(dr.wrap);
+
           const actions = document.createElement("div");
           actions.className = "edit-actions";
 
@@ -1198,7 +1433,7 @@
           saveBtn.className = "save";
           saveBtn.textContent = "✓";
           saveBtn.title = "저장";
-          saveBtn.addEventListener("click", ()=> saveWeekEdit(colKey, idx, textInput.value, catSel.value));
+          saveBtn.addEventListener("click", ()=> saveWeekEdit(task.id, textInput.value, catSel.value, dr.startInput.value, dr.endInput.value));
           actions.appendChild(saveBtn);
 
           const delBtn = document.createElement("button");
@@ -1207,8 +1442,7 @@
           delBtn.textContent = "✕";
           delBtn.title = "삭제";
           delBtn.addEventListener("click", ()=>{
-            const t = getTasks(colKey);
-            t.splice(idx, 1);
+            deleteTask(task.id);
             weekEditing = null;
             saveData();
             renderAll();
@@ -1219,7 +1453,7 @@
           tasksWrap.appendChild(row);
 
           textInput.addEventListener("keydown", e=>{
-            if(e.key === "Enter") saveWeekEdit(colKey, idx, textInput.value, catSel.value);
+            if(e.key === "Enter") saveWeekEdit(task.id, textInput.value, catSel.value, dr.startInput.value, dr.endInput.value);
             if(e.key === "Escape"){ weekEditing = null; renderWeekTasks(); }
           });
           textInput.focus();
@@ -1247,7 +1481,7 @@
         editBtn.textContent = "✎";
         editBtn.title = "수정";
         editBtn.addEventListener("click", ()=>{
-          weekEditing = { colKey, idx };
+          weekEditing = { id: task.id, colKey };
           renderWeekTasks();
         });
 
@@ -1271,21 +1505,25 @@
   const todoList = document.getElementById("todoList");
   const todoInput = document.getElementById("todoInput");
   const todoStats = document.getElementById("todoStats");
-  let dailyEditingIndex = null;
+  let dailyEditingId = null;
 
-  function saveEdit(idx, newVal, newCategory){
+  function saveEdit(id, newVal, newCategory, newStart, newEnd){
     const val = newVal.trim();
     if(!val) return;
-    const tasks = getTasks(todayKey);
-    tasks[idx].text = val;
-    tasks[idx].category = newCategory || CATEGORIES[0];
-    dailyEditingIndex = null;
+    const task = findTask(id);
+    if(!task) return;
+    const r = clampRange(newStart, newEnd);
+    task.text = val;
+    task.category = newCategory || CATEGORIES[0];
+    task.startDate = r.start;
+    task.endDate = r.end;
+    dailyEditingId = null;
     saveData();
     renderAll();
   }
 
   function renderDaily(){
-    const tasks = getTasks(todayKey);
+    const tasks = getTasksForDate(todayKey);
     todoList.innerHTML = "";
 
     if(tasks.length === 0){
@@ -1297,11 +1535,11 @@
       return;
     }
 
-    tasks.forEach((todo, idx)=>{
+    tasks.forEach(todo=>{
       const row = document.createElement("div");
       row.className = "todo-item" + (todo.done ? " done" : "");
 
-      if(dailyEditingIndex === idx){
+      if(dailyEditingId === todo.id){
         row.classList.add("editing");
 
         const cb = document.createElement("input");
@@ -1326,7 +1564,6 @@
         saveBtn.className = "save";
         saveBtn.textContent = "✓";
         saveBtn.title = "저장";
-        saveBtn.addEventListener("click", ()=> saveEdit(idx, editInput.value, editCategorySelect.value));
         row.appendChild(saveBtn);
 
         const cancelBtn = document.createElement("button");
@@ -1335,16 +1572,21 @@
         cancelBtn.textContent = "✕";
         cancelBtn.title = "취소";
         cancelBtn.addEventListener("click", ()=>{
-          dailyEditingIndex = null;
+          dailyEditingId = null;
           renderDaily();
         });
         row.appendChild(cancelBtn);
 
+        const dr = makeDateRangeRow(todo.startDate, todo.endDate);
+        row.appendChild(dr.wrap);
+
+        saveBtn.addEventListener("click", ()=> saveEdit(todo.id, editInput.value, editCategorySelect.value, dr.startInput.value, dr.endInput.value));
+
         todoList.appendChild(row);
 
         editInput.addEventListener("keydown", e=>{
-          if(e.key === "Enter") saveEdit(idx, editInput.value, editCategorySelect.value);
-          if(e.key === "Escape"){ dailyEditingIndex = null; renderDaily(); }
+          if(e.key === "Enter") saveEdit(todo.id, editInput.value, editCategorySelect.value, dr.startInput.value, dr.endInput.value);
+          if(e.key === "Escape"){ dailyEditingId = null; renderDaily(); }
         });
         editInput.focus();
         editInput.select();
@@ -1371,7 +1613,7 @@
       editBtn.textContent = "✎";
       editBtn.title = "수정";
       editBtn.addEventListener("click", ()=>{
-        dailyEditingIndex = idx;
+        dailyEditingId = todo.id;
         renderDaily();
       });
 
@@ -1380,8 +1622,8 @@
       del.textContent = "✕";
       del.title = "삭제";
       del.addEventListener("click", ()=>{
-        tasks.splice(idx,1);
-        if(dailyEditingIndex === idx) dailyEditingIndex = null;
+        deleteTask(todo.id);
+        if(dailyEditingId === todo.id) dailyEditingId = null;
         saveData();
         renderAll();
       });
@@ -1402,8 +1644,10 @@
   function addTodo(){
     const val = todoInput.value.trim();
     if(!val) return;
-    addTask(todayKey, val, todoCategorySelect.value);
+    addTask(val, todoCategorySelect.value, todoStartDate.value, todoEndDate.value);
     todoInput.value = "";
+    todoStartDate.value = todayKey;
+    todoEndDate.value = todayKey;
     saveData();
     renderAll();
   }
