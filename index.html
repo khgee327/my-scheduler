@@ -499,7 +499,7 @@
   }
   .modal-actions .delete-btn:hover{ background:#fecaca; }
 
-  /* Weekly tasks - unified grid (headers + multi-day bars + single-day cards) */
+  /* Weekly tasks (Mon-Fri columns) */
   .week-range{
     display:block;
     font-size:12px;
@@ -507,23 +507,35 @@
     font-weight:600;
     margin-bottom:12px;
   }
-  .week-grid{
+  .week-cols-grid{
     display:grid;
     grid-template-columns:repeat(5,1fr);
-    column-gap:14px;
-    row-gap:6px;
+    gap:14px;
   }
-  .week-grid-header{
+  .week-col{
+    background:#fdf7f9;
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:12px;
+    display:flex;
+    flex-direction:column;
+    min-height:180px;
+  }
+  .week-col.today-col{
+    border-color:var(--accent);
+    background:var(--accent-soft);
+  }
+  .week-col-header{
     position:relative;
     display:flex;
     align-items:center;
     justify-content:space-between;
+    margin-bottom:10px;
     padding-bottom:8px;
     padding-right:22px;
     border-bottom:1px dashed var(--border);
   }
-  .week-grid-header.today-col{ border-bottom-color:var(--accent); }
-  .week-grid-header .day-label{
+  .week-col-header .day-label{
     font-size:13px;
     font-weight:700;
   }
@@ -546,62 +558,12 @@
     justify-content:center;
     padding:0;
   }
-  .week-grid-header:hover .week-add-btn{ display:flex; }
-  .week-grid-bar{
-    position:relative;
-    display:flex;
-    align-items:center;
-    gap:5px;
-    height:26px;
-    padding:0 8px;
-    font-size:11.5px;
-    font-weight:700;
-    overflow:hidden;
-    border-radius:8px;
-  }
-  .week-grid-bar.trunc-start{ border-top-left-radius:0; border-bottom-left-radius:0; }
-  .week-grid-bar.trunc-end{ border-top-right-radius:0; border-bottom-right-radius:0; }
-  .week-grid-bar input[type=checkbox]{
-    flex-shrink:0;
-    width:14px;height:14px;
-    cursor:pointer;
-  }
-  .week-grid-bar .txt{
-    flex:1;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-  }
-  .week-grid-bar.done .txt{ text-decoration:line-through; opacity:.7; }
-  .week-grid-bar a.link-icon{ font-size:10px; }
-  .week-grid-bar .tl-edit{
-    flex-shrink:0;
-    border:none;
-    background:rgba(255,255,255,0.55);
-    color:inherit;
-    border-radius:4px;
-    width:18px;height:18px;
-    font-size:10px;
-    cursor:pointer;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:0;
-  }
-  .week-grid-bar .tl-edit:hover{ background:rgba(255,255,255,0.9); }
-  .week-grid-cards{
-    background:#fdf7f9;
-    border:1px solid var(--border);
-    border-radius:12px;
-    padding:12px;
+  .week-col-header:hover .week-add-btn{ display:flex; }
+  .week-col-tasks{
     display:flex;
     flex-direction:column;
     gap:6px;
-    min-height:90px;
-  }
-  .week-grid-cards.today-col{
-    border-color:var(--accent);
-    background:var(--accent-soft);
+    flex:1;
   }
   .week-task-item{
     display:flex;
@@ -611,6 +573,21 @@
     border:1px solid var(--border);
     border-radius:8px;
     padding:6px 8px;
+  }
+  .week-task-item.multi-day{
+    background:#faf5ff;
+    border-color:#e9d5ff;
+  }
+  .continuous-tag{
+    display:inline-block;
+    font-size:9px;
+    font-weight:700;
+    padding:2px 6px;
+    border-radius:999px;
+    background:#f3e8ff;
+    color:#9333ea;
+    flex-shrink:0;
+    white-space:nowrap;
   }
   .week-task-item input[type=checkbox]{
     width:15px;height:15px;
@@ -849,15 +826,15 @@
   }
 
   @media (max-width:1100px){
-    .week-grid{ grid-template-columns:repeat(3,1fr); }
+    .week-cols-grid{ grid-template-columns:repeat(3,1fr); }
   }
   @media (max-width:700px){
-    .week-grid{ grid-template-columns:repeat(2,1fr); }
+    .week-cols-grid{ grid-template-columns:repeat(2,1fr); }
     .dashboard-stack{ padding:16px; }
     header{ padding:20px 16px 4px; }
   }
   @media (max-width:480px){
-    .week-grid{ grid-template-columns:1fr; }
+    .week-cols-grid{ grid-template-columns:1fr; }
   }
 </style>
 </head>
@@ -920,7 +897,7 @@
       </div>
     </div>
     <span class="week-range" id="weekRange"></span>
-    <div class="week-grid" id="weekGrid"></div>
+    <div class="week-cols-grid" id="weekColsGrid"></div>
     <div class="progress-wrap">
       <div class="progress-bar"><div id="weekProgressBar" style="width:0%"></div></div>
       <div class="progress-label">
@@ -1641,7 +1618,7 @@
   // ---------- Weekly tasks (통합 그리드: 헤더 + 기간형 바 + 단일 업무 카드) ----------
   let viewedWeekKey = getWeekKey(today);
   let weekEditing = null; // { id, colKey } | null
-  const weekGrid = document.getElementById("weekGrid");
+  const weekColsGrid = document.getElementById("weekColsGrid");
   const weekProgressBar = document.getElementById("weekProgressBar");
   const weekProgressText = document.getElementById("weekProgressText");
   const weekRangeLabel = document.getElementById("weekRange");
@@ -1691,70 +1668,27 @@
     renderAll();
   }
 
-  function getWeekTimelineItems(){
-    const sundayOfWeek = new Date(viewedWeekKey);
-    const weekdayKeys = WEEKDAYS.map(wd=>{
-      const d = new Date(sundayOfWeek);
-      d.setDate(d.getDate() + wd.offset);
-      return fmtDate(d);
-    });
-    const weekMonKey = weekdayKeys[0], weekFriKey = weekdayKeys[4];
-
-    const items = data.taskList
-      .filter(t => t.startDate !== t.endDate)
-      .filter(t => t.startDate <= weekFriKey && t.endDate >= weekMonKey)
-      .map(t=>{
-        const dispStart = t.startDate < weekMonKey ? weekMonKey : t.startDate;
-        const dispEnd = t.endDate > weekFriKey ? weekFriKey : t.endDate;
-        return {
-          task: t,
-          startIdx: weekdayKeys.indexOf(dispStart),
-          endIdx: weekdayKeys.indexOf(dispEnd),
-          capStart: dispStart === t.startDate,
-          capEnd: dispEnd === t.endDate
-        };
-      })
-      .sort((a,b)=> a.startIdx - b.startIdx || a.endIdx - b.endIdx);
-
-    const laneEnds = [];
-    items.forEach(it=>{
-      let lane = laneEnds.findIndex(end => end < it.startIdx);
-      if(lane === -1){ lane = laneEnds.length; laneEnds.push(it.endIdx); }
-      else laneEnds[lane] = it.endIdx;
-      it.lane = lane;
-    });
-    return items;
-  }
-
   function renderWeekTasks(){
-    weekGrid.innerHTML = "";
+    weekColsGrid.innerHTML = "";
     const sundayOfWeek = new Date(viewedWeekKey);
     let totalAll = 0, doneAll = 0;
 
-    const timelineItems = getWeekTimelineItems();
-    timelineItems.forEach(it=>{
-      totalAll++;
-      if(it.task.done) doneAll++;
-    });
-    const laneCount = timelineItems.length ? Math.max(...timelineItems.map(it=>it.lane)) + 1 : 0;
-    const cardsRow = laneCount + 2;
-
-    const colKeys = [];
-    const colDates = [];
-
-    WEEKDAYS.forEach((wd, i)=>{
+    WEEKDAYS.forEach(wd=>{
       const colDate = new Date(sundayOfWeek);
       colDate.setDate(colDate.getDate() + wd.offset);
       const colKey = fmtDate(colDate);
-      colKeys.push(colKey);
-      colDates.push(colDate);
       const isToday = colKey === todayKey;
 
-      const header = document.createElement("div");
-      header.className = "week-grid-header" + (isToday ? " today-col" : "");
-      header.style.gridColumn = String(i + 1);
-      header.style.gridRow = "1";
+      const allTasks = getTasksForDate(colKey);
+      const multiDayTasks = allTasks.filter(t => t.startDate !== t.endDate);
+      const singleDayTasks = allTasks.filter(t => t.startDate === t.endDate);
+      const tasks = multiDayTasks.concat(singleDayTasks);
 
+      const col = document.createElement("div");
+      col.className = "week-col" + (isToday ? " today-col" : "");
+
+      const header = document.createElement("div");
+      header.className = "week-col-header";
       const dayLabel = document.createElement("span");
       dayLabel.className = "day-label";
       dayLabel.textContent = `${DOW[colDate.getDay()]}(${colDate.getMonth()+1}.${colDate.getDate()})`;
@@ -1768,74 +1702,27 @@
       addBtn.addEventListener("click", ()=> openModal(colKey, colDate));
       header.appendChild(addBtn);
 
-      weekGrid.appendChild(header);
-    });
+      col.appendChild(header);
 
-    timelineItems.forEach(it=>{
-      const t = it.task;
-      const bar = document.createElement("div");
-      bar.className = "week-grid-bar" + (t.done ? " done" : "") + (!it.capStart ? " trunc-start" : "") + (!it.capEnd ? " trunc-end" : "");
-      bar.style.gridColumn = `${it.startIdx + 1} / ${it.endIdx + 2}`;
-      bar.style.gridRow = String(it.lane + 2);
-      const c = categoryColor(t.category);
-      bar.style.background = c.bg;
-      bar.style.color = c.fg;
-      attachDraggable(bar, t);
-
-      const cb = document.createElement("input");
-      cb.type = "checkbox";
-      cb.title = "완료 체크";
-      cb.checked = t.done;
-      cb.addEventListener("click", e=> e.stopPropagation());
-      cb.addEventListener("change", ()=>{
-        t.done = cb.checked;
-        saveData();
-        renderAll();
-      });
-      bar.appendChild(cb);
-
-      const txt = document.createElement("span");
-      txt.className = "txt";
-      txt.textContent = t.text;
-      bar.appendChild(txt);
-
-      if(t.link) bar.appendChild(makeLinkIcon(t.link));
-
-      const editBtn = document.createElement("button");
-      editBtn.className = "tl-edit";
-      editBtn.type = "button";
-      editBtn.textContent = "✎";
-      editBtn.title = "수정";
-      editBtn.addEventListener("click", ()=> openEditModal(t));
-      bar.appendChild(editBtn);
-
-      weekGrid.appendChild(bar);
-    });
-
-    colKeys.forEach((colKey, i)=>{
-      const isToday = colKey === todayKey;
-      const tasks = getTasksForDate(colKey).filter(t => t.startDate === t.endDate);
-
-      const cardsWrap = document.createElement("div");
-      cardsWrap.className = "week-grid-cards" + (isToday ? " today-col" : "");
-      cardsWrap.style.gridColumn = String(i + 1);
-      cardsWrap.style.gridRow = String(cardsRow);
-      attachDropTarget(cardsWrap, ()=> colKey);
+      const tasksWrap = document.createElement("div");
+      tasksWrap.className = "week-col-tasks";
+      attachDropTarget(tasksWrap, ()=> colKey);
 
       if(tasks.length === 0){
         const empty = document.createElement("div");
         empty.className = "week-col-empty";
         empty.textContent = "업무 없음";
-        cardsWrap.appendChild(empty);
+        tasksWrap.appendChild(empty);
       }
 
       tasks.forEach(task=>{
         totalAll++;
         if(task.done) doneAll++;
 
+        const isMultiDay = task.startDate !== task.endDate;
         const isEditing = weekEditing && weekEditing.id === task.id && weekEditing.colKey === colKey;
         const row = document.createElement("div");
-        row.className = "week-task-item" + (task.done ? " done" : "") + (isEditing ? " editing" : "");
+        row.className = "week-task-item" + (task.done ? " done" : "") + (isMultiDay ? " multi-day" : "") + (isEditing ? " editing" : "");
 
         if(isEditing){
           const catSel = document.createElement("select");
@@ -1885,7 +1772,7 @@
           actions.appendChild(delBtn);
 
           row.appendChild(actions);
-          cardsWrap.appendChild(row);
+          tasksWrap.appendChild(row);
 
           textInput.addEventListener("keydown", e=>{
             if(e.key === "Enter") saveWeekEdit(task.id, textInput.value, catSel.value, dr.startInput.value, dr.endInput.value, linkInput.value);
@@ -1922,14 +1809,22 @@
 
         row.appendChild(cb);
         row.appendChild(tag);
+        if(isMultiDay){
+          const contTag = document.createElement("span");
+          contTag.className = "continuous-tag";
+          contTag.textContent = "연속";
+          contTag.title = `${task.startDate} ~ ${task.endDate}`;
+          row.appendChild(contTag);
+        }
         row.appendChild(label);
         if(task.link) row.appendChild(makeLinkIcon(task.link));
         row.appendChild(editBtn);
         attachDraggable(row, task);
-        cardsWrap.appendChild(row);
+        tasksWrap.appendChild(row);
       });
 
-      weekGrid.appendChild(cardsWrap);
+      col.appendChild(tasksWrap);
+      weekColsGrid.appendChild(col);
     });
 
     const pct = totalAll === 0 ? 0 : Math.round((doneAll/totalAll)*100);
