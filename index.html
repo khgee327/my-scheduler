@@ -76,6 +76,7 @@
     display:inline-block;
   }
   .today-date-badge{
+    display:inline-block;
     font-size:12px;
     font-weight:700;
     color:var(--accent-dark);
@@ -83,6 +84,49 @@
     padding:5px 12px;
     border-radius:999px;
     white-space:nowrap;
+    margin-bottom:12px;
+  }
+
+  /* Date/week navigation */
+  .day-nav{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    flex-shrink:0;
+  }
+  .day-nav .nav-btn{
+    border:none;
+    background:var(--accent-soft);
+    color:var(--accent-dark);
+    width:26px;height:26px;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:13px;
+    font-weight:700;
+  }
+  .day-nav .nav-btn:hover{ background:#fbcfe8; }
+  .day-nav .nav-today-btn{
+    border:none;
+    background:var(--accent-soft);
+    color:var(--accent-dark);
+    padding:0 10px;
+    height:26px;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:12px;
+    font-weight:700;
+    white-space:nowrap;
+  }
+  .day-nav .nav-today-btn:hover{ background:#fbcfe8; }
+  .day-nav input[type=date]{
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:4px 6px;
+    font-size:11.5px;
+    font-family:inherit;
+    color:var(--text);
+    outline:none;
+    height:26px;
   }
 
   /* Quick Memo */
@@ -293,6 +337,7 @@
     padding:0 5px;
     overflow:hidden;
     white-space:nowrap;
+    cursor:pointer;
   }
   .cal-bar.seg-start{
     border-top-left-radius:5px;
@@ -341,6 +386,7 @@
     border-radius:5px;
     overflow:hidden;
     flex-shrink:0;
+    cursor:pointer;
   }
   .day-badge .txt{
     overflow:hidden;
@@ -445,9 +491,11 @@
 
   /* Weekly tasks (Mon-Fri columns) */
   .week-range{
+    display:block;
     font-size:12px;
     color:var(--text-soft);
     font-weight:600;
+    margin-bottom:12px;
   }
   .week-cols-grid{
     display:grid;
@@ -837,8 +885,14 @@
   <div class="card">
     <div class="card-header">
       <h2><span class="dot"></span>일일 업무 (Today's To-Do)</h2>
-      <span class="today-date-badge" id="todoDateBadge"></span>
+      <div class="day-nav">
+        <button id="todoPrevDay" class="nav-btn" title="이전 날">‹</button>
+        <button id="todoTodayBtn" class="nav-today-btn">오늘</button>
+        <button id="todoNextDay" class="nav-btn" title="다음 날">›</button>
+        <input type="date" id="todoDatePicker">
+      </div>
     </div>
+    <span class="today-date-badge" id="todoDateBadge"></span>
     <div class="add-row simple">
       <select class="cat-select" id="todoCategorySelect"></select>
       <input type="text" id="todoInput" placeholder="할 일을 입력하고 Enter">
@@ -858,8 +912,13 @@
   <div class="card">
     <div class="card-header">
       <h2><span class="dot"></span>주간 업무 (Weekly Tasks)</h2>
-      <span class="week-range" id="weekRange"></span>
+      <div class="day-nav">
+        <button id="weekPrevBtn" class="nav-btn" title="이전 주">‹</button>
+        <button id="weekTodayBtn" class="nav-today-btn">이번주</button>
+        <button id="weekNextBtn" class="nav-btn" title="다음 주">›</button>
+      </div>
     </div>
+    <span class="week-range" id="weekRange"></span>
     <div class="week-timeline" id="weekTimeline"></div>
     <div class="week-cols-grid" id="weekColsGrid"></div>
     <div class="progress-wrap">
@@ -1173,8 +1232,6 @@
   // ---------- Header ----------
   document.getElementById("todayLabel").textContent =
     `오늘은 ${today.getFullYear()}년 ${today.getMonth()+1}월 ${today.getDate()}일 (${DOW[today.getDay()]}요일) 입니다.`;
-  document.getElementById("todoDateBadge").textContent =
-    `${today.getFullYear()}년 ${today.getMonth()+1}월 ${today.getDate()}일 ${DOW[today.getDay()]}요일`;
 
   const todoCategorySelect = document.getElementById("todoCategorySelect");
   fillCategorySelect(todoCategorySelect, CATEGORIES[0]);
@@ -1183,8 +1240,44 @@
   const todoStartDate = document.getElementById("todoStartDate");
   const todoEndDate = document.getElementById("todoEndDate");
   const todoLinkInput = document.getElementById("todoLinkInput");
-  todoStartDate.value = todayKey;
-  todoEndDate.value = todayKey;
+
+  // ---------- 일일 업무 날짜 네비게이션 ----------
+  let viewedDate = new Date(today);
+  let viewedDateKey = todayKey;
+  const todoDateBadge = document.getElementById("todoDateBadge");
+  const todoDatePicker = document.getElementById("todoDatePicker");
+  const todoPrevDay = document.getElementById("todoPrevDay");
+  const todoNextDay = document.getElementById("todoNextDay");
+  const todoTodayBtn = document.getElementById("todoTodayBtn");
+
+  function updateTodoDateUI(){
+    todoDateBadge.textContent = `${viewedDate.getFullYear()}년 ${viewedDate.getMonth()+1}월 ${viewedDate.getDate()}일 ${DOW[viewedDate.getDay()]}요일`;
+    todoDatePicker.value = viewedDateKey;
+    todoStartDate.value = viewedDateKey;
+    todoEndDate.value = viewedDateKey;
+  }
+  function setViewedDate(d){
+    viewedDate = d;
+    viewedDateKey = fmtDate(viewedDate);
+    dailyEditingId = null;
+    updateTodoDateUI();
+    renderDaily();
+  }
+  todoPrevDay.addEventListener("click", ()=>{
+    const d = new Date(viewedDate); d.setDate(d.getDate()-1);
+    setViewedDate(d);
+  });
+  todoNextDay.addEventListener("click", ()=>{
+    const d = new Date(viewedDate); d.setDate(d.getDate()+1);
+    setViewedDate(d);
+  });
+  todoTodayBtn.addEventListener("click", ()=> setViewedDate(new Date(today)));
+  todoDatePicker.addEventListener("change", ()=>{
+    if(!todoDatePicker.value) return;
+    const [y,m,d] = todoDatePicker.value.split("-").map(Number);
+    setViewedDate(new Date(y, m-1, d));
+  });
+  updateTodoDateUI();
 
   // ---------- Quick Memo (날짜 무관 영구 보관, 카드형) ----------
   const memoList = document.getElementById("memoList");
@@ -1310,6 +1403,7 @@
           const c = isToday ? { bg:"rgba(255,255,255,0.35)", fg:"#fff" } : categoryColor(t.category);
           bar.style.background = c.bg;
           bar.style.color = c.fg;
+          bar.addEventListener("click", ()=> openEditModal(t));
 
           if(segStart){
             const txt = document.createElement("span");
@@ -1328,7 +1422,8 @@
             del.className = "cal-bar-del";
             del.type = "button";
             del.textContent = "×";
-            del.addEventListener("click", ()=>{
+            del.addEventListener("click", (e)=>{
+              e.stopPropagation();
               deleteTask(t.id);
               saveData();
               renderAll();
@@ -1351,6 +1446,7 @@
           const c = isToday ? { bg:"rgba(255,255,255,0.28)", fg:"#fff" } : categoryColor(t.category);
           badge.style.background = c.bg;
           badge.style.color = c.fg;
+          badge.addEventListener("click", ()=> openEditModal(t));
 
           const txt = document.createElement("span");
           txt.className = "txt";
@@ -1367,7 +1463,8 @@
           del.className = "day-badge-del";
           del.type = "button";
           del.textContent = "×";
-          del.addEventListener("click", ()=>{
+          del.addEventListener("click", (e)=>{
+            e.stopPropagation();
             deleteTask(t.id);
             saveData();
             renderAll();
@@ -1481,16 +1578,37 @@
   });
 
   // ---------- Weekly tasks (Mon-Fri columns) ----------
-  const weekKey = getWeekKey(today);
+  let viewedWeekKey = getWeekKey(today);
   let weekEditing = null; // { id, colKey } | null
   const weekTimeline = document.getElementById("weekTimeline");
   const weekColsGrid = document.getElementById("weekColsGrid");
   const weekProgressBar = document.getElementById("weekProgressBar");
   const weekProgressText = document.getElementById("weekProgressText");
   const weekRangeLabel = document.getElementById("weekRange");
+  const weekPrevBtn = document.getElementById("weekPrevBtn");
+  const weekNextBtn = document.getElementById("weekNextBtn");
+  const weekTodayBtn = document.getElementById("weekTodayBtn");
+
+  function setViewedWeek(newWeekKey){
+    viewedWeekKey = newWeekKey;
+    weekEditing = null;
+    renderWeekRange();
+    renderWeekTasks();
+  }
+  weekPrevBtn.addEventListener("click", ()=>{
+    const d = new Date(viewedWeekKey);
+    d.setDate(d.getDate() - 7);
+    setViewedWeek(fmtDate(d));
+  });
+  weekNextBtn.addEventListener("click", ()=>{
+    const d = new Date(viewedWeekKey);
+    d.setDate(d.getDate() + 7);
+    setViewedWeek(fmtDate(d));
+  });
+  weekTodayBtn.addEventListener("click", ()=> setViewedWeek(getWeekKey(today)));
 
   function renderWeekRange(){
-    const start = new Date(weekKey);
+    const start = new Date(viewedWeekKey);
     const end = new Date(start);
     end.setDate(end.getDate()+6);
     const fmt = d => `${d.getMonth()+1}.${d.getDate()}`;
@@ -1514,7 +1632,7 @@
   }
 
   function getWeekTimelineItems(){
-    const sundayOfWeek = new Date(weekKey);
+    const sundayOfWeek = new Date(viewedWeekKey);
     const weekdayKeys = WEEKDAYS.map(wd=>{
       const d = new Date(sundayOfWeek);
       d.setDate(d.getDate() + wd.offset);
@@ -1601,7 +1719,7 @@
 
   function renderWeekTasks(){
     weekColsGrid.innerHTML = "";
-    const sundayOfWeek = new Date(weekKey);
+    const sundayOfWeek = new Date(viewedWeekKey);
     let totalAll = 0, doneAll = 0;
 
     const timelineItems = getWeekTimelineItems();
@@ -1779,13 +1897,13 @@
   }
 
   function renderDaily(){
-    const tasks = getTasksForDate(todayKey);
+    const tasks = getTasksForDate(viewedDateKey);
     todoList.innerHTML = "";
 
     if(tasks.length === 0){
       const empty = document.createElement("div");
       empty.className = "todo-empty";
-      empty.textContent = "오늘의 할 일을 추가해보세요.";
+      empty.textContent = "등록된 할 일이 없습니다.";
       todoList.appendChild(empty);
       todoStats.textContent = "";
       return;
@@ -1912,8 +2030,8 @@
     addTask(val, todoCategorySelect.value, todoStartDate.value, todoEndDate.value, todoLinkInput.value);
     todoInput.value = "";
     todoLinkInput.value = "";
-    todoStartDate.value = todayKey;
-    todoEndDate.value = todayKey;
+    todoStartDate.value = viewedDateKey;
+    todoEndDate.value = viewedDateKey;
     saveData();
     renderAll();
   }
