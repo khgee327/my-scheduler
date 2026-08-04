@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>스케줄러</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>💖</text></svg>">
 <style>
   :root{
     --bg:#fdf6f8;
@@ -85,22 +86,39 @@
   }
 
   /* Quick Memo */
-  .memo-textarea{
-    width:100%;
-    min-height:80px;
-    resize:vertical;
-    padding:12px 14px;
+  .memo-card{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:10px;
+    background:#fdf7f9;
     border:1px solid var(--border);
     border-radius:10px;
-    font-family:inherit;
+    padding:10px 12px;
+    margin-bottom:8px;
+  }
+  .memo-card .txt{
+    flex:1;
     font-size:13.5px;
     line-height:1.5;
-    color:var(--text);
-    background:#fdf7f9;
-    outline:none;
+    white-space:pre-wrap;
+    word-break:break-word;
   }
-  .memo-textarea:focus{ border-color:var(--accent); background:#fff; }
-  .memo-textarea::placeholder{ color:var(--text-soft); }
+  .memo-card button.del{
+    border:none;
+    background:transparent;
+    color:var(--text-soft);
+    cursor:pointer;
+    font-size:14px;
+    flex-shrink:0;
+  }
+  .memo-card button.del:hover{ color:var(--danger); }
+  .memo-empty{
+    text-align:center;
+    color:var(--text-soft);
+    font-size:13px;
+    padding:18px 0;
+  }
 
   /* Category tag & select */
   .cat-tag{
@@ -597,7 +615,11 @@
     <div class="card-header">
       <h2><span class="dot"></span>오늘의 메모 (Quick Memo)</h2>
     </div>
-    <textarea id="memoInput" class="memo-textarea" placeholder="자유롭게 메모를 적어보세요. 자동으로 저장됩니다."></textarea>
+    <div class="add-row simple">
+      <input type="text" id="memoInput" placeholder="메모를 입력하고 Enter">
+      <button id="addMemoBtn">추가</button>
+    </div>
+    <div id="memoList"></div>
   </div>
 
   <!-- 1. 일일 업무 (Today's To-Do) -->
@@ -748,7 +770,15 @@
       delete parsed.events;
       delete parsed.weekTasks;
     }
-    if(!parsed.memos) parsed.memos = {};
+    if(!parsed.memoCards){
+      parsed.memoCards = [];
+      if(parsed.memos){
+        Object.values(parsed.memos).forEach(txt=>{
+          if(txt && txt.trim()) parsed.memoCards.push(txt.trim());
+        });
+      }
+      delete parsed.memos;
+    }
 
     return parsed;
   }
@@ -805,13 +835,55 @@
   const todoCategorySelect = document.getElementById("todoCategorySelect");
   fillCategorySelect(todoCategorySelect, CATEGORIES[0]);
 
-  // ---------- Quick Memo ----------
+  // ---------- Quick Memo (날짜 무관 영구 보관, 카드형) ----------
+  const memoList = document.getElementById("memoList");
   const memoInput = document.getElementById("memoInput");
-  memoInput.value = data.memos[todayKey] || "";
-  memoInput.addEventListener("input", ()=>{
-    data.memos[todayKey] = memoInput.value;
+
+  function renderMemos(){
+    memoList.innerHTML = "";
+    if(data.memoCards.length === 0){
+      const empty = document.createElement("div");
+      empty.className = "memo-empty";
+      empty.textContent = "메모를 추가해보세요.";
+      memoList.appendChild(empty);
+      return;
+    }
+    data.memoCards.forEach((txt, idx)=>{
+      const card = document.createElement("div");
+      card.className = "memo-card";
+
+      const span = document.createElement("div");
+      span.className = "txt";
+      span.textContent = txt;
+
+      const del = document.createElement("button");
+      del.className = "del";
+      del.textContent = "✕";
+      del.title = "삭제";
+      del.addEventListener("click", ()=>{
+        data.memoCards.splice(idx, 1);
+        saveData();
+        renderMemos();
+      });
+
+      card.appendChild(span);
+      card.appendChild(del);
+      memoList.appendChild(card);
+    });
+  }
+
+  function addMemo(){
+    const val = memoInput.value.trim();
+    if(!val) return;
+    data.memoCards.push(val);
+    memoInput.value = "";
     saveData();
-  });
+    renderMemos();
+  }
+  document.getElementById("addMemoBtn").addEventListener("click", addMemo);
+  memoInput.addEventListener("keydown", e=>{ if(e.key==="Enter") addMemo(); });
+
+  renderMemos();
 
   // ---------- 렌더 오케스트레이션 ----------
   function renderAll(){
