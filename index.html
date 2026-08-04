@@ -84,6 +84,24 @@
     white-space:nowrap;
   }
 
+  /* Quick Memo */
+  .memo-textarea{
+    width:100%;
+    min-height:80px;
+    resize:vertical;
+    padding:12px 14px;
+    border:1px solid var(--border);
+    border-radius:10px;
+    font-family:inherit;
+    font-size:13.5px;
+    line-height:1.5;
+    color:var(--text);
+    background:#fdf7f9;
+    outline:none;
+  }
+  .memo-textarea:focus{ border-color:var(--accent); background:#fff; }
+  .memo-textarea::placeholder{ color:var(--text-soft); }
+
   /* Category tag & select */
   .cat-tag{
     display:inline-block;
@@ -574,6 +592,14 @@
 
 <div class="dashboard-stack">
 
+  <!-- 0. 오늘의 메모 (Quick Memo) -->
+  <div class="card">
+    <div class="card-header">
+      <h2><span class="dot"></span>오늘의 메모 (Quick Memo)</h2>
+    </div>
+    <textarea id="memoInput" class="memo-textarea" placeholder="자유롭게 메모를 적어보세요. 자동으로 저장됩니다."></textarea>
+  </div>
+
   <!-- 1. 일일 업무 (Today's To-Do) -->
   <div class="card">
     <div class="card-header">
@@ -722,6 +748,7 @@
       delete parsed.events;
       delete parsed.weekTasks;
     }
+    if(!parsed.memos) parsed.memos = {};
 
     return parsed;
   }
@@ -777,6 +804,14 @@
 
   const todoCategorySelect = document.getElementById("todoCategorySelect");
   fillCategorySelect(todoCategorySelect, CATEGORIES[0]);
+
+  // ---------- Quick Memo ----------
+  const memoInput = document.getElementById("memoInput");
+  memoInput.value = data.memos[todayKey] || "";
+  memoInput.addEventListener("input", ()=>{
+    data.memos[todayKey] = memoInput.value;
+    saveData();
+  });
 
   // ---------- 렌더 오케스트레이션 ----------
   function renderAll(){
@@ -1069,16 +1104,16 @@
         cb.disabled = true;
         row.appendChild(cb);
 
+        const editCategorySelect = document.createElement("select");
+        editCategorySelect.className = "cat-select";
+        fillCategorySelect(editCategorySelect, todo.category);
+        row.appendChild(editCategorySelect);
+
         const editInput = document.createElement("input");
         editInput.type = "text";
         editInput.className = "edit-input";
         editInput.value = todo.text;
         row.appendChild(editInput);
-
-        const editCategorySelect = document.createElement("select");
-        editCategorySelect.className = "cat-select";
-        fillCategorySelect(editCategorySelect, todo.category);
-        row.appendChild(editCategorySelect);
 
         const saveBtn = document.createElement("button");
         saveBtn.className = "save";
