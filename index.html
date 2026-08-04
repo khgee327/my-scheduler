@@ -3,20 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>스케줄러 대시보드</title>
+<title>스케줄러</title>
 <style>
   :root{
-    --bg:#f4f6fb;
+    --bg:#fdf6f8;
     --card:#ffffff;
-    --border:#e7eaf3;
-    --text:#1f2433;
-    --text-soft:#6b7280;
-    --accent:#6366f1;
-    --accent-soft:#eef0fe;
-    --accent-2:#22c55e;
+    --border:#f5dbe4;
+    --text:#2b2430;
+    --text-soft:#8a7480;
+    --accent:#f472b6;
+    --accent-dark:#db2777;
+    --accent-soft:#fdf2f8;
+    --accent-2:#fb7185;
     --danger:#ef4444;
     --danger-soft:#fee2e2;
-    --shadow:0 4px 16px rgba(31,36,51,0.06);
+    --shadow:0 4px 16px rgba(219,119,150,0.08);
     --radius:16px;
   }
   *{box-sizing:border-box;}
@@ -76,12 +77,34 @@
   .today-date-badge{
     font-size:12px;
     font-weight:700;
-    color:var(--accent);
+    color:var(--accent-dark);
     background:var(--accent-soft);
     padding:5px 12px;
     border-radius:999px;
     white-space:nowrap;
   }
+
+  /* Category tag & select */
+  .cat-tag{
+    display:inline-block;
+    font-size:10px;
+    font-weight:700;
+    padding:2px 8px;
+    border-radius:999px;
+    white-space:nowrap;
+    flex-shrink:0;
+  }
+  select.cat-select{
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:8px 10px;
+    font-size:12.5px;
+    background:#fff;
+    color:var(--text);
+    outline:none;
+    cursor:pointer;
+  }
+  select.cat-select:focus{ border-color:var(--accent); }
 
   /* Calendar */
   .cal-nav{
@@ -92,14 +115,14 @@
   .cal-nav button{
     border:none;
     background:var(--accent-soft);
-    color:var(--accent);
+    color:var(--accent-dark);
     width:28px;height:28px;
     border-radius:8px;
     cursor:pointer;
     font-size:14px;
     font-weight:700;
   }
-  .cal-nav button:hover{ background:#e0e2fc; }
+  .cal-nav button:hover{ background:#fbcfe8; }
   .cal-title{
     font-weight:700;
     font-size:15px;
@@ -123,7 +146,7 @@
     min-height:92px;
     border-radius:10px;
     padding:6px 6px;
-    background:#fafbfe;
+    background:#fdf7f9;
     border:1px solid transparent;
     transition:background .15s, border-color .15s;
   }
@@ -169,7 +192,7 @@
     padding:0;
   }
   .cal-day:hover .day-add-btn{ display:flex; }
-  .cal-day.today .day-add-btn{ background:#fff; color:var(--accent); }
+  .cal-day.today .day-add-btn{ background:#fff; color:var(--accent-dark); }
   .day-badges{
     margin-top:4px;
     display:flex;
@@ -181,10 +204,8 @@
     align-items:center;
     justify-content:space-between;
     gap:2px;
-    background:var(--accent-soft);
-    color:var(--accent);
     font-size:9.5px;
-    font-weight:600;
+    font-weight:700;
     padding:2px 5px;
     border-radius:5px;
     overflow:hidden;
@@ -217,17 +238,12 @@
     font-weight:700;
     padding-left:2px;
   }
-  .cal-day.today .day-badge{
-    background:rgba(255,255,255,0.25);
-    color:#fff;
-  }
-  .cal-day.today .day-badge-more{ color:rgba(255,255,255,0.85); }
 
   /* Add-task modal */
   .modal-overlay{
     position:fixed;
     inset:0;
-    background:rgba(15,17,26,0.45);
+    background:rgba(43,36,48,0.45);
     display:none;
     align-items:center;
     justify-content:center;
@@ -257,6 +273,12 @@
     outline:none;
   }
   .modal-box input[type=text]:focus{ border-color:var(--accent); }
+  .modal-box select.cat-select{
+    width:100%;
+    margin-top:10px;
+    padding:10px 12px;
+    font-size:14px;
+  }
   .modal-actions{
     display:flex;
     justify-content:flex-end;
@@ -275,12 +297,12 @@
     background:var(--bg);
     color:var(--text-soft);
   }
-  .modal-actions .cancel-btn:hover{ background:#e9ebf3; }
+  .modal-actions .cancel-btn:hover{ background:#f5e3ea; }
   .modal-actions .confirm-btn{
     background:var(--accent);
     color:#fff;
   }
-  .modal-actions .confirm-btn:hover{ background:#4f46e5; }
+  .modal-actions .confirm-btn:hover{ background:var(--accent-dark); }
 
   /* Weekly tasks (Mon-Fri columns) */
   .week-range{
@@ -294,7 +316,7 @@
     gap:14px;
   }
   .week-col{
-    background:#fafbfe;
+    background:#fdf7f9;
     border:1px solid var(--border);
     border-radius:12px;
     padding:12px;
@@ -307,28 +329,44 @@
     background:var(--accent-soft);
   }
   .week-col-header{
+    position:relative;
     display:flex;
-    align-items:baseline;
+    align-items:center;
     justify-content:space-between;
     margin-bottom:10px;
     padding-bottom:8px;
+    padding-right:22px;
     border-bottom:1px dashed var(--border);
   }
-  .week-col-header .day-name{
+  .week-col-header .day-label{
     font-size:13px;
     font-weight:700;
   }
-  .week-col-header .day-date{
-    font-size:11px;
-    color:var(--text-soft);
-    font-weight:600;
+  .week-add-btn{
+    position:absolute;
+    top:50%;
+    right:0;
+    transform:translateY(-50%);
+    width:20px;
+    height:20px;
+    border-radius:50%;
+    border:none;
+    background:var(--accent);
+    color:#fff;
+    font-size:13px;
+    line-height:1;
+    cursor:pointer;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:0;
   }
+  .week-col-header:hover .week-add-btn{ display:flex; }
   .week-col-tasks{
     display:flex;
     flex-direction:column;
     gap:6px;
     flex:1;
-    margin-bottom:10px;
   }
   .week-task-item{
     display:flex;
@@ -372,15 +410,6 @@
     text-align:center;
     padding:10px 0;
   }
-  .week-col-add input{
-    width:100%;
-    font-size:12px;
-    padding:7px 8px;
-    border:1px solid var(--border);
-    border-radius:8px;
-    outline:none;
-  }
-  .week-col-add input:focus{ border-color:var(--accent); }
 
   .progress-wrap{
     margin-top:16px;
@@ -393,7 +422,7 @@
   }
   .progress-bar > div{
     height:100%;
-    background:linear-gradient(90deg,var(--accent),#8b5cf6);
+    background:linear-gradient(90deg,var(--accent),var(--accent-2));
     border-radius:999px;
     transition:width .3s ease;
   }
@@ -411,7 +440,7 @@
     gap:8px;
     margin-bottom:14px;
   }
-  .add-row.simple input{
+  .add-row.simple input[type=text]{
     flex:1;
     padding:9px 10px;
     border:1px solid var(--border);
@@ -419,7 +448,11 @@
     font-size:13px;
     outline:none;
   }
-  .add-row.simple input:focus{ border-color:var(--accent); }
+  .add-row.simple input[type=text]:focus{ border-color:var(--accent); }
+  .add-row.simple select.cat-select{
+    width:112px;
+    flex-shrink:0;
+  }
   .add-row.simple button{
     background:var(--accent);
     color:#fff;
@@ -430,7 +463,7 @@
     font-size:13px;
     cursor:pointer;
   }
-  .add-row.simple button:hover{ background:#4f46e5; }
+  .add-row.simple button:hover{ background:var(--accent-dark); }
 
   /* Todo */
   .todo-item{
@@ -438,14 +471,14 @@
     align-items:center;
     gap:8px;
     padding:10px 12px;
-    background:#fafbfe;
+    background:#fdf7f9;
     border:1px solid var(--border);
     border-radius:10px;
     margin-bottom:8px;
   }
   .todo-item input[type=checkbox]{
     width:18px;height:18px;
-    accent-color:var(--accent-2);
+    accent-color:var(--accent);
     cursor:pointer;
     flex-shrink:0;
   }
@@ -454,7 +487,7 @@
     font-size:14px;
   }
   .todo-item.done{
-    background:#f6f7fb;
+    background:#f7eef1;
   }
   .todo-item.done .label{
     text-decoration:line-through;
@@ -473,7 +506,7 @@
   }
   .todo-item:hover button.edit,
   .todo-item:hover button.del{ opacity:1; }
-  .todo-item button.edit:hover{ color:var(--accent); }
+  .todo-item button.edit:hover{ color:var(--accent-dark); }
   .todo-item button.del:hover{ color:var(--danger); }
   .todo-item.editing{
     background:#fff;
@@ -487,6 +520,12 @@
     border-radius:6px;
     outline:none;
   }
+  .todo-item select.cat-select{
+    width:92px;
+    flex-shrink:0;
+    padding:6px 8px;
+    font-size:12px;
+  }
   .todo-item button.save{
     border:none;
     background:var(--accent-2);
@@ -498,7 +537,7 @@
     flex-shrink:0;
     opacity:1;
   }
-  .todo-item button.save:hover{ background:#16a34a; }
+  .todo-item button.save:hover{ background:var(--accent-dark); }
   .todo-empty{
     text-align:center;
     color:var(--text-soft);
@@ -529,7 +568,7 @@
 <body>
 
 <header>
-  <h1>📋 스케줄러 대시보드</h1>
+  <h1>📋 스케줄러</h1>
   <p id="todayLabel"></p>
 </header>
 
@@ -542,6 +581,7 @@
       <span class="today-date-badge" id="todoDateBadge"></span>
     </div>
     <div class="add-row simple">
+      <select class="cat-select" id="todoCategorySelect"></select>
       <input type="text" id="todoInput" placeholder="할 일을 입력하고 Enter">
       <button id="addTodoBtn">추가</button>
     </div>
@@ -585,6 +625,7 @@
   <div class="modal-box">
     <h3 id="modalDateLabel"></h3>
     <input type="text" id="modalTaskInput" placeholder="일정을 입력하세요">
+    <select class="cat-select" id="modalCategorySelect"></select>
     <div class="modal-actions">
       <button class="cancel-btn" id="modalCancelBtn">취소</button>
       <button class="confirm-btn" id="modalAddBtn">추가</button>
@@ -599,12 +640,25 @@
   const STORAGE_KEY = "scheduler_dashboard_data_v1";
   const DOW = ["일","월","화","수","목","금","토"];
   const WEEKDAYS = [
-    { key:"mon", name:"월요일", offset:1 },
-    { key:"tue", name:"화요일", offset:2 },
-    { key:"wed", name:"수요일", offset:3 },
-    { key:"thu", name:"목요일", offset:4 },
-    { key:"fri", name:"금요일", offset:5 }
+    { key:"mon", offset:1 },
+    { key:"tue", offset:2 },
+    { key:"wed", offset:3 },
+    { key:"thu", offset:4 },
+    { key:"fri", offset:5 }
   ];
+  const CATEGORIES = ["SNS","디자인","서류","품의","지결","인플루언서","크리에이터","체험단","이벤트","기타"];
+  const CATEGORY_COLORS = {
+    "SNS":       { bg:"#e0f2fe", fg:"#0284c7" },
+    "디자인":     { bg:"#f3e8ff", fg:"#9333ea" },
+    "서류":       { bg:"#f1f5f9", fg:"#475569" },
+    "품의":       { bg:"#fef3c7", fg:"#b45309" },
+    "지결":       { bg:"#ccfbf1", fg:"#0f766e" },
+    "인플루언서":  { bg:"#ffe4e6", fg:"#e11d48" },
+    "크리에이터":  { bg:"#e0e7ff", fg:"#4338ca" },
+    "체험단":     { bg:"#ecfccb", fg:"#4d7c0f" },
+    "이벤트":     { bg:"#ffedd5", fg:"#c2410c" },
+    "기타":       { bg:"#e5e7eb", fg:"#4b5563" }
+  };
 
   function fmtDate(d){
     const y = d.getFullYear();
@@ -688,9 +742,31 @@
   function getTasks(dateKey){
     return data.tasks[dateKey] || [];
   }
-  function addTask(dateKey, text){
+  function addTask(dateKey, text, category){
     if(!data.tasks[dateKey]) data.tasks[dateKey] = [];
-    data.tasks[dateKey].push({ text: text, done:false });
+    data.tasks[dateKey].push({ text: text, done:false, category: category || CATEGORIES[0] });
+  }
+  function categoryColor(category){
+    return CATEGORY_COLORS[category] || CATEGORY_COLORS["기타"];
+  }
+  function fillCategorySelect(selectEl, selected){
+    selectEl.innerHTML = "";
+    CATEGORIES.forEach(c=>{
+      const opt = document.createElement("option");
+      opt.value = c;
+      opt.textContent = c;
+      selectEl.appendChild(opt);
+    });
+    selectEl.value = selected || CATEGORIES[0];
+  }
+  function makeCategoryTag(category){
+    const tag = document.createElement("span");
+    tag.className = "cat-tag";
+    tag.textContent = category || "기타";
+    const c = categoryColor(category);
+    tag.style.background = c.bg;
+    tag.style.color = c.fg;
+    return tag;
   }
 
   // ---------- Header ----------
@@ -698,6 +774,9 @@
     `오늘은 ${today.getFullYear()}년 ${today.getMonth()+1}월 ${today.getDate()}일 (${DOW[today.getDay()]}요일) 입니다.`;
   document.getElementById("todoDateBadge").textContent =
     `${today.getFullYear()}년 ${today.getMonth()+1}월 ${today.getDate()}일 ${DOW[today.getDay()]}요일`;
+
+  const todoCategorySelect = document.getElementById("todoCategorySelect");
+  fillCategorySelect(todoCategorySelect, CATEGORIES[0]);
 
   // ---------- 렌더 오케스트레이션 ----------
   function renderAll(){
@@ -734,9 +813,10 @@
     for(let day=1; day<=daysInMonth; day++){
       const dateObj = new Date(calYear, calMonth, day);
       const key = fmtDate(dateObj);
+      const isToday = key === todayKey;
       const el = document.createElement("div");
       el.className = "cal-day";
-      if(key === todayKey) el.classList.add("today");
+      if(isToday) el.classList.add("today");
 
       const num = document.createElement("div");
       num.className = "num";
@@ -759,6 +839,9 @@
         visible.forEach((t, idx)=>{
           const badge = document.createElement("div");
           badge.className = "day-badge" + (t.done ? " done" : "");
+          const c = isToday ? { bg:"rgba(255,255,255,0.28)", fg:"#fff" } : categoryColor(t.category);
+          badge.style.background = c.bg;
+          badge.style.color = c.fg;
 
           const txt = document.createElement("span");
           txt.className = "txt";
@@ -802,16 +885,18 @@
     renderCalendar();
   });
 
-  // ---------- 날짜별 일정 추가 모달 ----------
+  // ---------- 날짜별 일정 추가 모달 (달력 + 주간 업무 공용) ----------
   const modalOverlay = document.getElementById("addTaskModal");
   const modalDateLabel = document.getElementById("modalDateLabel");
   const modalTaskInput = document.getElementById("modalTaskInput");
+  const modalCategorySelect = document.getElementById("modalCategorySelect");
   let modalDateKey = null;
 
   function openModal(dateKey, dateObj){
     modalDateKey = dateKey;
-    modalDateLabel.textContent = `${dateObj.getFullYear()}년 ${dateObj.getMonth()+1}월 ${dateObj.getDate()}일 (${DOW[dateObj.getDay()]}) 일정 추가`;
+    modalDateLabel.textContent = `${dateObj.getFullYear()}년 ${dateObj.getMonth()+1}월 ${dateObj.getDate()}일 (${DOW[dateObj.getDay()]}) 업무 추가`;
     modalTaskInput.value = "";
+    fillCategorySelect(modalCategorySelect, CATEGORIES[0]);
     modalOverlay.classList.add("open");
     modalTaskInput.focus();
   }
@@ -822,7 +907,7 @@
   function submitModal(){
     const val = modalTaskInput.value.trim();
     if(!val || !modalDateKey) return;
-    addTask(modalDateKey, val);
+    addTask(modalDateKey, val, modalCategorySelect.value);
     saveData();
     closeModal();
     renderAll();
@@ -869,14 +954,19 @@
 
       const header = document.createElement("div");
       header.className = "week-col-header";
-      const dayName = document.createElement("span");
-      dayName.className = "day-name";
-      dayName.textContent = wd.name;
-      const dayDate = document.createElement("span");
-      dayDate.className = "day-date";
-      dayDate.textContent = `${colDate.getMonth()+1}.${colDate.getDate()}`;
-      header.appendChild(dayName);
-      header.appendChild(dayDate);
+      const dayLabel = document.createElement("span");
+      dayLabel.className = "day-label";
+      dayLabel.textContent = `${DOW[colDate.getDay()]}(${colDate.getMonth()+1}.${colDate.getDate()})`;
+      header.appendChild(dayLabel);
+
+      const addBtn = document.createElement("button");
+      addBtn.className = "week-add-btn";
+      addBtn.type = "button";
+      addBtn.textContent = "+";
+      addBtn.title = "업무 추가";
+      addBtn.addEventListener("click", ()=> openModal(colKey, colDate));
+      header.appendChild(addBtn);
+
       col.appendChild(header);
 
       const tasksWrap = document.createElement("div");
@@ -905,6 +995,8 @@
           renderAll();
         });
 
+        const tag = makeCategoryTag(task.category);
+
         const label = document.createElement("div");
         label.className = "label";
         label.textContent = task.text;
@@ -919,30 +1011,13 @@
         });
 
         row.appendChild(cb);
+        row.appendChild(tag);
         row.appendChild(label);
         row.appendChild(del);
         tasksWrap.appendChild(row);
       });
 
       col.appendChild(tasksWrap);
-
-      const addWrap = document.createElement("div");
-      addWrap.className = "week-col-add";
-      const input = document.createElement("input");
-      input.type = "text";
-      input.placeholder = "+ 업무 추가";
-      input.addEventListener("keydown", e=>{
-        if(e.key === "Enter"){
-          const val = input.value.trim();
-          if(!val) return;
-          addTask(colKey, val);
-          saveData();
-          renderAll();
-        }
-      });
-      addWrap.appendChild(input);
-      col.appendChild(addWrap);
-
       weekColsGrid.appendChild(col);
     });
 
@@ -957,11 +1032,12 @@
   const todoStats = document.getElementById("todoStats");
   let dailyEditingIndex = null;
 
-  function saveEdit(idx, newVal){
+  function saveEdit(idx, newVal, newCategory){
     const val = newVal.trim();
     if(!val) return;
     const tasks = getTasks(todayKey);
     tasks[idx].text = val;
+    tasks[idx].category = newCategory || CATEGORIES[0];
     dailyEditingIndex = null;
     saveData();
     renderAll();
@@ -999,11 +1075,16 @@
         editInput.value = todo.text;
         row.appendChild(editInput);
 
+        const editCategorySelect = document.createElement("select");
+        editCategorySelect.className = "cat-select";
+        fillCategorySelect(editCategorySelect, todo.category);
+        row.appendChild(editCategorySelect);
+
         const saveBtn = document.createElement("button");
         saveBtn.className = "save";
         saveBtn.textContent = "✓";
         saveBtn.title = "저장";
-        saveBtn.addEventListener("click", ()=> saveEdit(idx, editInput.value));
+        saveBtn.addEventListener("click", ()=> saveEdit(idx, editInput.value, editCategorySelect.value));
         row.appendChild(saveBtn);
 
         const cancelBtn = document.createElement("button");
@@ -1020,7 +1101,7 @@
         todoList.appendChild(row);
 
         editInput.addEventListener("keydown", e=>{
-          if(e.key === "Enter") saveEdit(idx, editInput.value);
+          if(e.key === "Enter") saveEdit(idx, editInput.value, editCategorySelect.value);
           if(e.key === "Escape"){ dailyEditingIndex = null; renderDaily(); }
         });
         editInput.focus();
@@ -1036,6 +1117,8 @@
         saveData();
         renderAll();
       });
+
+      const tag = makeCategoryTag(todo.category);
 
       const label = document.createElement("div");
       label.className = "label";
@@ -1062,6 +1145,7 @@
       });
 
       row.appendChild(cb);
+      row.appendChild(tag);
       row.appendChild(label);
       row.appendChild(editBtn);
       row.appendChild(del);
@@ -1076,7 +1160,7 @@
   function addTodo(){
     const val = todoInput.value.trim();
     if(!val) return;
-    addTask(todayKey, val);
+    addTask(todayKey, val, todoCategorySelect.value);
     todoInput.value = "";
     saveData();
     renderAll();
