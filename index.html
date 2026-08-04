@@ -430,6 +430,7 @@
     text-decoration:line-through;
     color:var(--text-soft);
   }
+  .week-task-item button.edit,
   .week-task-item button.del{
     border:none;
     background:transparent;
@@ -439,7 +440,43 @@
     padding:0 2px;
     flex-shrink:0;
   }
+  .week-task-item button.edit:hover{ color:var(--accent-dark); }
   .week-task-item button.del:hover{ color:var(--danger); }
+  .week-task-item.editing{
+    flex-direction:column;
+    align-items:stretch;
+    gap:6px;
+    border-color:var(--accent);
+  }
+  .week-task-item select.cat-select{
+    width:100%;
+    font-size:11.5px;
+    padding:6px 8px;
+  }
+  .week-task-item .edit-input{
+    width:100%;
+    font-size:12px;
+    padding:6px 8px;
+    border:1px solid var(--accent);
+    border-radius:6px;
+    outline:none;
+  }
+  .week-task-item .edit-actions{
+    display:flex;
+    justify-content:flex-end;
+    gap:6px;
+  }
+  .week-task-item button.save{
+    border:none;
+    background:var(--accent-2);
+    color:#fff;
+    border-radius:6px;
+    width:24px;height:24px;
+    cursor:pointer;
+    font-size:12px;
+    flex-shrink:0;
+  }
+  .week-task-item button.save:hover{ background:var(--accent-dark); }
   .week-col-empty{
     color:var(--text-soft);
     font-size:11.5px;
@@ -779,6 +816,7 @@
       }
       delete parsed.memos;
     }
+    if(!parsed.customCategories) parsed.customCategories = [];
 
     return parsed;
   }
@@ -803,18 +841,50 @@
     if(!data.tasks[dateKey]) data.tasks[dateKey] = [];
     data.tasks[dateKey].push({ text: text, done:false, category: category || CATEGORIES[0] });
   }
+  function allCategories(){
+    return CATEGORIES.concat(data.customCategories);
+  }
   function categoryColor(category){
-    return CATEGORY_COLORS[category] || CATEGORY_COLORS["기타"];
+    if(CATEGORY_COLORS[category]) return CATEGORY_COLORS[category];
+    let hash = 0;
+    for(let i=0;i<category.length;i++){ hash = category.charCodeAt(i) + ((hash<<5)-hash); }
+    const hue = Math.abs(hash) % 360;
+    return { bg:`hsl(${hue},70%,92%)`, fg:`hsl(${hue},55%,38%)` };
   }
   function fillCategorySelect(selectEl, selected){
     selectEl.innerHTML = "";
-    CATEGORIES.forEach(c=>{
+    allCategories().forEach(c=>{
       const opt = document.createElement("option");
       opt.value = c;
       opt.textContent = c;
       selectEl.appendChild(opt);
     });
+    const addOpt = document.createElement("option");
+    addOpt.value = "__ADD_NEW__";
+    addOpt.textContent = "+ 카테고리 추가";
+    selectEl.appendChild(addOpt);
+
     selectEl.value = selected || CATEGORIES[0];
+    selectEl.dataset.prevValue = selectEl.value;
+  }
+  function attachAddCategoryHandler(selectEl){
+    selectEl.addEventListener("change", ()=>{
+      if(selectEl.value === "__ADD_NEW__"){
+        const name = prompt("추가할 카테고리 이름을 입력하세요.");
+        const trimmed = (name || "").trim();
+        if(trimmed){
+          if(!allCategories().includes(trimmed)){
+            data.customCategories.push(trimmed);
+            saveData();
+          }
+          fillCategorySelect(selectEl, trimmed);
+        }else{
+          fillCategorySelect(selectEl, selectEl.dataset.prevValue || CATEGORIES[0]);
+        }
+      }else{
+        selectEl.dataset.prevValue = selectEl.value;
+      }
+    });
   }
   function makeCategoryTag(category){
     const tag = document.createElement("span");
@@ -834,6 +904,7 @@
 
   const todoCategorySelect = document.getElementById("todoCategorySelect");
   fillCategorySelect(todoCategorySelect, CATEGORIES[0]);
+  attachAddCategoryHandler(todoCategorySelect);
 
   // ---------- Quick Memo (날짜 무관 영구 보관, 카드형) ----------
   const memoList = document.getElementById("memoList");
@@ -997,6 +1068,7 @@
   const modalDateLabel = document.getElementById("modalDateLabel");
   const modalTaskInput = document.getElementById("modalTaskInput");
   const modalCategorySelect = document.getElementById("modalCategorySelect");
+  attachAddCategoryHandler(modalCategorySelect);
   let modalDateKey = null;
 
   function openModal(dateKey, dateObj){
@@ -1031,6 +1103,7 @@
 
   // ---------- Weekly tasks (Mon-Fri columns) ----------
   const weekKey = getWeekKey(today);
+  let weekEditing = null; // { colKey, idx } | null
   const weekColsGrid = document.getElementById("weekColsGrid");
   const weekProgressBar = document.getElementById("weekProgressBar");
   const weekProgressText = document.getElementById("weekProgressText");
@@ -1042,6 +1115,17 @@
     end.setDate(end.getDate()+6);
     const fmt = d => `${d.getMonth()+1}.${d.getDate()}`;
     weekRangeLabel.textContent = `${fmt(start)} - ${fmt(end)}`;
+  }
+
+  function saveWeekEdit(colKey, idx, newVal, newCategory){
+    const val = newVal.trim();
+    if(!val) return;
+    const tasks = getTasks(colKey);
+    tasks[idx].text = val;
+    tasks[idx].category = newCategory || CATEGORIES[0];
+    weekEditing = null;
+    saveData();
+    renderAll();
   }
 
   function renderWeekTasks(){
@@ -1090,8 +1174,58 @@
         totalAll++;
         if(task.done) doneAll++;
 
+        const isEditing = weekEditing && weekEditing.colKey === colKey && weekEditing.idx === idx;
         const row = document.createElement("div");
-        row.className = "week-task-item" + (task.done ? " done" : "");
+        row.className = "week-task-item" + (task.done ? " done" : "") + (isEditing ? " editing" : "");
+
+        if(isEditing){
+          const catSel = document.createElement("select");
+          catSel.className = "cat-select";
+          fillCategorySelect(catSel, task.category);
+          attachAddCategoryHandler(catSel);
+          row.appendChild(catSel);
+
+          const textInput = document.createElement("input");
+          textInput.type = "text";
+          textInput.className = "edit-input";
+          textInput.value = task.text;
+          row.appendChild(textInput);
+
+          const actions = document.createElement("div");
+          actions.className = "edit-actions";
+
+          const saveBtn = document.createElement("button");
+          saveBtn.className = "save";
+          saveBtn.textContent = "✓";
+          saveBtn.title = "저장";
+          saveBtn.addEventListener("click", ()=> saveWeekEdit(colKey, idx, textInput.value, catSel.value));
+          actions.appendChild(saveBtn);
+
+          const delBtn = document.createElement("button");
+          delBtn.className = "del";
+          delBtn.style.opacity = "1";
+          delBtn.textContent = "✕";
+          delBtn.title = "삭제";
+          delBtn.addEventListener("click", ()=>{
+            const t = getTasks(colKey);
+            t.splice(idx, 1);
+            weekEditing = null;
+            saveData();
+            renderAll();
+          });
+          actions.appendChild(delBtn);
+
+          row.appendChild(actions);
+          tasksWrap.appendChild(row);
+
+          textInput.addEventListener("keydown", e=>{
+            if(e.key === "Enter") saveWeekEdit(colKey, idx, textInput.value, catSel.value);
+            if(e.key === "Escape"){ weekEditing = null; renderWeekTasks(); }
+          });
+          textInput.focus();
+          textInput.select();
+          return;
+        }
 
         const cb = document.createElement("input");
         cb.type = "checkbox";
@@ -1108,19 +1242,19 @@
         label.className = "label";
         label.textContent = task.text;
 
-        const del = document.createElement("button");
-        del.className = "del";
-        del.textContent = "✕";
-        del.addEventListener("click", ()=>{
-          tasks.splice(idx,1);
-          saveData();
-          renderAll();
+        const editBtn = document.createElement("button");
+        editBtn.className = "edit";
+        editBtn.textContent = "✎";
+        editBtn.title = "수정";
+        editBtn.addEventListener("click", ()=>{
+          weekEditing = { colKey, idx };
+          renderWeekTasks();
         });
 
         row.appendChild(cb);
         row.appendChild(tag);
         row.appendChild(label);
-        row.appendChild(del);
+        row.appendChild(editBtn);
         tasksWrap.appendChild(row);
       });
 
@@ -1179,6 +1313,7 @@
         const editCategorySelect = document.createElement("select");
         editCategorySelect.className = "cat-select";
         fillCategorySelect(editCategorySelect, todo.category);
+        attachAddCategoryHandler(editCategorySelect);
         row.appendChild(editCategorySelect);
 
         const editInput = document.createElement("input");
