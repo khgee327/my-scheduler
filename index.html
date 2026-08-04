@@ -167,6 +167,22 @@
     font-size:12px;
     flex-shrink:0;
   }
+  input.link-input{
+    padding:9px 10px;
+    border:1px solid var(--border);
+    border-radius:8px;
+    font-size:12.5px;
+    font-family:inherit;
+    color:var(--text);
+    outline:none;
+  }
+  input.link-input:focus{ border-color:var(--accent); }
+  a.link-icon{
+    flex-shrink:0;
+    text-decoration:none;
+    line-height:1;
+    cursor:pointer;
+  }
 
   /* Calendar */
   .cal-nav{
@@ -420,6 +436,12 @@
     color:#fff;
   }
   .modal-actions .confirm-btn:hover{ background:var(--accent-dark); }
+  .modal-actions .delete-btn{
+    margin-right:auto;
+    background:var(--danger-soft);
+    color:var(--danger);
+  }
+  .modal-actions .delete-btn:hover{ background:#fecaca; }
 
   /* Weekly tasks (Mon-Fri columns) */
   .week-range{
@@ -432,6 +454,53 @@
     grid-template-columns:repeat(5,1fr);
     gap:14px;
   }
+  .week-timeline{
+    display:none;
+    grid-template-columns:repeat(5,1fr);
+    gap:14px;
+    margin-bottom:14px;
+  }
+  .week-timeline-bar{
+    position:relative;
+    display:flex;
+    align-items:center;
+    gap:5px;
+    height:26px;
+    padding:0 8px;
+    font-size:11.5px;
+    font-weight:700;
+    overflow:hidden;
+  }
+  .week-timeline-bar.cap-start{ border-top-left-radius:8px; border-bottom-left-radius:8px; }
+  .week-timeline-bar.cap-end{ border-top-right-radius:8px; border-bottom-right-radius:8px; }
+  .week-timeline-bar input[type=checkbox]{
+    flex-shrink:0;
+    width:14px;height:14px;
+    cursor:pointer;
+  }
+  .week-timeline-bar .txt{
+    flex:1;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .week-timeline-bar.done .txt{ text-decoration:line-through; opacity:.7; }
+  .week-timeline-bar a.link-icon{ font-size:10px; }
+  .week-timeline-bar .tl-edit{
+    flex-shrink:0;
+    border:none;
+    background:rgba(255,255,255,0.55);
+    color:inherit;
+    border-radius:4px;
+    width:18px;height:18px;
+    font-size:10px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:0;
+  }
+  .week-timeline-bar .tl-edit:hover{ background:rgba(255,255,255,0.9); }
   .week-col{
     background:#fdf7f9;
     border:1px solid var(--border);
@@ -613,6 +682,10 @@
     width:112px;
     flex-shrink:0;
   }
+  .add-row.simple input.link-input{
+    flex:1;
+    min-width:140px;
+  }
   .add-row.simple .date-range-row{
     flex-basis:auto;
     width:auto;
@@ -769,6 +842,7 @@
     <div class="add-row simple">
       <select class="cat-select" id="todoCategorySelect"></select>
       <input type="text" id="todoInput" placeholder="할 일을 입력하고 Enter">
+      <input type="url" class="link-input" id="todoLinkInput" placeholder="링크 URL (선택)">
       <div class="date-range-row">
         <input type="date" class="date-input" id="todoStartDate">
         <span class="sep">~</span>
@@ -786,6 +860,7 @@
       <h2><span class="dot"></span>주간 업무 (Weekly Tasks)</h2>
       <span class="week-range" id="weekRange"></span>
     </div>
+    <div class="week-timeline" id="weekTimeline"></div>
     <div class="week-cols-grid" id="weekColsGrid"></div>
     <div class="progress-wrap">
       <div class="progress-bar"><div id="weekProgressBar" style="width:0%"></div></div>
@@ -817,12 +892,14 @@
     <h3 id="modalDateLabel"></h3>
     <input type="text" id="modalTaskInput" placeholder="일정을 입력하세요">
     <select class="cat-select" id="modalCategorySelect"></select>
+    <input type="url" class="link-input" id="modalLinkInput" placeholder="링크 URL (선택)" style="width:100%;margin-top:10px;">
     <div class="date-range-row">
       <input type="date" class="date-input" id="modalStartDate">
       <span class="sep">~</span>
       <input type="date" class="date-input" id="modalEndDate">
     </div>
     <div class="modal-actions">
+      <button class="delete-btn" id="modalDeleteBtn" style="display:none;">삭제</button>
       <button class="cancel-btn" id="modalCancelBtn">취소</button>
       <button class="confirm-btn" id="modalAddBtn">추가</button>
     </div>
@@ -986,7 +1063,13 @@
     if(e < s) e = s;
     return { start:s, end:e };
   }
-  function addTask(text, category, startDate, endDate){
+  function normalizeLink(url){
+    const v = (url || "").trim();
+    if(!v) return "";
+    if(/^https?:\/\//i.test(v)) return v;
+    return "https://" + v;
+  }
+  function addTask(text, category, startDate, endDate, link){
     const r = clampRange(startDate, endDate);
     data.taskList.push({
       id: genId(),
@@ -994,7 +1077,8 @@
       done:false,
       category: category || CATEGORIES[0],
       startDate: r.start,
-      endDate: r.end
+      endDate: r.end,
+      link: normalizeLink(link)
     });
   }
   function allCategories(){
@@ -1051,6 +1135,17 @@
     tag.style.color = c.fg;
     return tag;
   }
+  function makeLinkIcon(url){
+    const a = document.createElement("a");
+    a.className = "link-icon";
+    a.href = url;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.textContent = "🔗";
+    a.title = url;
+    a.addEventListener("click", e=> e.stopPropagation());
+    return a;
+  }
   function makeDateRangeRow(startVal, endVal){
     const wrap = document.createElement("div");
     wrap.className = "date-range-row";
@@ -1087,6 +1182,7 @@
 
   const todoStartDate = document.getElementById("todoStartDate");
   const todoEndDate = document.getElementById("todoEndDate");
+  const todoLinkInput = document.getElementById("todoLinkInput");
   todoStartDate.value = todayKey;
   todoEndDate.value = todayKey;
 
@@ -1220,6 +1316,11 @@
             txt.className = "txt";
             txt.textContent = t.text;
             bar.appendChild(txt);
+            if(t.link){
+              const link = makeLinkIcon(t.link);
+              link.style.fontSize = "8px";
+              bar.appendChild(link);
+            }
           }
 
           if(isTaskStart){
@@ -1254,6 +1355,13 @@
           const txt = document.createElement("span");
           txt.className = "txt";
           txt.textContent = t.text;
+          badge.appendChild(txt);
+
+          if(t.link){
+            const link = makeLinkIcon(t.link);
+            link.style.fontSize = "8px";
+            badge.appendChild(link);
+          }
 
           const del = document.createElement("button");
           del.className = "day-badge-del";
@@ -1264,9 +1372,8 @@
             saveData();
             renderAll();
           });
-
-          badge.appendChild(txt);
           badge.appendChild(del);
+
           badgeWrap.appendChild(badge);
         });
         el.appendChild(badgeWrap);
@@ -1292,35 +1399,79 @@
   const modalDateLabel = document.getElementById("modalDateLabel");
   const modalTaskInput = document.getElementById("modalTaskInput");
   const modalCategorySelect = document.getElementById("modalCategorySelect");
+  const modalLinkInput = document.getElementById("modalLinkInput");
   const modalStartDate = document.getElementById("modalStartDate");
   const modalEndDate = document.getElementById("modalEndDate");
+  const modalAddBtn = document.getElementById("modalAddBtn");
+  const modalDeleteBtn = document.getElementById("modalDeleteBtn");
   attachAddCategoryHandler(modalCategorySelect);
   let modalDateKey = null;
+  let modalEditId = null;
 
   function openModal(dateKey, dateObj){
     modalDateKey = dateKey;
+    modalEditId = null;
     modalDateLabel.textContent = `${dateObj.getFullYear()}년 ${dateObj.getMonth()+1}월 ${dateObj.getDate()}일 (${DOW[dateObj.getDay()]}) 업무 추가`;
     modalTaskInput.value = "";
+    modalLinkInput.value = "";
     fillCategorySelect(modalCategorySelect, CATEGORIES[0]);
     modalStartDate.value = dateKey;
     modalEndDate.value = dateKey;
+    modalAddBtn.textContent = "추가";
+    modalDeleteBtn.style.display = "none";
+    modalOverlay.classList.add("open");
+    modalTaskInput.focus();
+  }
+  function openEditModal(task){
+    modalDateKey = null;
+    modalEditId = task.id;
+    modalDateLabel.textContent = "업무 수정";
+    modalTaskInput.value = task.text;
+    modalLinkInput.value = task.link || "";
+    fillCategorySelect(modalCategorySelect, task.category);
+    modalStartDate.value = task.startDate;
+    modalEndDate.value = task.endDate;
+    modalAddBtn.textContent = "저장";
+    modalDeleteBtn.style.display = "inline-block";
     modalOverlay.classList.add("open");
     modalTaskInput.focus();
   }
   function closeModal(){
     modalOverlay.classList.remove("open");
     modalDateKey = null;
+    modalEditId = null;
   }
   function submitModal(){
     const val = modalTaskInput.value.trim();
-    if(!val || !modalDateKey) return;
-    addTask(val, modalCategorySelect.value, modalStartDate.value, modalEndDate.value);
+    if(!val) return;
+    if(modalEditId){
+      const task = findTask(modalEditId);
+      if(task){
+        const r = clampRange(modalStartDate.value, modalEndDate.value);
+        task.text = val;
+        task.category = modalCategorySelect.value;
+        task.startDate = r.start;
+        task.endDate = r.end;
+        task.link = normalizeLink(modalLinkInput.value);
+      }
+    }else{
+      if(!modalDateKey) return;
+      addTask(val, modalCategorySelect.value, modalStartDate.value, modalEndDate.value, modalLinkInput.value);
+    }
     saveData();
     closeModal();
     renderAll();
   }
-  document.getElementById("modalAddBtn").addEventListener("click", submitModal);
+  modalAddBtn.addEventListener("click", submitModal);
   document.getElementById("modalCancelBtn").addEventListener("click", closeModal);
+  modalDeleteBtn.addEventListener("click", ()=>{
+    if(modalEditId){
+      deleteTask(modalEditId);
+      saveData();
+    }
+    closeModal();
+    renderAll();
+  });
   modalTaskInput.addEventListener("keydown", e=>{
     if(e.key === "Enter") submitModal();
     if(e.key === "Escape") closeModal();
@@ -1332,6 +1483,7 @@
   // ---------- Weekly tasks (Mon-Fri columns) ----------
   const weekKey = getWeekKey(today);
   let weekEditing = null; // { id, colKey } | null
+  const weekTimeline = document.getElementById("weekTimeline");
   const weekColsGrid = document.getElementById("weekColsGrid");
   const weekProgressBar = document.getElementById("weekProgressBar");
   const weekProgressText = document.getElementById("weekProgressText");
@@ -1345,7 +1497,7 @@
     weekRangeLabel.textContent = `${fmt(start)} - ${fmt(end)}`;
   }
 
-  function saveWeekEdit(id, newVal, newCategory, newStart, newEnd){
+  function saveWeekEdit(id, newVal, newCategory, newStart, newEnd, newLink){
     const val = newVal.trim();
     if(!val) return;
     const task = findTask(id);
@@ -1355,9 +1507,96 @@
     task.category = newCategory || CATEGORIES[0];
     task.startDate = r.start;
     task.endDate = r.end;
+    task.link = normalizeLink(newLink);
     weekEditing = null;
     saveData();
     renderAll();
+  }
+
+  function getWeekTimelineItems(){
+    const sundayOfWeek = new Date(weekKey);
+    const weekdayKeys = WEEKDAYS.map(wd=>{
+      const d = new Date(sundayOfWeek);
+      d.setDate(d.getDate() + wd.offset);
+      return fmtDate(d);
+    });
+    const weekMonKey = weekdayKeys[0], weekFriKey = weekdayKeys[4];
+
+    const items = data.taskList
+      .filter(t => t.startDate !== t.endDate)
+      .filter(t => t.startDate <= weekFriKey && t.endDate >= weekMonKey)
+      .map(t=>{
+        const dispStart = t.startDate < weekMonKey ? weekMonKey : t.startDate;
+        const dispEnd = t.endDate > weekFriKey ? weekFriKey : t.endDate;
+        return {
+          task: t,
+          startIdx: weekdayKeys.indexOf(dispStart),
+          endIdx: weekdayKeys.indexOf(dispEnd),
+          capStart: dispStart === t.startDate,
+          capEnd: dispEnd === t.endDate
+        };
+      })
+      .sort((a,b)=> a.startIdx - b.startIdx || a.endIdx - b.endIdx);
+
+    const laneEnds = [];
+    items.forEach(it=>{
+      let lane = laneEnds.findIndex(end => end < it.startIdx);
+      if(lane === -1){ lane = laneEnds.length; laneEnds.push(it.endIdx); }
+      else laneEnds[lane] = it.endIdx;
+      it.lane = lane;
+    });
+    return items;
+  }
+
+  function renderWeekTimeline(items){
+    weekTimeline.innerHTML = "";
+    if(items.length === 0){
+      weekTimeline.style.display = "none";
+      return;
+    }
+    weekTimeline.style.display = "grid";
+    const laneCount = Math.max(...items.map(it=>it.lane)) + 1;
+    weekTimeline.style.gridTemplateRows = `repeat(${laneCount}, 26px)`;
+
+    items.forEach(it=>{
+      const t = it.task;
+      const bar = document.createElement("div");
+      bar.className = "week-timeline-bar" + (t.done ? " done" : "") + (it.capStart ? " cap-start" : "") + (it.capEnd ? " cap-end" : "");
+      bar.style.gridColumn = `${it.startIdx + 1} / ${it.endIdx + 2}`;
+      bar.style.gridRow = `${it.lane + 1}`;
+      const c = categoryColor(t.category);
+      bar.style.background = c.bg;
+      bar.style.color = c.fg;
+
+      const cb = document.createElement("input");
+      cb.type = "checkbox";
+      cb.title = "완료 체크";
+      cb.checked = t.done;
+      cb.addEventListener("click", e=> e.stopPropagation());
+      cb.addEventListener("change", ()=>{
+        t.done = cb.checked;
+        saveData();
+        renderAll();
+      });
+      bar.appendChild(cb);
+
+      const txt = document.createElement("span");
+      txt.className = "txt";
+      txt.textContent = t.text;
+      bar.appendChild(txt);
+
+      if(t.link) bar.appendChild(makeLinkIcon(t.link));
+
+      const editBtn = document.createElement("button");
+      editBtn.className = "tl-edit";
+      editBtn.type = "button";
+      editBtn.textContent = "✎";
+      editBtn.title = "수정";
+      editBtn.addEventListener("click", ()=> openEditModal(t));
+      bar.appendChild(editBtn);
+
+      weekTimeline.appendChild(bar);
+    });
   }
 
   function renderWeekTasks(){
@@ -1365,12 +1604,19 @@
     const sundayOfWeek = new Date(weekKey);
     let totalAll = 0, doneAll = 0;
 
+    const timelineItems = getWeekTimelineItems();
+    renderWeekTimeline(timelineItems);
+    timelineItems.forEach(it=>{
+      totalAll++;
+      if(it.task.done) doneAll++;
+    });
+
     WEEKDAYS.forEach(wd=>{
       const colDate = new Date(sundayOfWeek);
       colDate.setDate(colDate.getDate() + wd.offset);
       const colKey = fmtDate(colDate);
       const isToday = colKey === todayKey;
-      const tasks = getTasksForDate(colKey);
+      const tasks = getTasksForDate(colKey).filter(t => t.startDate === t.endDate);
 
       const col = document.createElement("div");
       col.className = "week-col" + (isToday ? " today-col" : "");
@@ -1423,6 +1669,14 @@
           textInput.value = task.text;
           row.appendChild(textInput);
 
+          const linkInput = document.createElement("input");
+          linkInput.type = "url";
+          linkInput.className = "link-input";
+          linkInput.placeholder = "링크 URL (선택)";
+          linkInput.value = task.link || "";
+          linkInput.style.width = "100%";
+          row.appendChild(linkInput);
+
           const dr = makeDateRangeRow(task.startDate, task.endDate);
           row.appendChild(dr.wrap);
 
@@ -1433,7 +1687,7 @@
           saveBtn.className = "save";
           saveBtn.textContent = "✓";
           saveBtn.title = "저장";
-          saveBtn.addEventListener("click", ()=> saveWeekEdit(task.id, textInput.value, catSel.value, dr.startInput.value, dr.endInput.value));
+          saveBtn.addEventListener("click", ()=> saveWeekEdit(task.id, textInput.value, catSel.value, dr.startInput.value, dr.endInput.value, linkInput.value));
           actions.appendChild(saveBtn);
 
           const delBtn = document.createElement("button");
@@ -1453,7 +1707,7 @@
           tasksWrap.appendChild(row);
 
           textInput.addEventListener("keydown", e=>{
-            if(e.key === "Enter") saveWeekEdit(task.id, textInput.value, catSel.value, dr.startInput.value, dr.endInput.value);
+            if(e.key === "Enter") saveWeekEdit(task.id, textInput.value, catSel.value, dr.startInput.value, dr.endInput.value, linkInput.value);
             if(e.key === "Escape"){ weekEditing = null; renderWeekTasks(); }
           });
           textInput.focus();
@@ -1488,6 +1742,7 @@
         row.appendChild(cb);
         row.appendChild(tag);
         row.appendChild(label);
+        if(task.link) row.appendChild(makeLinkIcon(task.link));
         row.appendChild(editBtn);
         tasksWrap.appendChild(row);
       });
@@ -1507,7 +1762,7 @@
   const todoStats = document.getElementById("todoStats");
   let dailyEditingId = null;
 
-  function saveEdit(id, newVal, newCategory, newStart, newEnd){
+  function saveEdit(id, newVal, newCategory, newStart, newEnd, newLink){
     const val = newVal.trim();
     if(!val) return;
     const task = findTask(id);
@@ -1517,6 +1772,7 @@
     task.category = newCategory || CATEGORIES[0];
     task.startDate = r.start;
     task.endDate = r.end;
+    task.link = normalizeLink(newLink);
     dailyEditingId = null;
     saveData();
     renderAll();
@@ -1577,15 +1833,23 @@
         });
         row.appendChild(cancelBtn);
 
+        const linkInput = document.createElement("input");
+        linkInput.type = "url";
+        linkInput.className = "link-input";
+        linkInput.placeholder = "링크 URL (선택)";
+        linkInput.value = todo.link || "";
+        linkInput.style.width = "100%";
+        row.appendChild(linkInput);
+
         const dr = makeDateRangeRow(todo.startDate, todo.endDate);
         row.appendChild(dr.wrap);
 
-        saveBtn.addEventListener("click", ()=> saveEdit(todo.id, editInput.value, editCategorySelect.value, dr.startInput.value, dr.endInput.value));
+        saveBtn.addEventListener("click", ()=> saveEdit(todo.id, editInput.value, editCategorySelect.value, dr.startInput.value, dr.endInput.value, linkInput.value));
 
         todoList.appendChild(row);
 
         editInput.addEventListener("keydown", e=>{
-          if(e.key === "Enter") saveEdit(todo.id, editInput.value, editCategorySelect.value, dr.startInput.value, dr.endInput.value);
+          if(e.key === "Enter") saveEdit(todo.id, editInput.value, editCategorySelect.value, dr.startInput.value, dr.endInput.value, linkInput.value);
           if(e.key === "Escape"){ dailyEditingId = null; renderDaily(); }
         });
         editInput.focus();
@@ -1631,6 +1895,7 @@
       row.appendChild(cb);
       row.appendChild(tag);
       row.appendChild(label);
+      if(todo.link) row.appendChild(makeLinkIcon(todo.link));
       row.appendChild(editBtn);
       row.appendChild(del);
       todoList.appendChild(row);
@@ -1644,8 +1909,9 @@
   function addTodo(){
     const val = todoInput.value.trim();
     if(!val) return;
-    addTask(val, todoCategorySelect.value, todoStartDate.value, todoEndDate.value);
+    addTask(val, todoCategorySelect.value, todoStartDate.value, todoEndDate.value, todoLinkInput.value);
     todoInput.value = "";
+    todoLinkInput.value = "";
     todoStartDate.value = todayKey;
     todoEndDate.value = todayKey;
     saveData();
