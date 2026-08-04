@@ -998,7 +998,23 @@
   </div>
 </div>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBh3P-qWlWu3CefQP549eMsYKu3AymOkHE",
+  authDomain: "my-scheduler-c17ea.firebaseapp.com",
+  databaseURL: "https://my-scheduler-c17ea-default-rtdb.firebaseio.com",
+  projectId: "my-scheduler-c17ea",
+  storageBucket: "my-scheduler-c17ea.firebasestorage.app",
+  messagingSenderId: "862922283525",
+  appId: "1:862922283525:web:dd7885c0124d19862a5a6c",
+  measurementId: "G-6YTELP66YK"
+};
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getDatabase(firebaseApp);
+
 (function(){
   "use strict";
 
@@ -1122,63 +1138,76 @@
       delete parsed.memos;
     }
     if(!parsed.customCategories) parsed.customCategories = [];
+    if(!parsed.shareId) parsed.shareId = null;
 
     return parsed;
   }
 
-  // ---------- 공유 링크 모드 판별 (edit: 내 브라우저로 가져오기 / view: 읽기 전용 미리보기) ----------
+  // ---------- 공유 링크 모드 판별 (edit: Firebase와 실시간 동기화 / view: 실시간 읽기 전용) ----------
   const urlParams = new URLSearchParams(location.search);
   const urlMode = urlParams.get("mode");
-  const urlDataRaw = urlParams.get("data");
+  const urlId = urlParams.get("id");
   let isViewMode = false;
 
-  function decodeSharedPayload(raw){
-    try{
-      const json = decodeURIComponent(escape(atob(raw)));
-      const obj = JSON.parse(json);
-      if(!obj || !Array.isArray(obj.taskList)) return null;
-      return obj;
-    }catch(e){
-      return null;
-    }
+  function scheduleRef(id){
+    return ref(db, "schedules/" + id);
+  }
+  function pushShareData(id){
+    set(scheduleRef(id), {
+      taskList: data.taskList,
+      customCategories: data.customCategories,
+      memoCards: data.memoCards
+    }).catch(()=>{});
   }
 
   function saveData(){
     if(isViewMode) return;
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    if(data.shareId) pushShareData(data.shareId);
   }
 
   let data;
-  if(urlMode === "view" && urlDataRaw){
-    const shared = decodeSharedPayload(urlDataRaw);
-    if(shared){
-      isViewMode = true;
-      data = {
-        taskList: shared.taskList,
-        customCategories: Array.isArray(shared.customCategories) ? shared.customCategories : [],
-        memoCards: Array.isArray(shared.memoCards) ? shared.memoCards : []
-      };
-    }else{
-      alert("공유 링크의 데이터를 불러오지 못했습니다.");
-      data = loadData();
-      saveData();
-    }
+  let viewFirstSnapshot = false;
+
+  if(urlMode === "view" && urlId){
+    isViewMode = true;
+    data = { taskList: [], customCategories: [], memoCards: [], shareId: urlId };
+    onValue(scheduleRef(urlId), (snapshot)=>{
+      const val = snapshot.val();
+      if(val){
+        data.taskList = val.taskList || [];
+        data.customCategories = val.customCategories || [];
+        data.memoCards = val.memoCards || [];
+      }else if(!viewFirstSnapshot){
+        alert("존재하지 않는 공유 링크입니다.");
+      }
+      viewFirstSnapshot = true;
+      renderMemos();
+      renderAll();
+    });
   }else{
     data = loadData();
     saveData();
-    if(urlMode === "edit" && urlDataRaw){
-      const shared = decodeSharedPayload(urlDataRaw);
-      if(shared){
-        const ok = confirm("공유된 스케줄 데이터를 불러오시겠습니까?\n(현재 저장된 업무 데이터가 공유 데이터로 대체됩니다)");
-        if(ok){
-          data.taskList = shared.taskList;
-          data.customCategories = Array.isArray(shared.customCategories) ? shared.customCategories : [];
-          data.memoCards = Array.isArray(shared.memoCards) ? shared.memoCards : [];
-          saveData();
+    if(urlMode === "edit" && urlId){
+      get(scheduleRef(urlId)).then(snapshot=>{
+        const val = snapshot.val();
+        if(val){
+          const ok = confirm("공유된 스케줄(Firebase)을 이 브라우저에 불러와 실시간 동기화하시겠습니까?\n(현재 저장된 업무 데이터가 대체됩니다)");
+          if(ok){
+            data.taskList = val.taskList || [];
+            data.customCategories = val.customCategories || [];
+            data.memoCards = val.memoCards || [];
+            data.shareId = urlId;
+            saveData();
+            renderMemos();
+            renderAll();
+          }
+        }else{
+          alert("존재하지 않는 공유 링크입니다.");
         }
-      }else{
-        alert("공유 링크의 데이터를 불러오지 못했습니다.");
-      }
+      }).catch(()=>{
+        alert("Firebase에서 데이터를 불러오지 못했습니다. 인터넷 연결을 확인해주세요.");
+      });
     }
   }
   history.replaceState({}, "", location.pathname);
@@ -1377,29 +1406,44 @@
   document.getElementById("todayLabel").textContent =
     `오늘은 ${today.getFullYear()}년 ${today.getMonth()+1}월 ${today.getDate()}일 (${DOW[today.getDay()]}요일) 입니다.`;
 
-  // ---------- 편집용 / 보고용 공유 링크 생성 ----------
-  function buildShareUrl(mode){
-    const payload = { taskList: data.taskList, customCategories: data.customCategories, memoCards: data.memoCards };
-    const json = JSON.stringify(payload);
-    const b64 = btoa(unescape(encodeURIComponent(json)));
-    return location.origin + location.pathname + "?mode=" + mode + "&data=" + encodeURIComponent(b64);
+  // ---------- 편집용 / 보고용 공유 링크 생성 (Firebase 짧은 ID 기반) ----------
+  function genShareId(){
+    return Math.random().toString(36).slice(2, 10);
+  }
+  async function ensureShareId(){
+    if(!data.shareId) data.shareId = genShareId();
+    await set(scheduleRef(data.shareId), {
+      taskList: data.taskList,
+      customCategories: data.customCategories,
+      memoCards: data.memoCards
+    });
+    saveData();
+    return data.shareId;
+  }
+  function buildShareUrl(id, mode){
+    return location.origin + location.pathname + "?id=" + encodeURIComponent(id) + "&mode=" + mode;
   }
   function wireShareButton(btn, mode, originalLabel){
     btn.addEventListener("click", async ()=>{
-      const shareUrl = buildShareUrl(mode);
-      function showCopied(){
-        btn.textContent = "✓ 링크가 복사되었습니다!";
-        btn.classList.add("copied");
-        setTimeout(()=>{
-          btn.textContent = originalLabel;
-          btn.classList.remove("copied");
-        }, 2000);
-      }
+      btn.disabled = true;
       try{
-        await navigator.clipboard.writeText(shareUrl);
-        showCopied();
+        const id = await ensureShareId();
+        const shareUrl = buildShareUrl(id, mode);
+        try{
+          await navigator.clipboard.writeText(shareUrl);
+          btn.textContent = "✓ 링크가 복사되었습니다!";
+          btn.classList.add("copied");
+          setTimeout(()=>{
+            btn.textContent = originalLabel;
+            btn.classList.remove("copied");
+          }, 2000);
+        }catch(e){
+          prompt("아래 링크를 복사하세요:", shareUrl);
+        }
       }catch(e){
-        prompt("아래 링크를 복사하세요:", shareUrl);
+        alert("공유 링크 생성에 실패했습니다. 인터넷 연결 또는 Firebase 설정을 확인해주세요.");
+      }finally{
+        btn.disabled = false;
       }
     });
   }
