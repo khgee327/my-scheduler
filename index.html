@@ -50,47 +50,6 @@
     gap:12px;
     flex-wrap:wrap;
   }
-  .share-btns{
-    display:flex;
-    gap:8px;
-    flex-wrap:wrap;
-  }
-  .share-btn{
-    border:none;
-    background:var(--accent);
-    color:#fff;
-    padding:8px 16px;
-    border-radius:999px;
-    font-size:13px;
-    font-weight:700;
-    cursor:pointer;
-    white-space:nowrap;
-    transition:background .15s;
-  }
-  .share-btn:hover{ background:var(--accent-dark); }
-  .share-btn.copied{ background:var(--accent-2); color:#fff; }
-  .share-btn.view-btn{
-    background:#f3e8ff;
-    color:#7c3aed;
-  }
-  .share-btn.view-btn:hover{ background:#e9d5ff; }
-
-  /* 보고용(읽기 전용) 모드 */
-  .view-mode-banner{
-    display:none;
-    text-align:center;
-    padding:10px 16px;
-    font-size:13px;
-    font-weight:700;
-    color:var(--accent-dark);
-    background:linear-gradient(90deg, #fdf2f8, #f3e8ff);
-    border-bottom:1px solid var(--border);
-  }
-  body.view-mode .view-mode-banner{ display:block; }
-  body.view-mode #todoAddRow,
-  body.view-mode #memoAddRow{ display:none; }
-  body.view-mode .day-badge,
-  body.view-mode .cal-bar{ cursor:default; }
   .dashboard-stack{
     display:flex;
     flex-direction:column;
@@ -888,15 +847,9 @@
 </head>
 <body>
 
-<div id="viewModeBanner" class="view-mode-banner">👀 보고용 모드입니다 (수정 불가)</div>
-
 <header>
   <div class="header-top">
     <h1>📋 스케줄러</h1>
-    <div class="share-btns">
-      <button id="shareEditBtn" class="share-btn edit-btn">✏️ 편집용 링크 복사</button>
-      <button id="shareViewBtn" class="share-btn view-btn">🔒 보고용 링크 복사</button>
-    </div>
   </div>
   <p id="todayLabel"></p>
 </header>
@@ -1167,14 +1120,7 @@
     };
   }
 
-  // ---------- 공유 링크 모드 판별 (edit: 편집 가능, 구글 시트에 저장 / view: 주기적 새로고침으로 읽기 전용 표시) ----------
-  const urlParams = new URLSearchParams(location.search);
-  const urlMode = urlParams.get("mode");
-  const urlId = urlParams.get("id");
-  let isViewMode = false;
-
-  function shareKey(id){ return "share:" + id; }
-
+  // ---------- 구글 시트 웹앱 API와 직접 로드/저장 (클라이언트 ID 기준) ----------
   let sheetRows = [];
   let sheetLoadFailed = false;
   try{ sheetRows = await fetchSheetRows(); }catch(e){ sheetLoadFailed = true; }
@@ -1185,73 +1131,22 @@
   async function syncToSheet(){
     let rows;
     try{ rows = await fetchSheetRows(); }catch(e){ rows = sheetRows; }
-    upsertEntry(rows, clientId, { taskList: data.taskList, customCategories: data.customCategories, memoCards: data.memoCards, shareId: data.shareId || null });
-    if(data.shareId){
-      upsertEntry(rows, shareKey(data.shareId), { taskList: data.taskList, customCategories: data.customCategories, memoCards: data.memoCards });
-    }
+    upsertEntry(rows, clientId, { taskList: data.taskList, customCategories: data.customCategories, memoCards: data.memoCards });
     sheetRows = rows;
     try{ await postSheetRows(rows); }catch(e){}
   }
   function saveData(){
-    if(isViewMode) return;
     saveQueue = saveQueue.then(syncToSheet).catch(()=>{});
   }
 
-  if(urlMode === "view" && urlId){
-    isViewMode = true;
-    const shared = sheetLoadFailed ? null : readEntry(sheetRows, shareKey(urlId));
-    if(shared){
-      data = { taskList: shared.taskList || [], customCategories: shared.customCategories || [], memoCards: shared.memoCards || [], shareId: urlId };
-    }else{
-      alert(sheetLoadFailed ? "구글 시트에서 데이터를 불러오지 못했습니다. 인터넷 연결을 확인해주세요." : "존재하지 않는 공유 링크입니다.");
-      data = { taskList: [], customCategories: [], memoCards: [], shareId: urlId };
-    }
-    // 구글 시트는 실시간 push를 지원하지 않으므로 주기적으로 다시 불러와 새로고침
-    setInterval(async ()=>{
-      try{
-        const rows = await fetchSheetRows();
-        const latest = readEntry(rows, shareKey(urlId));
-        if(latest){
-          data.taskList = latest.taskList || [];
-          data.customCategories = latest.customCategories || [];
-          data.memoCards = latest.memoCards || [];
-          renderMemos();
-          renderAll();
-        }
-      }catch(e){}
-    }, 5000);
+  const existing = sheetLoadFailed ? null : readEntry(sheetRows, clientId);
+  if(existing){
+    data = { taskList: existing.taskList || [], customCategories: existing.customCategories || [], memoCards: existing.memoCards || [] };
   }else{
-    const existing = sheetLoadFailed ? null : readEntry(sheetRows, clientId);
-    if(existing){
-      data = { taskList: existing.taskList || [], customCategories: existing.customCategories || [], memoCards: existing.memoCards || [], shareId: existing.shareId || null };
-    }else{
-      const migrated = migrateLegacyData();
-      data = Object.assign(emptyPayload(), migrated || {}, { shareId: null });
-      saveData();
-    }
-
-    if(urlMode === "edit" && urlId){
-      if(sheetLoadFailed){
-        alert("구글 시트에서 데이터를 불러오지 못했습니다. 인터넷 연결을 확인해주세요.");
-      }else{
-        const shared = readEntry(sheetRows, shareKey(urlId));
-        if(shared){
-          const ok = confirm("공유된 스케줄을 이 브라우저에 불러와 동기화하시겠습니까?\n(현재 저장된 업무 데이터가 대체됩니다)");
-          if(ok){
-            data.taskList = shared.taskList || [];
-            data.customCategories = shared.customCategories || [];
-            data.memoCards = shared.memoCards || [];
-            data.shareId = urlId;
-            saveData();
-          }
-        }else{
-          alert("존재하지 않는 공유 링크입니다.");
-        }
-      }
-    }
+    const migrated = migrateLegacyData();
+    data = Object.assign(emptyPayload(), migrated || {});
+    saveData();
   }
-  history.replaceState({}, "", location.pathname);
-  if(isViewMode) document.body.classList.add("view-mode");
 
   const today = new Date();
   let calYear = today.getFullYear();
@@ -1411,7 +1306,6 @@
     renderAll();
   }
   function attachDraggable(el, task){
-    if(isViewMode) return;
     el.draggable = true;
     el.addEventListener("dragstart", (e)=>{
       e.dataTransfer.setData("text/plain", task.id);
@@ -1423,7 +1317,6 @@
     });
   }
   function attachDropTarget(el, getDropDateKey){
-    if(isViewMode) return;
     el.addEventListener("dragover", (e)=>{
       e.preventDefault();
       e.dataTransfer.dropEffect = e.ctrlKey ? "copy" : "move";
@@ -1445,50 +1338,6 @@
   // ---------- Header ----------
   document.getElementById("todayLabel").textContent =
     `오늘은 ${today.getFullYear()}년 ${today.getMonth()+1}월 ${today.getDate()}일 (${DOW[today.getDay()]}요일) 입니다.`;
-
-  // ---------- 편집용 / 보고용 공유 링크 생성 (구글 시트 짧은 ID 기반) ----------
-  function genShareId(){
-    return Math.random().toString(36).slice(2, 10);
-  }
-  async function ensureShareId(){
-    if(!data.shareId) data.shareId = genShareId();
-    let rows;
-    try{ rows = await fetchSheetRows(); }catch(e){ rows = sheetRows; }
-    upsertEntry(rows, clientId, { taskList: data.taskList, customCategories: data.customCategories, memoCards: data.memoCards, shareId: data.shareId });
-    upsertEntry(rows, shareKey(data.shareId), { taskList: data.taskList, customCategories: data.customCategories, memoCards: data.memoCards });
-    sheetRows = rows;
-    await postSheetRows(rows);
-    return data.shareId;
-  }
-  function buildShareUrl(id, mode){
-    return location.origin + location.pathname + "?id=" + encodeURIComponent(id) + "&mode=" + mode;
-  }
-  function wireShareButton(btn, mode, originalLabel){
-    btn.addEventListener("click", async ()=>{
-      btn.disabled = true;
-      try{
-        const id = await ensureShareId();
-        const shareUrl = buildShareUrl(id, mode);
-        try{
-          await navigator.clipboard.writeText(shareUrl);
-          btn.textContent = "✓ 링크가 복사되었습니다!";
-          btn.classList.add("copied");
-          setTimeout(()=>{
-            btn.textContent = originalLabel;
-            btn.classList.remove("copied");
-          }, 2000);
-        }catch(e){
-          prompt("아래 링크를 복사하세요:", shareUrl);
-        }
-      }catch(e){
-        alert("공유 링크 생성에 실패했습니다. 인터넷 연결 또는 구글 시트 웹앱 설정을 확인해주세요.");
-      }finally{
-        btn.disabled = false;
-      }
-    });
-  }
-  wireShareButton(document.getElementById("shareEditBtn"), "edit", "✏️ 편집용 링크 복사");
-  wireShareButton(document.getElementById("shareViewBtn"), "view", "🔒 보고용 링크 복사");
 
   const todoCategorySelect = document.getElementById("todoCategorySelect");
   fillCategorySelect(todoCategorySelect, CATEGORIES[0]);
@@ -1558,18 +1407,16 @@
       span.textContent = txt;
       card.appendChild(span);
 
-      if(!isViewMode){
-        const del = document.createElement("button");
-        del.className = "del";
-        del.textContent = "✕";
-        del.title = "삭제";
-        del.addEventListener("click", ()=>{
-          data.memoCards.splice(idx, 1);
-          saveData();
-          renderMemos();
-        });
-        card.appendChild(del);
-      }
+      const del = document.createElement("button");
+      del.className = "del";
+      del.textContent = "✕";
+      del.title = "삭제";
+      del.addEventListener("click", ()=>{
+        data.memoCards.splice(idx, 1);
+        saveData();
+        renderMemos();
+      });
+      card.appendChild(del);
 
       memoList.appendChild(card);
     });
@@ -1634,15 +1481,13 @@
       num.textContent = day;
       el.appendChild(num);
 
-      if(!isViewMode){
-        const addBtn = document.createElement("button");
-        addBtn.className = "day-add-btn";
-        addBtn.type = "button";
-        addBtn.textContent = "+";
-        addBtn.title = "일정 추가";
-        addBtn.addEventListener("click", ()=> openModal(key, dateObj));
-        el.appendChild(addBtn);
-      }
+      const addBtn = document.createElement("button");
+      addBtn.className = "day-add-btn";
+      addBtn.type = "button";
+      addBtn.textContent = "+";
+      addBtn.title = "일정 추가";
+      addBtn.addEventListener("click", ()=> openModal(key, dateObj));
+      el.appendChild(addBtn);
 
       const dayTasks = getTasksForDate(key);
       const multiDay = dayTasks.filter(t => t.startDate !== t.endDate);
@@ -1665,7 +1510,7 @@
           const c = isToday ? { bg:"rgba(255,255,255,0.35)", fg:"#fff" } : categoryColor(t.category);
           bar.style.background = c.bg;
           bar.style.color = c.fg;
-          if(!isViewMode) bar.addEventListener("click", ()=> openEditModal(t));
+          bar.addEventListener("click", ()=> openEditModal(t));
           attachDraggable(bar, t);
 
           if(segStart){
@@ -1680,7 +1525,7 @@
             }
           }
 
-          if(isTaskStart && !isViewMode){
+          if(isTaskStart){
             const del = document.createElement("button");
             del.className = "cal-bar-del";
             del.type = "button";
@@ -1709,7 +1554,7 @@
           const c = isToday ? { bg:"rgba(255,255,255,0.28)", fg:"#fff" } : categoryColor(t.category);
           badge.style.background = c.bg;
           badge.style.color = c.fg;
-          if(!isViewMode) badge.addEventListener("click", ()=> openEditModal(t));
+          badge.addEventListener("click", ()=> openEditModal(t));
           attachDraggable(badge, t);
 
           const txt = document.createElement("span");
@@ -1723,19 +1568,17 @@
             badge.appendChild(link);
           }
 
-          if(!isViewMode){
-            const del = document.createElement("button");
-            del.className = "day-badge-del";
-            del.type = "button";
-            del.textContent = "×";
-            del.addEventListener("click", (e)=>{
-              e.stopPropagation();
-              deleteTask(t.id);
-              saveData();
-              renderAll();
-            });
-            badge.appendChild(del);
-          }
+          const del = document.createElement("button");
+          del.className = "day-badge-del";
+          del.type = "button";
+          del.textContent = "×";
+          del.addEventListener("click", (e)=>{
+            e.stopPropagation();
+            deleteTask(t.id);
+            saveData();
+            renderAll();
+          });
+          badge.appendChild(del);
 
           badgeWrap.appendChild(badge);
         });
@@ -1922,15 +1765,13 @@
       dayLabel.textContent = `${DOW[colDate.getDay()]}(${colDate.getMonth()+1}.${colDate.getDate()})`;
       header.appendChild(dayLabel);
 
-      if(!isViewMode){
-        const addBtn = document.createElement("button");
-        addBtn.className = "week-add-btn";
-        addBtn.type = "button";
-        addBtn.textContent = "+";
-        addBtn.title = "업무 추가";
-        addBtn.addEventListener("click", ()=> openModal(colKey, colDate));
-        header.appendChild(addBtn);
-      }
+      const addBtn = document.createElement("button");
+      addBtn.className = "week-add-btn";
+      addBtn.type = "button";
+      addBtn.textContent = "+";
+      addBtn.title = "업무 추가";
+      addBtn.addEventListener("click", ()=> openModal(colKey, colDate));
+      header.appendChild(addBtn);
 
       col.appendChild(header);
 
@@ -2016,7 +1857,6 @@
         const cb = document.createElement("input");
         cb.type = "checkbox";
         cb.checked = task.done;
-        cb.disabled = isViewMode;
         cb.addEventListener("change", ()=>{
           task.done = cb.checked;
           saveData();
@@ -2040,17 +1880,15 @@
         }
         row.appendChild(label);
         if(task.link) row.appendChild(makeLinkIcon(task.link));
-        if(!isViewMode){
-          const editBtn = document.createElement("button");
-          editBtn.className = "edit";
-          editBtn.textContent = "✎";
-          editBtn.title = "수정";
-          editBtn.addEventListener("click", ()=>{
-            weekEditing = { id: task.id, colKey };
-            renderWeekTasks();
-          });
-          row.appendChild(editBtn);
-        }
+        const editBtn = document.createElement("button");
+        editBtn.className = "edit";
+        editBtn.textContent = "✎";
+        editBtn.title = "수정";
+        editBtn.addEventListener("click", ()=>{
+          weekEditing = { id: task.id, colKey };
+          renderWeekTasks();
+        });
+        row.appendChild(editBtn);
         attachDraggable(row, task);
         tasksWrap.appendChild(row);
       });
@@ -2169,7 +2007,6 @@
       const cb = document.createElement("input");
       cb.type = "checkbox";
       cb.checked = todo.done;
-      cb.disabled = isViewMode;
       cb.addEventListener("change", ()=>{
         todo.done = cb.checked;
         saveData();
@@ -2187,29 +2024,27 @@
       row.appendChild(label);
       if(todo.link) row.appendChild(makeLinkIcon(todo.link));
 
-      if(!isViewMode){
-        const editBtn = document.createElement("button");
-        editBtn.className = "edit";
-        editBtn.textContent = "✎";
-        editBtn.title = "수정";
-        editBtn.addEventListener("click", ()=>{
-          dailyEditingId = todo.id;
-          renderDaily();
-        });
-        row.appendChild(editBtn);
+      const editBtn = document.createElement("button");
+      editBtn.className = "edit";
+      editBtn.textContent = "✎";
+      editBtn.title = "수정";
+      editBtn.addEventListener("click", ()=>{
+        dailyEditingId = todo.id;
+        renderDaily();
+      });
+      row.appendChild(editBtn);
 
-        const del = document.createElement("button");
-        del.className = "del";
-        del.textContent = "✕";
-        del.title = "삭제";
-        del.addEventListener("click", ()=>{
-          deleteTask(todo.id);
-          if(dailyEditingId === todo.id) dailyEditingId = null;
-          saveData();
-          renderAll();
-        });
-        row.appendChild(del);
-      }
+      const del = document.createElement("button");
+      del.className = "del";
+      del.textContent = "✕";
+      del.title = "삭제";
+      del.addEventListener("click", ()=>{
+        deleteTask(todo.id);
+        if(dailyEditingId === todo.id) dailyEditingId = null;
+        saveData();
+        renderAll();
+      });
+      row.appendChild(del);
 
       attachDraggable(row, todo);
       todoList.appendChild(row);
