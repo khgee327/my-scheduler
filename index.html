@@ -17,7 +17,6 @@
     --accent-soft: #fdf2f8;
     --accent-2: #fb7185;
     --danger: #ef4444;
-    --danger-soft: #fee2e2;
     --shadow: 0 4px 16px rgba(219,119,150,0.08);
     --radius: 16px;
   }
@@ -28,275 +27,126 @@
     color: var(--text);
     min-height: 100vh;
   }
-  header {
-    padding: 28px 40px 8px;
-  }
+  header { padding: 28px 40px 8px; }
   .header-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    flex-wrap: wrap;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
   }
-  header h1 {
-    font-size: 26px;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-  }
+  header h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
   .sync-badge {
-    font-size: 12px;
-    font-weight: 600;
-    padding: 4px 10px;
-    border-radius: 999px;
-    background: #fff;
-    border: 1px solid var(--border);
-    color: var(--text-soft);
+    font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px;
+    background: #fff; border: 1px solid var(--border); color: var(--text-soft);
   }
-  .btn-group {
-    display: flex;
-    gap: 8px;
-  }
+  .btn-group { display: flex; gap: 8px; }
   .action-btn {
-    border: none;
-    background: var(--accent);
-    color: #fff;
-    padding: 6px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: 700;
+    border: none; background: var(--accent); color: #fff; padding: 6px 12px;
+    border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 700;
   }
   .action-btn.secondary { background: #8b5cf6; }
   .action-btn:hover { opacity: 0.9; }
 
   .banner-readonly {
-    background: #fef3c7;
-    color: #92400e;
-    padding: 10px 20px;
-    font-size: 13px;
-    font-weight: 600;
-    display: none;
-    text-align: center;
+    background: #fef3c7; color: #92400e; padding: 10px 20px; font-size: 13px;
+    font-weight: 600; display: none; text-align: center;
   }
   body.readonly-mode .banner-readonly { display: block; }
   body.readonly-mode .edit-only { display: none !important; }
 
-  .dashboard-stack {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    padding: 20px 40px 40px;
-  }
+  .dashboard-stack { display: flex; flex-direction: column; gap: 20px; padding: 20px 40px 40px; }
   .card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    padding: 22px;
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 22px;
   }
-  .card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 16px;
-  }
-  .card-header h2 {
-    font-size: 16px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .card-header h2 .dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: var(--accent);
-  }
+  .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
+  .card-header h2 { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .card-header h2 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  
   .today-date-badge {
-    display: inline-block;
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--accent-dark);
-    background: var(--accent-soft);
-    padding: 5px 12px;
-    border-radius: 999px;
-    margin-bottom: 12px;
+    display: inline-block; font-size: 12px; font-weight: 700; color: var(--accent-dark);
+    background: var(--accent-soft); padding: 5px 12px; border-radius: 999px; margin-bottom: 12px;
   }
 
-  .day-nav {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
+  .day-nav { display: flex; align-items: center; gap: 6px; }
   .day-nav .nav-btn {
-    border: none;
-    background: var(--accent-soft);
-    color: var(--accent-dark);
-    width: 26px; height: 26px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 700;
+    border: none; background: var(--accent-soft); color: var(--accent-dark);
+    width: 26px; height: 26px; border-radius: 8px; cursor: pointer; font-weight: 700;
   }
   .day-nav .nav-today-btn {
-    border: none;
-    background: var(--accent-soft);
-    color: var(--accent-dark);
-    padding: 0 10px;
-    height: 26px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: 700;
+    border: none; background: var(--accent-soft); color: var(--accent-dark);
+    padding: 0 10px; height: 26px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 700;
   }
   .day-nav input[type=date] {
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 4px 6px;
-    font-size: 11.5px;
-    outline: none;
-    height: 26px;
+    border: 1px solid var(--border); border-radius: 8px; padding: 4px 6px; font-size: 11.5px; outline: none; height: 26px;
   }
 
-  .add-row.simple {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 14px;
-  }
+  .add-row.simple { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
   .add-row.simple input[type=text] {
-    flex: 1;
-    min-width: 140px;
-    padding: 9px 10px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    font-size: 13px;
-    outline: none;
+    flex: 1; min-width: 140px; padding: 9px 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; outline: none;
   }
   .add-row.simple select.cat-select {
-    width: 112px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 8px;
-    font-size: 12.5px;
-    outline: none;
+    width: 112px; border: 1px solid var(--border); border-radius: 8px; padding: 8px; font-size: 12.5px; outline: none;
   }
   .add-row.simple input.link-input {
-    flex: 1;
-    min-width: 140px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 9px 10px;
-    font-size: 12.5px;
-    outline: none;
+    flex: 1; min-width: 140px; border: 1px solid var(--border); border-radius: 8px; padding: 9px 10px; font-size: 12.5px; outline: none;
   }
-  .date-range-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .date-range-row .date-input {
-    padding: 7px 8px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    font-size: 11.5px;
-    outline: none;
-  }
+  .date-range-row { display: flex; align-items: center; gap: 6px; }
+  .date-range-row .date-input { padding: 7px 8px; border: 1px solid var(--border); border-radius: 8px; font-size: 11.5px; outline: none; }
   .add-row.simple button {
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    padding: 0 16px;
-    font-weight: 600;
-    font-size: 13px;
-    cursor: pointer;
+    background: var(--accent); color: #fff; border: none; border-radius: 8px; padding: 0 16px; font-weight: 600; font-size: 13px; cursor: pointer;
   }
 
-  /* Memo */
+  /* Tags */
+  .cat-tag { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px; white-space: nowrap; }
+  .period-tag { font-size: 10px; font-weight: 600; background: #e0f2fe; color: #0284c7; padding: 2px 6px; border-radius: 4px; white-space: nowrap; }
+
+  /* Memo Cards */
   .memo-card {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 10px;
-    background: #fdf7f9;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 10px 12px;
-    margin-bottom: 8px;
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;
+    background: #fdf7f9; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px;
   }
-  .memo-card .txt {
-    flex: 1;
-    font-size: 13.5px;
-    line-height: 1.5;
-    white-space: pre-wrap;
-    word-break: break-word;
-  }
-  .memo-card button.del {
-    border: none;
-    background: transparent;
-    color: var(--text-soft);
-    cursor: pointer;
-    font-size: 14px;
-  }
+  .memo-card .txt { flex: 1; font-size: 13.5px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+  .memo-card button.del { border: none; background: transparent; color: var(--text-soft); cursor: pointer; font-size: 14px; }
   .memo-card button.del:hover { color: var(--danger); }
 
   /* Todo Items */
   .todo-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 12px;
-    background: #fdf7f9;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    margin-bottom: 8px;
+    display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+    background: #fdf7f9; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 8px; flex-wrap: wrap;
+    cursor: pointer; user-select: none; transition: transform 0.1s, box-shadow 0.1s;
   }
-  .todo-item input[type=checkbox] {
-    width: 18px; height: 18px;
-    accent-color: var(--accent);
-    cursor: pointer;
-  }
-  .todo-item .label { flex: 1; font-size: 14px; }
+  .todo-item:hover { transform: translateY(-1px); box-shadow: 0 2px 6px rgba(0,0,0,0.04); }
+  .todo-item input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+  .todo-item .label { flex: 1; font-size: 13.5px; word-break: break-word; }
   .todo-item.done .label { text-decoration: line-through; color: var(--text-soft); }
-  .todo-item button.del {
-    border: none; background: transparent;
-    color: var(--text-soft); cursor: pointer; font-size: 14px;
-  }
-  .todo-item button.del:hover { color: var(--danger); }
+  .item-actions { display: flex; gap: 6px; align-items: center; }
+  .item-actions button { border: none; background: transparent; cursor: pointer; font-size: 13px; color: var(--text-soft); }
+  .item-actions button:hover { color: var(--accent-dark); }
 
-  .cat-tag {
-    font-size: 10px;
-    font-weight: 700;
-    padding: 2px 8px;
-    border-radius: 999px;
-  }
-
-  /* Weekly */
+  /* Weekly Grid */
   .week-range { font-size: 12px; color: var(--text-soft); font-weight: 600; margin-bottom: 12px; display: block; }
-  .week-cols-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 14px;
-  }
+  .week-cols-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
   .week-col {
-    background: #fdf7f9;
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 12px;
-    min-height: 180px;
-    display: flex; flex-direction: column;
+    background: #fdf7f9; border: 1px solid var(--border); border-radius: 12px; padding: 12px; min-height: 220px; display: flex; flex-direction: column;
   }
   .week-col.today-col { border-color: var(--accent); background: var(--accent-soft); }
   .week-col-header {
-    font-size: 13px; font-weight: 700;
-    padding-bottom: 8px; margin-bottom: 10px;
-    border-bottom: 1px dashed var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 13px; font-weight: 700; padding-bottom: 8px; margin-bottom: 10px; border-bottom: 1px dashed var(--border);
   }
+  .week-col-header .add-day-btn {
+    border: none; background: var(--accent); color: #fff; width: 22px; height: 22px;
+    border-radius: 6px; cursor: pointer; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+  }
+  .week-col-header .add-day-btn:hover { background: var(--accent-dark); }
+
   .week-task-item {
-    background: #fff; border: 1px solid var(--border);
-    border-radius: 8px; padding: 6px 8px; margin-bottom: 6px;
-    font-size: 12px; display: flex; align-items: center; gap: 6px;
+    background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 8px; margin-bottom: 8px;
+    font-size: 12px; display: flex; flex-direction: column; gap: 4px; cursor: pointer; user-select: none; transition: transform 0.1s, box-shadow 0.1s;
   }
-  .week-task-item.done span { text-decoration: line-through; color: var(--text-soft); }
+  .week-task-item:hover { transform: translateY(-1px); box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+  .week-task-item.done .task-txt { text-decoration: line-through; color: var(--text-soft); }
+  .week-task-top { display: flex; align-items: center; justify-content: space-between; gap: 4px; }
+  .week-task-mid { display: flex; align-items: center; gap: 6px; }
+  .week-task-item .task-txt { flex: 1; font-weight: 500; font-size: 12.5px; word-break: break-word; }
 
   .progress-wrap { margin-top: 16px; }
   .progress-bar { height: 8px; background: var(--accent-soft); border-radius: 999px; overflow: hidden; }
@@ -310,33 +160,32 @@
   .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; margin-top: 10px; }
   .cal-grid .dow { text-align: center; font-size: 12px; font-weight: 700; color: var(--text-soft); padding-bottom: 6px; }
   .cal-day {
-    min-height: 90px; border-radius: 10px; padding: 6px;
-    background: #fdf7f9; transition: background .15s; position: relative;
+    min-height: 95px; border-radius: 10px; padding: 6px; background: #fdf7f9; position: relative; cursor: pointer;
   }
-  .cal-day.empty { background: transparent; }
-  .cal-day.today { background: var(--accent); color: #fff; }
-  .cal-day.today .num { color: #fff; font-weight: 800; }
-  .cal-day .num { font-size: 12px; font-weight: 600; }
+  .cal-day.empty { background: transparent; cursor: default; }
+  .cal-day.today { background: #fce7f3; border: 1.5px solid var(--accent); }
+  .cal-day .num { font-size: 12px; font-weight: 700; margin-bottom: 4px; }
   .day-badge {
-    font-size: 9.5px; font-weight: 700; padding: 2px 4px; border-radius: 4px;
-    margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer;
+    font-size: 10px; font-weight: 600; padding: 3px 5px; border-radius: 4px;
+    margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 4px;
+    cursor: pointer; transition: transform 0.1s; user-select: none;
   }
+  .day-badge:hover { transform: scale(1.02); }
 
   /* Modal */
   .modal-overlay {
-    position: fixed; inset: 0; background: rgba(43,36,48,0.45);
-    display: none; align-items: center; justify-content: center; z-index: 1000;
+    position: fixed; inset: 0; background: rgba(43,36,48,0.45); display: none; align-items: center; justify-content: center; z-index: 1000;
   }
   .modal-overlay.open { display: flex; }
-  .modal-box {
-    background: #fff; border-radius: 14px; padding: 22px; width: 100%; max-width: 360px;
-  }
+  .modal-box { background: #fff; border-radius: 14px; padding: 22px; width: 100%; max-width: 380px; }
   .modal-box h3 { margin-bottom: 14px; font-size: 15px; }
-  .modal-box input, .modal-box select { width: 100%; margin-top: 8px; padding: 9px; border: 1px solid var(--border); border-radius: 8px; }
+  .modal-box input, .modal-box select { width: 100%; margin-top: 8px; padding: 9px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
   .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
-  .modal-actions button { border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-weight: 600; }
+  .modal-actions button { border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-weight: 600; font-size: 13px; }
   .modal-actions .cancel-btn { background: var(--bg); color: var(--text-soft); }
   .modal-actions .confirm-btn { background: var(--accent); color: #fff; }
+
+  .hint-tag { font-size: 11px; color: var(--text-soft); font-weight: 500; }
 
   @media (max-width: 900px) {
     .week-cols-grid { grid-template-columns: repeat(2, 1fr); }
@@ -369,7 +218,7 @@
 
 <div class="dashboard-stack">
 
-  <!-- 0. Quick Memo -->
+  <!-- 0. MEMO -->
   <div class="card">
     <div class="card-header">
       <h2><span class="dot"></span>MEMO</h2>
@@ -385,11 +234,14 @@
   <div class="card">
     <div class="card-header">
       <h2><span class="dot"></span>일일 업무 (Today's To-Do)</h2>
-      <div class="day-nav">
-        <button id="todoPrevDay" class="nav-btn">‹</button>
-        <button id="todoTodayBtn" class="nav-today-btn">오늘</button>
-        <button id="todoNextDay" class="nav-btn">›</button>
-        <input type="date" id="todoDatePicker">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="hint-tag edit-only">💡 <b>클릭</b>: 수정 | <b>Ctrl+클릭</b>: 복제</span>
+        <div class="day-nav">
+          <button id="todoPrevDay" class="nav-btn">‹</button>
+          <button id="todoTodayBtn" class="nav-today-btn">오늘</button>
+          <button id="todoNextDay" class="nav-btn">›</button>
+          <input type="date" id="todoDatePicker">
+        </div>
       </div>
     </div>
     <span class="today-date-badge" id="todoDateBadge"></span>
@@ -411,10 +263,13 @@
   <div class="card">
     <div class="card-header">
       <h2><span class="dot"></span>주간 업무 (Weekly Tasks)</h2>
-      <div class="day-nav">
-        <button id="weekPrevBtn" class="nav-btn">‹</button>
-        <button id="weekTodayBtn" class="nav-today-btn">이번주</button>
-        <button id="weekNextBtn" class="nav-btn">›</button>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span class="hint-tag edit-only">💡 <b>클릭</b>: 수정 | <b>Ctrl+클릭</b>: 복제</span>
+        <div class="day-nav">
+          <button id="weekPrevBtn" class="nav-btn">‹</button>
+          <button id="weekTodayBtn" class="nav-today-btn">이번주</button>
+          <button id="weekNextBtn" class="nav-btn">›</button>
+        </div>
       </div>
     </div>
     <span class="week-range" id="weekRange"></span>
@@ -432,10 +287,13 @@
   <div class="card">
     <div class="card-header">
       <h2><span class="dot"></span>월간 달력</h2>
-      <div class="cal-nav">
-        <button id="prevMonth">‹</button>
-        <span class="cal-title" id="calTitle"></span>
-        <button id="nextMonth">›</button>
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span class="hint-tag edit-only">💡 <b>뱃지 클릭</b>: 수정 | <b>Ctrl+클릭</b>: 복제</span>
+        <div class="cal-nav">
+          <button id="prevMonth">‹</button>
+          <span class="cal-title" id="calTitle"></span>
+          <button id="nextMonth">›</button>
+        </div>
       </div>
     </div>
     <div class="cal-grid" id="calGrid"></div>
@@ -443,10 +301,11 @@
 
 </div>
 
-<!-- Modal -->
-<div class="modal-overlay" id="addTaskModal">
+<!-- Modal (추가 / 수정 공용) -->
+<div class="modal-overlay" id="taskModal">
   <div class="modal-box">
-    <h3 id="modalDateLabel">일정 추가</h3>
+    <h3 id="modalTitle">일정 추가</h3>
+    <input type="hidden" id="modalTaskId">
     <input type="text" id="modalTaskInput" placeholder="일정을 입력하세요">
     <select class="cat-select" id="modalCategorySelect"></select>
     <input type="url" id="modalLinkInput" placeholder="링크 URL (선택)">
@@ -457,7 +316,7 @@
     </div>
     <div class="modal-actions">
       <button class="cancel-btn" id="modalCancelBtn">취소</button>
-      <button class="confirm-btn" id="modalAddBtn">추가</button>
+      <button class="confirm-btn" id="modalSaveBtn">저장</button>
     </div>
   </div>
 </div>
@@ -467,9 +326,11 @@
   "use strict";
 
   const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbyjLXPILrFl3pbgXQldCbDPTRufIeEXUhpewlt3unU_P9uZ16dj6FL-Q4Zbet9cWLPh1Q/exec";
-  const PRIMARY_KEY = "global_shared_scheduler_data"; // 기본 공통 키
-  const CATEGORIES = ["SNS","디자인","서류","품의","지결","인플루언서","크리에이터","체험단","이벤트","기타"];
+  const PRIMARY_KEY = "global_shared_scheduler_data";
+  const CATEGORIES = ["PPL","택배","SNS","디자인","서류","품의","지결","인플루언서","크리에이터","체험단","이벤트","기타"];
   const CATEGORY_COLORS = {
+    "PPL": { bg:"#fef08a", fg:"#854d0e" },
+    "택배": { bg:"#fed7aa", fg:"#9a3412" },
     "SNS": { bg:"#e0f2fe", fg:"#0284c7" },
     "디자인": { bg:"#f3e8ff", fg:"#9333ea" },
     "서류": { bg:"#f1f5f9", fg:"#475569" },
@@ -486,16 +347,15 @@
   if (isViewMode) document.body.classList.add('readonly-mode');
 
   let state = {
-    taskList: [], // { id, text, done, category, startDate, endDate, link }
+    taskList: [], 
     memoCards: [],
     customCategories: []
   };
 
-  let currentDate = new Date();
   let selectedTodoDate = new Date();
   let selectedWeekDate = new Date();
-  let calYear = currentDate.getFullYear();
-  let calMonth = currentDate.getMonth();
+  let calYear = new Date().getFullYear();
+  let calMonth = new Date().getMonth();
 
   function fmtDate(d) {
     const y = d.getFullYear();
@@ -512,28 +372,21 @@
     el.style.color = isError ? "#ef4444" : "#059669";
   }
 
-  // 데이터 로드 (모든 키 호환 및 구글 시트 원본 복구)
   async function loadData() {
     try {
       const res = await fetch(SHEET_API_URL);
       const rows = await res.json();
       
       let loadedData = null;
-
       if (Array.isArray(rows) && rows.length > 0) {
-        // 1. 공통키 탐색
         let target = rows.find(r => r.key === PRIMARY_KEY || r.key === "my_main_scheduler_data" || r.key === "global_dashboard_data");
-        
-        // 2. 만약 공통키 데이터가 없으면 기존에 저장된 아무 유효 행이나 자동 선택
         if (!target) target = rows.find(r => r.json);
-
         if (target && target.json) {
           loadedData = typeof target.json === 'string' ? JSON.parse(target.json) : target.json;
         }
       }
 
       if (loadedData) {
-        // 구버전/신버전 필드 구조 자동 호환
         state.memoCards = loadedData.memoCards || loadedData.memos || [];
         state.customCategories = loadedData.customCategories || [];
 
@@ -588,7 +441,6 @@
     }
   }
 
-  // --- UI Renders ---
   function renderAll() {
     renderCategorySelects();
     renderMemos();
@@ -631,6 +483,40 @@
     saveData();
   };
 
+  /* Helper for Date Display */
+  function getPeriodLabel(start, end) {
+    if (!start || !end || start === end) return "";
+    const sStr = start.slice(5).replace('-', '/');
+    const eStr = end.slice(5).replace('-', '/');
+    return `<span class="period-tag">🗓️ ${sStr}~${eStr}</span>`;
+  }
+
+  /* Unified Click Handler (Click -> Edit, Ctrl+Click -> Duplicate) */
+  window.handleTaskClick = function(e, id) {
+    if (isViewMode) return;
+    // Don't trigger if clicked directly on checkbox, link, or action buttons
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'A' || e.target.closest('button')) return;
+
+    e.stopPropagation();
+
+    if (e.ctrlKey || e.metaKey) {
+      // Ctrl + Click = Duplicate
+      const orig = state.taskList.find(t => t.id === id);
+      if (orig) {
+        const newTask = Object.assign({}, orig, {
+          id: genId(),
+          text: orig.text + " (복사본)"
+        });
+        state.taskList.push(newTask);
+        renderAll();
+        saveData();
+      }
+    } else {
+      // Normal Click = Edit Modal
+      openEditModal(id);
+    }
+  };
+
   /* Todos */
   function renderTodos() {
     const dateStr = fmtDate(selectedTodoDate);
@@ -647,13 +533,20 @@
 
     container.innerHTML = dayTasks.map(t => {
       const c = getCategoryColor(t.category);
+      const periodLabel = getPeriodLabel(t.startDate, t.endDate);
       return `
-        <div class="todo-item ${t.done ? 'done' : ''}">
-          <input type="checkbox" ${t.done ? 'checked' : ''} ${isViewMode ? 'disabled' : ''} onchange="toggleTaskDone('${t.id}')">
+        <div class="todo-item ${t.done ? 'done' : ''}" onclick="handleTaskClick(event, '${t.id}')">
+          <input type="checkbox" ${t.done ? 'checked' : ''} ${isViewMode ? 'disabled' : ''} onclick="event.stopPropagation(); toggleTaskDone('${t.id}')">
           <span class="cat-tag" style="background:${c.bg}; color:${c.fg};">${t.category || '기타'}</span>
+          ${periodLabel}
           <span class="label">${escapeHtml(t.text)}</span>
-          ${t.link ? `<a href="${escapeHtml(t.link)}" target="_blank" style="text-decoration:none;">🔗</a>` : ''}
-          ${!isViewMode ? `<button class="del" onclick="deleteTask('${t.id}')">✕</button>` : ''}
+          ${t.link ? `<a href="${escapeHtml(t.link)}" target="_blank" onclick="event.stopPropagation();" style="text-decoration:none;">🔗</a>` : ''}
+          ${!isViewMode ? `
+            <div class="item-actions">
+              <button onclick="event.stopPropagation(); openEditModal('${t.id}')">✏️</button>
+              <button onclick="event.stopPropagation(); deleteTask('${t.id}')">🗑️</button>
+            </div>
+          ` : ''}
         </div>
       `;
     }).join('');
@@ -674,15 +567,15 @@
     saveData();
   };
 
-  /* Weekly */
+  /* Weekly Tasks */
   function renderWeekly() {
     const startOfWeek = new Date(selectedWeekDate);
     const day = startOfWeek.getDay();
-    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1); // 월요일 기준
+    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
     startOfWeek.setDate(diff);
 
     const endOfWeek = new Date(startOfWeek);
-    endOfWeek.setDate(startOfWeek.getDate() + 4); // 금요일
+    endOfWeek.setDate(startOfWeek.getDate() + 4);
 
     document.getElementById("weekRange").textContent = `${fmtDate(startOfWeek)} ~ ${fmtDate(endOfWeek)}`;
 
@@ -706,14 +599,34 @@
       const col = document.createElement("div");
       col.className = `week-col ${isToday ? 'today-col' : ''}`;
       col.innerHTML = `
-        <div class="week-col-header">${days[i]} <span style="font-size:11px; font-weight:400; color:var(--text-soft);">${d.getMonth()+1}/${d.getDate()}</span></div>
+        <div class="week-col-header">
+          <span>${days[i]} <small style="font-size:11px; font-weight:400; color:var(--text-soft);">${d.getMonth()+1}/${d.getDate()}</small></span>
+          ${!isViewMode ? `<button class="add-day-btn" onclick="openAddModalForDate('${dStr}')" title="이 날짜에 업무 추가">+</button>` : ''}
+        </div>
         <div class="week-tasks">
-          ${tasks.map(t => `
-            <div class="week-task-item ${t.done ? 'done' : ''}">
-              <input type="checkbox" ${t.done ? 'checked' : ''} ${isViewMode ? 'disabled' : ''} onchange="toggleTaskDone('${t.id}')">
-              <span>${escapeHtml(t.text)}</span>
-            </div>
-          `).join('')}
+          ${tasks.map(t => {
+            const c = getCategoryColor(t.category);
+            const periodLabel = getPeriodLabel(t.startDate, t.endDate);
+            return `
+              <div class="week-task-item ${t.done ? 'done' : ''}" onclick="handleTaskClick(event, '${t.id}')">
+                <div class="week-task-top">
+                  <span class="cat-tag" style="background:${c.bg}; color:${c.fg};">${t.category || '기타'}</span>
+                  ${!isViewMode ? `
+                    <div class="item-actions">
+                      <button onclick="event.stopPropagation(); openEditModal('${t.id}')">✏️</button>
+                      <button onclick="event.stopPropagation(); deleteTask('${t.id}')">🗑️</button>
+                    </div>
+                  ` : ''}
+                </div>
+                <div class="week-task-mid">
+                  <input type="checkbox" ${t.done ? 'checked' : ''} ${isViewMode ? 'disabled' : ''} onclick="event.stopPropagation(); toggleTaskDone('${t.id}')">
+                  <span class="task-txt">${escapeHtml(t.text)}</span>
+                  ${t.link ? `<a href="${escapeHtml(t.link)}" target="_blank" onclick="event.stopPropagation();" style="text-decoration:none;">🔗</a>` : ''}
+                </div>
+                ${periodLabel ? `<div style="margin-top:2px;">${periodLabel}</div>` : ''}
+              </div>
+            `;
+          }).join('')}
         </div>
       `;
       grid.appendChild(col);
@@ -755,54 +668,92 @@
         badge.className = "day-badge";
         badge.style.background = c.bg;
         badge.style.color = c.fg;
-        badge.textContent = t.text;
+        badge.innerHTML = `<span style="font-size:9px; font-weight:800; opacity:0.85;">[${t.category || '기타'}]</span> <span>${escapeHtml(t.text)}</span>`;
+        
+        // Click badge to edit/duplicate
+        badge.onclick = (e) => handleTaskClick(e, t.id);
+
         dayCell.appendChild(badge);
       });
 
       if (!isViewMode) {
-        dayCell.onclick = () => openModal(dateStr);
+        dayCell.onclick = (e) => {
+          if (e.target === dayCell || e.target.classList.contains("num")) {
+            openAddModalForDate(dateStr);
+          }
+        };
       }
 
       grid.appendChild(dayCell);
     }
   }
 
-  // --- Modal Control ---
-  let selectedModalDate = "";
-  function openModal(dateStr) {
-    selectedModalDate = dateStr;
-    document.getElementById("modalDateLabel").textContent = `${dateStr} 일정 추가`;
+  // --- Modal Control (Add / Edit) ---
+  window.openAddModalForDate = function(dateStr) {
+    document.getElementById("modalTitle").textContent = "일정 추가";
+    document.getElementById("modalTaskId").value = "";
     document.getElementById("modalTaskInput").value = "";
     document.getElementById("modalLinkInput").value = "";
     document.getElementById("modalStartDate").value = dateStr;
     document.getElementById("modalEndDate").value = dateStr;
-    document.getElementById("addTaskModal").classList.add("open");
-  }
-
-  document.getElementById("modalCancelBtn").onclick = () => {
-    document.getElementById("addTaskModal").classList.remove("open");
+    document.getElementById("taskModal").classList.add("open");
   };
 
-  document.getElementById("modalAddBtn").onclick = () => {
+  window.openEditModal = function(id) {
+    const task = state.taskList.find(t => t.id === id);
+    if (!task) return;
+
+    document.getElementById("modalTitle").textContent = "일정 수정";
+    document.getElementById("modalTaskId").value = task.id;
+    document.getElementById("modalTaskInput").value = task.text;
+    document.getElementById("modalCategorySelect").value = task.category || CATEGORIES[0];
+    document.getElementById("modalLinkInput").value = task.link || "";
+    document.getElementById("modalStartDate").value = task.startDate;
+    document.getElementById("modalEndDate").value = task.endDate;
+    document.getElementById("taskModal").classList.add("open");
+  };
+
+  document.getElementById("modalCancelBtn").onclick = () => {
+    document.getElementById("taskModal").classList.remove("open");
+  };
+
+  document.getElementById("modalSaveBtn").onclick = () => {
     const text = document.getElementById("modalTaskInput").value.trim();
     if (!text) return;
 
-    state.taskList.push({
-      id: genId(),
-      text: text,
-      done: false,
-      category: document.getElementById("modalCategorySelect").value,
-      startDate: document.getElementById("modalStartDate").value || selectedModalDate,
-      endDate: document.getElementById("modalEndDate").value || selectedModalDate,
-      link: document.getElementById("modalLinkInput").value.trim()
-    });
+    const taskId = document.getElementById("modalTaskId").value;
+    const start = document.getElementById("modalStartDate").value || fmtDate(new Date());
+    const end = document.getElementById("modalEndDate").value || start;
 
-    document.getElementById("addTaskModal").classList.remove("open");
+    if (taskId) {
+      // Edit
+      const task = state.taskList.find(t => t.id === taskId);
+      if (task) {
+        task.text = text;
+        task.category = document.getElementById("modalCategorySelect").value;
+        task.link = document.getElementById("modalLinkInput").value.trim();
+        task.startDate = start;
+        task.endDate = end < start ? start : end;
+      }
+    } else {
+      // New
+      state.taskList.push({
+        id: genId(),
+        text: text,
+        done: false,
+        category: document.getElementById("modalCategorySelect").value,
+        startDate: start,
+        endDate: end < start ? start : end,
+        link: document.getElementById("modalLinkInput").value.trim()
+      });
+    }
+
+    document.getElementById("taskModal").classList.remove("open");
     renderAll();
     saveData();
   };
 
-  // --- Event Listeners ---
+  // --- Actions ---
   document.getElementById("addMemoBtn").onclick = () => {
     const input = document.getElementById("memoInput");
     const val = input.value.trim();
@@ -837,7 +788,7 @@
     saveData();
   };
 
-  // Date Navigation
+  // Date Navigations
   document.getElementById("todoPrevDay").onclick = () => { selectedTodoDate.setDate(selectedTodoDate.getDate() - 1); renderTodos(); };
   document.getElementById("todoNextDay").onclick = () => { selectedTodoDate.setDate(selectedTodoDate.getDate() + 1); renderTodos(); };
   document.getElementById("todoTodayBtn").onclick = () => { selectedTodoDate = new Date(); renderTodos(); };
