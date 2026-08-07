@@ -265,7 +265,7 @@
     <span class="today-date-badge" id="todoDateBadge"></span>
     <div class="add-row simple edit-only">
       <select class="cat-select" id="todoCategorySelect"></select>
-      <input type="text" id="todoInput" placeholder="할 일을 입력하세요">
+      <input type="text" id="todoInput" placeholder="할 일을 입력하세요 (Enter 저장)">
       <input type="url" class="link-input" id="todoLinkInput" placeholder="링크 URL (선택)">
       <div class="date-range-row">
         <input type="date" class="date-input" id="todoStartDate">
@@ -324,7 +324,7 @@
   <div class="modal-box">
     <h3 id="modalTitle">일정 추가</h3>
     <input type="hidden" id="modalTaskId">
-    <input type="text" id="modalTaskInput" placeholder="일정을 입력하세요">
+    <input type="text" id="modalTaskInput" placeholder="일정을 입력하세요 (Enter 저장)">
     <select class="cat-select" id="modalCategorySelect"></select>
     <input type="url" id="modalLinkInput" placeholder="링크 URL (선택)">
     <div class="date-range-row" style="margin-top:10px;">
@@ -345,7 +345,9 @@
 
   const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbyjLXPILrFl3pbgXQldCbDPTRufIeEXUhpewlt3unU_P9uZ16dj6FL-Q4Zbet9cWLPh1Q/exec";
   const PRIMARY_KEY = "global_shared_scheduler_data";
-  const CATEGORIES = ["PPL","택배","SNS","디자인","서류","품의","지결","인플루언서","크리에이터","체험단","이벤트","기타"];
+  
+  const CATEGORIES = ["PPL","택배","SNS","디자인","서류","품의","지결","인플루언서","크리에이터","체험단","이벤트","촬영","컨펌","미팅","엠버서더","무엠버서더","기타"];
+  
   const CATEGORY_COLORS = {
     "PPL": { bg:"#fef08a", fg:"#854d0e" },
     "택배": { bg:"#fed7aa", fg:"#9a3412" },
@@ -358,10 +360,14 @@
     "크리에이터": { bg:"#e0e7ff", fg:"#4338ca" },
     "체험단": { bg:"#ecfccb", fg:"#4d7c0f" },
     "이벤트": { bg:"#ffedd5", fg:"#c2410c" },
-    "기타": { bg:"#e5e7eb", fg:"#4b5563" }
+    "촬영": { bg:"#e9d5ff", fg:"#6b21a8" },
+    "컨펌": { bg:"#d1fae5", fg:"#065f46" },
+    "미팅": { bg:"#fce7f3", fg:"#9d174d" },
+    "엠버서더": { bg:"#dbeafe", fg:"#1e40af" },
+    "무엠버서더": { bg:"#e0e7ff", fg:"#3730a3" },
+    "기타": { bg:"#f3f4f6", fg:"#374151" }
   };
 
-  // Modern SVG Icons (Edit & Delete)
   const ICON_EDIT = `<svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
   const ICON_DEL = `<svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
 
@@ -473,7 +479,23 @@
   }
 
   function getCategoryColor(cat) {
-    return CATEGORY_COLORS[cat] || { bg: "#e5e7eb", fg: "#4b5563" };
+    if (!cat) return CATEGORY_COLORS["기타"];
+    const cleanCat = String(cat).trim();
+    
+    if (CATEGORY_COLORS[cleanCat]) return CATEGORY_COLORS[cleanCat];
+    
+    const matchKey = Object.keys(CATEGORY_COLORS).find(k => k.toLowerCase() === cleanCat.toLowerCase());
+    if (matchKey) return CATEGORY_COLORS[matchKey];
+
+    let hash = 0;
+    for (let i = 0; i < cleanCat.length; i++) {
+      hash = cleanCat.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const hue = Math.abs(hash) % 360;
+    return {
+      bg: `hsl(${hue}, 85%, 90%)`,
+      fg: `hsl(${hue}, 70%, 28%)`
+    };
   }
 
   function renderCategorySelects() {
@@ -506,7 +528,6 @@
     saveData();
   };
 
-  /* Helper for Date Display */
   function getPeriodLabel(start, end) {
     if (!start || !end || start === end) return "";
     const sStr = start.slice(5).replace('-', '/');
@@ -514,7 +535,6 @@
     return `<span class="period-tag">🗓️ ${sStr}~${eStr}</span>`;
   }
 
-  /* Task Click (Modal Edit / Ctrl Click Duplicate) */
   window.handleTaskClick = function(e, id) {
     if (isViewMode) return;
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'A' || e.target.closest('button')) return;
@@ -537,7 +557,7 @@
     }
   };
 
-  /* Drag and Drop Handlers */
+  /* Drag and Drop */
   window.handleDragStart = function(e, id) {
     if (isViewMode) return;
     draggedTaskId = id;
@@ -569,7 +589,6 @@
 
     const isCopy = e.ctrlKey || e.metaKey;
 
-    // Calculate duration
     let s = new Date(task.startDate);
     let eDate = new Date(task.endDate);
     let diffDays = Math.round((eDate - s) / (1000 * 60 * 60 * 24));
@@ -583,7 +602,6 @@
     const newEndStr = fmtDate(targetEnd);
 
     if (isCopy) {
-      // Copy Task to Target Date
       const newTask = Object.assign({}, task, {
         id: genId(),
         text: task.text + " (복사본)",
@@ -592,7 +610,6 @@
       });
       state.taskList.push(newTask);
     } else {
-      // Move Task to Target Date
       task.startDate = newStartStr;
       task.endDate = newEndStr;
     }
@@ -771,7 +788,6 @@
         badge.ondragstart = (e) => handleDragStart(e, t.id);
         badge.innerHTML = `<span style="font-size:9px; font-weight:800; opacity:0.85;">[${t.category || '기타'}]</span> <span>${escapeHtml(t.text)}</span>`;
         
-        // Badge Click -> Edit/Duplicate
         badge.onclick = (e) => handleTaskClick(e, t.id);
 
         dayCell.appendChild(badge);
@@ -798,6 +814,7 @@
     document.getElementById("modalStartDate").value = dateStr;
     document.getElementById("modalEndDate").value = dateStr;
     document.getElementById("taskModal").classList.add("open");
+    setTimeout(() => document.getElementById("modalTaskInput").focus(), 50);
   };
 
   window.openEditModal = function(id) {
@@ -812,6 +829,7 @@
     document.getElementById("modalStartDate").value = task.startDate;
     document.getElementById("modalEndDate").value = task.endDate;
     document.getElementById("taskModal").classList.add("open");
+    setTimeout(() => document.getElementById("modalTaskInput").focus(), 50);
   };
 
   document.getElementById("modalCancelBtn").onclick = () => {
@@ -827,7 +845,6 @@
     const end = document.getElementById("modalEndDate").value || start;
 
     if (taskId) {
-      // Edit
       const task = state.taskList.find(t => t.id === taskId);
       if (task) {
         task.text = text;
@@ -837,7 +854,6 @@
         task.endDate = end < start ? start : end;
       }
     } else {
-      // New
       state.taskList.push({
         id: genId(),
         text: text,
@@ -888,6 +904,38 @@
     renderAll();
     saveData();
   };
+
+  // --- Enter Key Event Listeners for Easy Saving ---
+  document.getElementById("memoInput").addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      document.getElementById("addMemoBtn").click();
+    }
+  });
+
+  ["todoInput", "todoLinkInput"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          document.getElementById("addTodoBtn").click();
+        }
+      });
+    }
+  });
+
+  ["modalTaskInput", "modalLinkInput"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          document.getElementById("modalSaveBtn").click();
+        }
+      });
+    }
+  });
 
   // Date Navigations
   document.getElementById("todoPrevDay").onclick = () => { selectedTodoDate.setDate(selectedTodoDate.getDate() - 1); renderTodos(); };
