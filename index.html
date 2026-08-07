@@ -999,26 +999,12 @@
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBh3P-qWlWu3CefQP549eMsYKu3AymOkHE",
-  authDomain: "my-scheduler-c17ea.firebaseapp.com",
-  databaseURL: "https://my-scheduler-c17ea-default-rtdb.firebaseio.com",
-  projectId: "my-scheduler-c17ea",
-  storageBucket: "my-scheduler-c17ea.firebasestorage.app",
-  messagingSenderId: "862922283525",
-  appId: "1:862922283525:web:dd7885c0124d19862a5a6c",
-  measurementId: "G-6YTELP66YK"
-};
-const firebaseApp = initializeApp(firebaseConfig);
-const db = getDatabase(firebaseApp);
-
-(function(){
+(async function(){
   "use strict";
 
-  const STORAGE_KEY = "scheduler_dashboard_data_v1";
+  const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbyjLXPILrFl3pbgXQldCbDPTRufIeEXUhpewlt3unU_P9uZ16dj6FL-Q4Zbet9cWLPh1Q/exec";
+  const CLIENT_ID_KEY = "scheduler_client_id_v1";
+  const LEGACY_STORAGE_KEY = "scheduler_dashboard_data_v1";
   const DOW = ["일","월","화","수","목","금","토"];
   const WEEKDAYS = [
     { key:"mon", offset:1 },
@@ -1060,13 +1046,48 @@ const db = getDatabase(firebaseApp);
     return "t" + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
   }
 
-  function loadData(){
-    let raw = null;
-    try{ raw = localStorage.getItem(STORAGE_KEY); }catch(e){}
-    let parsed = {};
-    if(raw){
-      try{ parsed = JSON.parse(raw); }catch(e){ parsed = {}; }
+  // ---------- 구글 시트 웹앱 연동 (시트 전체를 key/json 행 목록으로 사용) ----------
+  function getClientId(){
+    let id = null;
+    try{ id = localStorage.getItem(CLIENT_ID_KEY); }catch(e){}
+    if(!id){
+      id = genId();
+      try{ localStorage.setItem(CLIENT_ID_KEY, id); }catch(e){}
     }
+    return id;
+  }
+  const clientId = getClientId();
+
+  async function fetchSheetRows(){
+    const res = await fetch(SHEET_API_URL);
+    const rows = await res.json();
+    return Array.isArray(rows) ? rows : [];
+  }
+  async function postSheetRows(rows){
+    await fetch(SHEET_API_URL, { method:"POST", body: JSON.stringify(rows) });
+  }
+  function readEntry(rows, key){
+    const row = rows.find(r => r.key === key);
+    if(!row || !row.json) return null;
+    try{ return JSON.parse(row.json); }catch(e){ return null; }
+  }
+  function upsertEntry(rows, key, payload){
+    const json = JSON.stringify(payload);
+    const idx = rows.findIndex(r => r.key === key);
+    if(idx > -1) rows[idx] = { key, json };
+    else rows.push({ key, json });
+  }
+  function emptyPayload(){
+    return { taskList: [], customCategories: [], memoCards: [] };
+  }
+
+  function migrateLegacyData(){
+    // 구글 시트 도입 이전 localStorage 데이터를 최초 1회 이전하기 위한 변환
+    let raw = null;
+    try{ raw = localStorage.getItem(LEGACY_STORAGE_KEY); }catch(e){}
+    if(!raw) return null;
+    let parsed = {};
+    try{ parsed = JSON.parse(raw); }catch(e){ return null; }
 
     // 통합 데이터 구조(tasks: 날짜별 업무 배열)로 일회성 마이그레이션 (구버전)
     if(!parsed.tasks && !parsed.taskList){
@@ -1138,76 +1159,95 @@ const db = getDatabase(firebaseApp);
       delete parsed.memos;
     }
     if(!parsed.customCategories) parsed.customCategories = [];
-    if(!parsed.shareId) parsed.shareId = null;
 
-    return parsed;
+    return {
+      taskList: parsed.taskList,
+      customCategories: parsed.customCategories,
+      memoCards: parsed.memoCards
+    };
   }
 
-  // ---------- 공유 링크 모드 판별 (edit: Firebase와 실시간 동기화 / view: 실시간 읽기 전용) ----------
+  // ---------- 공유 링크 모드 판별 (edit: 편집 가능, 구글 시트에 저장 / view: 주기적 새로고침으로 읽기 전용 표시) ----------
   const urlParams = new URLSearchParams(location.search);
   const urlMode = urlParams.get("mode");
   const urlId = urlParams.get("id");
   let isViewMode = false;
 
-  function scheduleRef(id){
-    return ref(db, "schedules/" + id);
-  }
-  function pushShareData(id){
-    set(scheduleRef(id), {
-      taskList: data.taskList,
-      customCategories: data.customCategories,
-      memoCards: data.memoCards
-    }).catch(()=>{});
-  }
+  function shareKey(id){ return "share:" + id; }
 
-  function saveData(){
-    if(isViewMode) return;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    if(data.shareId) pushShareData(data.shareId);
-  }
+  let sheetRows = [];
+  let sheetLoadFailed = false;
+  try{ sheetRows = await fetchSheetRows(); }catch(e){ sheetLoadFailed = true; }
 
   let data;
-  let viewFirstSnapshot = false;
+  let saveQueue = Promise.resolve();
+
+  async function syncToSheet(){
+    let rows;
+    try{ rows = await fetchSheetRows(); }catch(e){ rows = sheetRows; }
+    upsertEntry(rows, clientId, { taskList: data.taskList, customCategories: data.customCategories, memoCards: data.memoCards, shareId: data.shareId || null });
+    if(data.shareId){
+      upsertEntry(rows, shareKey(data.shareId), { taskList: data.taskList, customCategories: data.customCategories, memoCards: data.memoCards });
+    }
+    sheetRows = rows;
+    try{ await postSheetRows(rows); }catch(e){}
+  }
+  function saveData(){
+    if(isViewMode) return;
+    saveQueue = saveQueue.then(syncToSheet).catch(()=>{});
+  }
 
   if(urlMode === "view" && urlId){
     isViewMode = true;
-    data = { taskList: [], customCategories: [], memoCards: [], shareId: urlId };
-    onValue(scheduleRef(urlId), (snapshot)=>{
-      const val = snapshot.val();
-      if(val){
-        data.taskList = val.taskList || [];
-        data.customCategories = val.customCategories || [];
-        data.memoCards = val.memoCards || [];
-      }else if(!viewFirstSnapshot){
-        alert("존재하지 않는 공유 링크입니다.");
-      }
-      viewFirstSnapshot = true;
-      renderMemos();
-      renderAll();
-    });
+    const shared = sheetLoadFailed ? null : readEntry(sheetRows, shareKey(urlId));
+    if(shared){
+      data = { taskList: shared.taskList || [], customCategories: shared.customCategories || [], memoCards: shared.memoCards || [], shareId: urlId };
+    }else{
+      alert(sheetLoadFailed ? "구글 시트에서 데이터를 불러오지 못했습니다. 인터넷 연결을 확인해주세요." : "존재하지 않는 공유 링크입니다.");
+      data = { taskList: [], customCategories: [], memoCards: [], shareId: urlId };
+    }
+    // 구글 시트는 실시간 push를 지원하지 않으므로 주기적으로 다시 불러와 새로고침
+    setInterval(async ()=>{
+      try{
+        const rows = await fetchSheetRows();
+        const latest = readEntry(rows, shareKey(urlId));
+        if(latest){
+          data.taskList = latest.taskList || [];
+          data.customCategories = latest.customCategories || [];
+          data.memoCards = latest.memoCards || [];
+          renderMemos();
+          renderAll();
+        }
+      }catch(e){}
+    }, 5000);
   }else{
-    data = loadData();
-    saveData();
+    const existing = sheetLoadFailed ? null : readEntry(sheetRows, clientId);
+    if(existing){
+      data = { taskList: existing.taskList || [], customCategories: existing.customCategories || [], memoCards: existing.memoCards || [], shareId: existing.shareId || null };
+    }else{
+      const migrated = migrateLegacyData();
+      data = Object.assign(emptyPayload(), migrated || {}, { shareId: null });
+      saveData();
+    }
+
     if(urlMode === "edit" && urlId){
-      get(scheduleRef(urlId)).then(snapshot=>{
-        const val = snapshot.val();
-        if(val){
-          const ok = confirm("공유된 스케줄(Firebase)을 이 브라우저에 불러와 실시간 동기화하시겠습니까?\n(현재 저장된 업무 데이터가 대체됩니다)");
+      if(sheetLoadFailed){
+        alert("구글 시트에서 데이터를 불러오지 못했습니다. 인터넷 연결을 확인해주세요.");
+      }else{
+        const shared = readEntry(sheetRows, shareKey(urlId));
+        if(shared){
+          const ok = confirm("공유된 스케줄을 이 브라우저에 불러와 동기화하시겠습니까?\n(현재 저장된 업무 데이터가 대체됩니다)");
           if(ok){
-            data.taskList = val.taskList || [];
-            data.customCategories = val.customCategories || [];
-            data.memoCards = val.memoCards || [];
+            data.taskList = shared.taskList || [];
+            data.customCategories = shared.customCategories || [];
+            data.memoCards = shared.memoCards || [];
             data.shareId = urlId;
             saveData();
-            renderMemos();
-            renderAll();
           }
         }else{
           alert("존재하지 않는 공유 링크입니다.");
         }
-      }).catch(()=>{
-        alert("Firebase에서 데이터를 불러오지 못했습니다. 인터넷 연결을 확인해주세요.");
-      });
+      }
     }
   }
   history.replaceState({}, "", location.pathname);
@@ -1406,18 +1446,18 @@ const db = getDatabase(firebaseApp);
   document.getElementById("todayLabel").textContent =
     `오늘은 ${today.getFullYear()}년 ${today.getMonth()+1}월 ${today.getDate()}일 (${DOW[today.getDay()]}요일) 입니다.`;
 
-  // ---------- 편집용 / 보고용 공유 링크 생성 (Firebase 짧은 ID 기반) ----------
+  // ---------- 편집용 / 보고용 공유 링크 생성 (구글 시트 짧은 ID 기반) ----------
   function genShareId(){
     return Math.random().toString(36).slice(2, 10);
   }
   async function ensureShareId(){
     if(!data.shareId) data.shareId = genShareId();
-    await set(scheduleRef(data.shareId), {
-      taskList: data.taskList,
-      customCategories: data.customCategories,
-      memoCards: data.memoCards
-    });
-    saveData();
+    let rows;
+    try{ rows = await fetchSheetRows(); }catch(e){ rows = sheetRows; }
+    upsertEntry(rows, clientId, { taskList: data.taskList, customCategories: data.customCategories, memoCards: data.memoCards, shareId: data.shareId });
+    upsertEntry(rows, shareKey(data.shareId), { taskList: data.taskList, customCategories: data.customCategories, memoCards: data.memoCards });
+    sheetRows = rows;
+    await postSheetRows(rows);
     return data.shareId;
   }
   function buildShareUrl(id, mode){
@@ -1441,7 +1481,7 @@ const db = getDatabase(firebaseApp);
           prompt("아래 링크를 복사하세요:", shareUrl);
         }
       }catch(e){
-        alert("공유 링크 생성에 실패했습니다. 인터넷 연결 또는 Firebase 설정을 확인해주세요.");
+        alert("공유 링크 생성에 실패했습니다. 인터넷 연결 또는 구글 시트 웹앱 설정을 확인해주세요.");
       }finally{
         btn.disabled = false;
       }
