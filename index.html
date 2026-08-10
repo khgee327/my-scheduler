@@ -185,8 +185,9 @@
   .day-badge {
     font-size: 10px; font-weight: 600; padding: 3px 5px; border-radius: 4px;
     margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: flex; align-items: center; gap: 4px;
-    cursor: grab; transition: transform 0.1s; user-select: none;
+    cursor: grab; transition: transform 0.1s, opacity 0.2s; user-select: none;
   }
+  .day-badge.done { text-decoration: line-through; opacity: 0.6; }
   .day-badge:active { cursor: grabbing; opacity: 0.7; }
   .day-badge:hover { transform: scale(1.02); }
 
@@ -197,8 +198,7 @@
   .modal-overlay.open { display: flex; }
   .modal-box { background: #fff; border-radius: 14px; padding: 22px; width: 100%; max-width: 380px; }
   .modal-box h3 { margin-bottom: 14px; font-size: 15px; }
-  .modal-box input, .modal-box select { width: 100%; margin-top: 8px; padding: 99px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
-  .modal-box select { padding: 9px; }
+  .modal-box input, .modal-box select { width: 100%; margin-top: 8px; padding: 9px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; }
   .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
   .modal-actions button { border: none; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-weight: 600; font-size: 13px; }
   .modal-actions .cancel-btn { background: var(--bg); color: var(--text-soft); }
@@ -500,7 +500,6 @@
   }
 
   function renderCategorySelects() {
-    // Set을 이용한 중복 항목 제거
     const allCats = [...new Set(CATEGORIES.concat(state.customCategories))];
     const selects = [document.getElementById("todoCategorySelect"), document.getElementById("modalCategorySelect")];
     selects.forEach(select => {
@@ -621,13 +620,16 @@
     saveData();
   };
 
-  /* Todos */
+  /* Todos - 미완료 우선 정렬 추가 */
   function renderTodos() {
     const dateStr = fmtDate(selectedTodoDate);
     document.getElementById("todoDateBadge").textContent = `${dateStr} (${["일","월","화","수","목","금","토"][selectedTodoDate.getDay()]})`;
     document.getElementById("todoDatePicker").value = dateStr;
 
-    const dayTasks = state.taskList.filter(t => t.startDate <= dateStr && dateStr <= t.endDate);
+    const dayTasks = state.taskList
+      .filter(t => t.startDate <= dateStr && dateStr <= t.endDate)
+      .sort((a, b) => Number(a.done) - Number(b.done)); // 미완료(false=0) 상단, 완료(true=1) 하단
+
     const container = document.getElementById("todoList");
 
     if (dayTasks.length === 0) {
@@ -674,7 +676,7 @@
     saveData();
   };
 
-  /* Weekly Tasks */
+  /* Weekly Tasks - 미완료 우선 정렬 추가 */
   function renderWeekly() {
     const startOfWeek = new Date(selectedWeekDate);
     const day = startOfWeek.getDay();
@@ -699,7 +701,10 @@
       const dStr = fmtDate(d);
       const isToday = dStr === fmtDate(new Date());
 
-      const tasks = state.taskList.filter(t => t.startDate <= dStr && dStr <= t.endDate);
+      const tasks = state.taskList
+        .filter(t => t.startDate <= dStr && dStr <= t.endDate)
+        .sort((a, b) => Number(a.done) - Number(b.done)); // 미완료 우선 정렬
+
       totalTasks += tasks.length;
       completedTasks += tasks.filter(t => t.done).length;
 
@@ -751,7 +756,7 @@
     document.getElementById("weekProgressText").textContent = rate + "%";
   }
 
-  /* Calendar */
+  /* Calendar - 미완료 우선 정렬 추가 */
   function renderCalendar() {
     document.getElementById("calTitle").textContent = `${calYear}년 ${calMonth + 1}월`;
     const grid = document.getElementById("calGrid");
@@ -779,11 +784,14 @@
 
       dayCell.innerHTML = `<div class="num">${day}</div>`;
 
-      const tasks = state.taskList.filter(t => t.startDate <= dateStr && dateStr <= t.endDate);
+      const tasks = state.taskList
+        .filter(t => t.startDate <= dateStr && dateStr <= t.endDate)
+        .sort((a, b) => Number(a.done) - Number(b.done)); // 미완료 우선 정렬
+
       tasks.forEach(t => {
         const c = getCategoryColor(t.category);
         const badge = document.createElement("div");
-        badge.className = "day-badge";
+        badge.className = `day-badge ${t.done ? 'done' : ''}`;
         badge.style.background = c.bg;
         badge.style.color = c.fg;
         badge.setAttribute("draggable", !isViewMode);
