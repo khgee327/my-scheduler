@@ -535,6 +535,7 @@
   let groupByDay = true;
   let loadedParts = 0;
   let saveTimer = null;
+  let cloudLoadOk = false;
   let report = blankReport();
 
   /* ---------- utils ---------- */
@@ -619,10 +620,12 @@
       if (main && Array.isArray(main.taskList)) taskList = main.taskList;
       window._rows = rows;
       loadReportFor(weekKey(), rows);
+      cloudLoadOk = true;
       setSync("동기화 완료 (" + new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"}) + ")");
     } catch (e) {
       console.error(e);
-      setSync("동기화 실패 · 로컬 임시본 사용", true);
+      cloudLoadOk = false;
+      setSync("불러오기 실패 · 저장 잠금", true);
       loadReportFor(weekKey(), []);
     }
     renderAll();
@@ -662,14 +665,44 @@
     report._ts = Date.now();
     try { localStorage.setItem("wr_local_" + wk, JSON.stringify(report)); } catch (e) {}
 
+    if (!cloudLoadOk) {
+      setSync("불러오기 실패 상태 · 이 기기에만 임시 저장했어요", true);
+      toast("서버에서 기존 내용을 못 불러와서, 덮어쓰기를 막았어요. 새로고침 후 다시 시도해 주세요.");
+      return;
+    }
+
     setSync("저장 중...");
     const json = JSON.stringify(report);
     const chunks = [];
     for (let i = 0; i < json.length; i += CHUNK) chunks.push(json.slice(i, i + CHUNK));
 
-    const payload = [{ key: "wrmeta_" + wk, json: JSON.stringify({ parts: chunks.length, updated: new Date().toISOString() }) }];
-    chunks.forEach((c, i) => payload.push({ key: "wr_" + wk + "_" + i, json: JSON.stringify({ c }) }));
-    for (let i = chunks.length; i < loadedParts; i++) payload.push({ key: "wr_" + wk + "_" + i, json: JSON.stringify({ c: "" }) });
+    const mine = [{ key: "wrmeta_" + wk, json: JSON.stringify({ parts: chunks.length, updated: new Date().toISOString() }) }];
+    chunks.forEach((c, i) => mine.push({ key: "wr_" + wk + "_" + i, json: JSON.stringify({ c }) }));
+    for (let i = chunks.length; i < loadedParts; i++) mine.push({ key: "wr_" + wk + "_" + i, json: JSON.stringify({ c: "" }) });
+
+    // 스케줄러 등 다른 행이 지워지지 않도록, 서버의 모든 행을 함께 다시 보냅니다.
+    const mineKeys = {};
+    mine.forEach(r => { mineKeys[r.key] = 1; });
+    let payload;
+    try {
+      const res = await fetch(SHEET_API_URL);
+      const rows = await res.json();
+      if (!Array.isArray(rows)) throw new Error("bad rows");
+      const hasScheduler = rows.some(r => r && r.key === PRIMARY_KEY);
+      if (!hasScheduler) {
+        setSync("스케줄러 데이터를 찾지 못해 저장을 멈췄어요", true);
+        toast("서버에서 스케줄러 데이터를 못 찾았어요. 덮어쓰기를 막았습니다.");
+        return;
+      }
+      const others = rows
+        .filter(r => r && r.key && !mineKeys[r.key])
+        .map(r => ({ key: r.key, json: typeof r.json === "string" ? r.json : JSON.stringify(r.json) }));
+      payload = others.concat(mine);
+    } catch (e) {
+      console.error(e);
+      setSync("서버 확인 실패 · 저장을 멈췄어요", true);
+      return;
+    }
     loadedParts = chunks.length;
 
     try {
@@ -1718,10 +1751,12 @@
       const main = rowJson(rows.find(r => r.key === PRIMARY_KEY));
       if (main && Array.isArray(main.taskList)) taskList = main.taskList;
       loadReportFor(weekKey(), rows);
+      cloudLoadOk = true;
       setSync("동기화 완료 (" + new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"}) + ")");
     } catch (e) {
       loadReportFor(weekKey(), window._rows || []);
-      setSync("동기화 실패", true);
+      cloudLoadOk = false;
+      setSync("불러오기 실패 · 저장 잠금", true);
     }
     renderAll();
   }
