@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>마케터 주간보고</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text x=%2250%25%22 y=%2265%25%22 font-size=%2270%22 text-anchor=%22middle%22>📊</text></svg>">
+<style>
+  :root {
+    --bg: #fdf6f8;
+    --card: #ffffff;
+    --border: #f5dbe4;
+    --text: #2b2430;
+    --text-soft: #8a7480;
+    --accent: #f472b6;
+    --accent-dark: #db2777;
+    --accent-soft: #fdf2f8;
+    --accent-2: #fb7185;
+    --teal: #0f766e;
+    --danger: #ef4444;
+    --shadow: 0 4px 16px rgba(219,119,150,0.08);
+    --radius: 16px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg); color: var(--text); min-height: 100vh;
+  }
+  header { padding: 28px 40px 8px; }
+  .header-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  header h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+  .sync-badge {
+    font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px;
+    background: #fff; border: 1px solid var(--border); color: var(--text-soft);
+  }
+  .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+  .action-btn {
+    border: none; background: var(--accent); color: #fff; padding: 6px 12px;
+    border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 700;
+  }
+  .action-btn.secondary { background: #8b5cf6; }
+  .action-btn.teal { background: var(--teal); }
+  .action-btn.ghost { background: #fff; color: var(--text-soft); border: 1px solid var(--border); }
+  .action-btn:hover { opacity: 0.9; }
+  .action-btn:focus-visible, button:focus-visible, [contenteditable]:focus-visible { outline: 2px solid var(--accent-dark); outline-offset: 2px; }
+
+  .banner-readonly {
+    background: #fef3c7; color: #92400e; padding: 10px 20px; font-size: 13px;
+    font-weight: 600; display: none; text-align: center;
+  }
+  body.readonly-mode .banner-readonly { display: block; }
+  body.readonly-mode .edit-only { display: none !important; }
+
+  .tabs { display: flex; gap: 6px; padding: 8px 40px 0; }
+  .tab-btn {
+    border: 1px solid var(--border); border-bottom: none; background: #fff0f5; color: var(--text-soft);
+    padding: 9px 18px; border-radius: 12px 12px 0 0; cursor: pointer; font-size: 13px; font-weight: 700;
+  }
+  .tab-btn.active { background: #fff; color: var(--accent-dark); box-shadow: 0 -2px 8px rgba(219,119,150,0.06); }
+
+  .stack { display: flex; flex-direction: column; gap: 20px; padding: 12px 40px 60px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 22px;
+  }
+  .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+  .card-header h2 { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+  .card-header h2 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+  .card-sub { font-size: 12px; color: var(--text-soft); font-weight: 500; }
+
+  .week-nav { display: flex; align-items: center; gap: 6px; }
+  .week-nav button {
+    border: none; background: var(--accent-soft); color: var(--accent-dark);
+    height: 28px; min-width: 28px; padding: 0 10px; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 700;
+  }
+  .week-title { font-size: 15px; font-weight: 800; }
+  .week-sub { font-size: 12px; color: var(--text-soft); font-weight: 600; }
+
+  .meta-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .meta-row .field { flex: 1; min-width: 180px; display: flex; flex-direction: column; gap: 5px; }
+  .meta-row label { font-size: 11.5px; font-weight: 700; color: var(--text-soft); }
+  .meta-row input {
+    border: 1px solid var(--border); border-radius: 8px; padding: 9px 10px; font-size: 13px; outline: none; font-family: inherit;
+  }
+
+  .stat-strip { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .stat {
+    background: var(--accent-soft); border: 1px solid var(--border); border-radius: 10px;
+    padding: 8px 14px; font-size: 12px; font-weight: 700; color: var(--accent-dark);
+  }
+  .stat b { font-size: 15px; }
+  .cat-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .cat-chip { font-size: 11px; font-weight: 700; padding: 4px 9px; border-radius: 999px; }
+
+  .day-block { margin-bottom: 14px; }
+  .day-block-title {
+    font-size: 13px; font-weight: 800; color: var(--accent-dark); background: var(--accent-soft);
+    display: inline-block; padding: 4px 12px; border-radius: 999px; margin-bottom: 8px;
+  }
+  .task-row {
+    display: flex; align-items: flex-start; gap: 8px; padding: 9px 12px; background: #fdf7f9;
+    border: 1px solid var(--border); border-radius: 10px; margin-bottom: 7px; flex-wrap: wrap;
+  }
+  .task-row.excluded { opacity: 0.42; }
+  .task-row input[type=checkbox] { width: 17px; height: 17px; accent-color: var(--accent); cursor: pointer; margin-top: 2px; }
+  .cat-tag { font-size: 10px; font-weight: 700; padding: 3px 7px; border-radius: 999px; white-space: nowrap; margin-top: 1px; }
+  .task-txt { flex: 1; min-width: 160px; font-size: 13.5px; word-break: break-word; line-height: 1.45; }
+  .status-tag { font-size: 10px; font-weight: 700; padding: 3px 7px; border-radius: 999px; white-space: nowrap; }
+  .status-done { background: #d1fae5; color: #065f46; }
+  .status-ing { background: #fee2e2; color: #b91c1c; }
+  .period-tag { font-size: 10px; font-weight: 600; background: #e0f2fe; color: #0284c7; padding: 3px 6px; border-radius: 4px; white-space: nowrap; }
+  .note-input {
+    flex-basis: 100%; border: 1px dashed var(--border); border-radius: 8px; padding: 7px 9px;
+    font-size: 12.5px; outline: none; font-family: inherit; background: #fff;
+  }
+  .note-input:focus { border-style: solid; border-color: var(--accent); }
+  .note-input::placeholder { color: #c9b6be; }
+
+  .empty { text-align: center; color: var(--text-soft); font-size: 13px; padding: 20px; }
+
+  /* Rich editor */
+  .rich-box {
+    min-height: 120px; border: 1px solid var(--border); border-radius: 12px; padding: 14px;
+    font-size: 13.5px; line-height: 1.65; outline: none; background: #fff; word-break: break-word;
+  }
+  .rich-box:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(244,114,182,0.12); }
+  .rich-box:empty:before { content: attr(data-placeholder); color: #c9b6be; }
+  .rich-box.drag-over { border: 2px dashed var(--accent-dark); background: #fff5f9; }
+  .rich-box img { max-width: 100%; border-radius: 8px; border: 1px solid var(--border); margin: 6px 0; display: block; cursor: pointer; }
+  .rich-box img.w-60 { max-width: 60%; }
+  .rich-box img.w-40 { max-width: 40%; }
+  .editor-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
+  .editor-hint { font-size: 11.5px; color: var(--text-soft); font-weight: 500; }
+  .mini-btn {
+    border: 1px solid var(--border); background: #fff; color: var(--accent-dark);
+    border-radius: 8px; padding: 5px 10px; font-size: 11.5px; font-weight: 700; cursor: pointer;
+  }
+  .mini-btn:hover { background: var(--accent-soft); }
+
+  #imgTool {
+    position: absolute; display: none; gap: 4px; background: #fff; border: 1px solid var(--border);
+    border-radius: 10px; padding: 5px; box-shadow: 0 6px 18px rgba(0,0,0,0.12); z-index: 900;
+  }
+  #imgTool button {
+    border: none; background: var(--accent-soft); color: var(--accent-dark); border-radius: 6px;
+    padding: 5px 9px; font-size: 11.5px; font-weight: 700; cursor: pointer;
+  }
+  #imgTool button.del { background: #fee2e2; color: #b91c1c; }
+
+  /* Preview */
+  #previewRoot {
+    background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
+    box-shadow: var(--shadow); padding: 38px 40px; max-width: 940px; margin: 0 auto;
+  }
+  .pv-title { font-size: 24px; font-weight: 800; letter-spacing: -0.6px; margin-bottom: 6px; }
+  .pv-meta { font-size: 12.5px; color: var(--text-soft); font-weight: 600; margin-bottom: 4px; }
+  .pv-rule { height: 3px; background: linear-gradient(90deg, var(--accent), var(--accent-2)); border-radius: 999px; margin: 16px 0 24px; }
+  .pv-sec { margin-bottom: 26px; }
+  .pv-sec h3 {
+    font-size: 14.5px; font-weight: 800; margin-bottom: 10px; padding-left: 10px;
+    border-left: 4px solid var(--accent); line-height: 1.2;
+  }
+  .pv-body { font-size: 13.5px; line-height: 1.7; word-break: break-word; }
+  .pv-body img { max-width: 100%; border-radius: 8px; border: 1px solid #e5e7eb; margin: 8px 0; display: block; }
+  .pv-body img.w-60 { max-width: 60%; }
+  .pv-body img.w-40 { max-width: 40%; }
+  .pv-empty { font-size: 13px; color: #b8a5ad; }
+  table.pv-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  table.pv-table th, table.pv-table td { border: 1px solid #ecd9e1; padding: 8px 10px; text-align: left; vertical-align: top; }
+  table.pv-table th { background: var(--accent-soft); font-weight: 700; color: var(--accent-dark); white-space: nowrap; }
+  table.pv-table td.c { text-align: center; white-space: nowrap; }
+  .pv-stats { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .pv-stat { background: var(--accent-soft); border-radius: 8px; padding: 7px 12px; font-size: 12px; font-weight: 700; color: var(--accent-dark); }
+
+  #toast {
+    position: fixed; left: 50%; bottom: 34px; transform: translateX(-50%) translateY(12px);
+    background: #2b2430; color: #fff; padding: 11px 18px; border-radius: 10px; font-size: 13px; font-weight: 600;
+    opacity: 0; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 1200;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-width: 900px) {
+    header { padding: 20px 16px 4px; }
+    .tabs { padding: 8px 16px 0; }
+    .stack { padding: 12px 16px 50px; }
+    #previewRoot { padding: 24px 20px; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+  @media print {
+    body { background: #fff; }
+    header, .tabs, .banner-readonly, #toast, #imgTool, .no-print { display: none !important; }
+    .stack { padding: 0; }
+    #previewRoot { border: none; box-shadow: none; padding: 0; max-width: none; }
+    .pv-sec { break-inside: avoid; }
+    table.pv-table { break-inside: auto; }
+    tr { break-inside: avoid; }
+    @page { margin: 14mm; }
+  }
+</style>
+</head>
+<body>
+
+<div class="banner-readonly">
+  🔒 보고용 모드(읽기 전용)입니다. 내용 수정은 불가능합니다.
+</div>
+
+<header>
+  <div class="header-top">
+    <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+      <h1>📊 마케터 주간보고</h1>
+      <span class="sync-badge" id="syncStatus">🔄 데이터 로딩 중...</span>
+    </div>
+    <div class="btn-group">
+      <button class="action-btn ghost" onclick="goScheduler()">← 스케줄러</button>
+      <button class="action-btn secondary" onclick="copyReportLink()">🔒 보고용 링크 복사</button>
+      <button class="action-btn teal" onclick="copyReportBody()">📋 보고서 통째로 복사</button>
+      <button class="action-btn" onclick="window.print()">🖨️ 인쇄 / PDF 저장</button>
+    </div>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active edit-only" id="tabEdit" onclick="switchTab('edit')">✏️ 작성</button>
+  <button class="tab-btn" id="tabView" onclick="switchTab('view')">📄 보고서 보기</button>
+</div>
+
+<!-- ============ 작성 화면 ============ -->
+<div class="stack" id="editPane">
+
+  <!-- 주차 선택 + 기본 정보 -->
+  <div class="card">
+    <div class="card-header">
+      <h2><span class="dot"></span>보고 주차</h2>
+      <div class="week-nav">
+        <button id="wPrev">‹ 지난주</button>
+        <button id="wThis">이번주</button>
+        <button id="wNext">다음주 ›</button>
+      </div>
+    </div>
+    <div style="margin-bottom:14px;">
+      <div class="week-title" id="weekTitle">-</div>
+      <div class="week-sub" id="weekSub">-</div>
+    </div>
+    <div class="meta-row edit-only">
+      <div class="field">
+        <label for="fTitle">보고서 제목</label>
+        <input type="text" id="fTitle" placeholder="예) 마케팅팀 주간 업무 보고">
+      </div>
+      <div class="field">
+        <label for="fWriter">작성자 / 소속</label>
+        <input type="text" id="fWriter" placeholder="예) 마케팅팀 김현지">
+      </div>
+      <div class="field">
+        <label for="fTo">보고 대상</label>
+        <input type="text" id="fTo" placeholder="예) 마케팅 본부장님">
+      </div>
+    </div>
+  </div>
+
+  <!-- 이번주 수행 업무 -->
+  <div class="card">
+    <div class="card-header">
+      <h2><span class="dot"></span>이번 주 수행 업무</h2>
+      <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+        <span class="card-sub">스케줄러에서 자동으로 불러옵니다</span>
+        <button class="mini-btn edit-only" id="groupToggle">요일별 보기</button>
+      </div>
+    </div>
+    <div class="stat-strip" id="statStrip"></div>
+    <div class="cat-chips" id="catChips"></div>
+    <div class="editor-hint edit-only" style="margin-bottom:10px;">
+      💡 체크를 해제하면 보고서에서 빠져요. 각 업무 아래 칸에 <b>성과·수치·특이사항</b>을 적으면 보고서 비고란에 들어갑니다.
+    </div>
+    <div id="taskArea"></div>
+  </div>
+
+  <!-- 주요 성과 -->
+  <div class="card">
+    <div class="card-header">
+      <h2><span class="dot"></span>주요 성과 및 진행 현황</h2>
+      <span class="card-sub">캡처 이미지 붙여넣기 가능</span>
+    </div>
+    <div class="rich-box" id="secSummary" data-key="summary" data-placeholder="이번 주 핵심 성과를 적어주세요. (예: 온살 8월 인플루언서 PPL 12명 발행 완료 / 총 노출 32만, 유입 1,240건)  캡처 이미지는 Ctrl+V로 바로 붙여넣으세요."></div>
+    <div class="editor-foot edit-only">
+      <span class="editor-hint">📸 Ctrl+V 붙여넣기 · 이미지 드래그&드롭 · 이미지 클릭 시 크기 조절/삭제</span>
+      <button class="mini-btn" data-upload="secSummary">이미지 파일 첨부</button>
+    </div>
+  </div>
+
+  <!-- 이슈 -->
+  <div class="card">
+    <div class="card-header">
+      <h2><span class="dot"></span>이슈 및 특이사항</h2>
+      <span class="card-sub">지연·리스크·의사결정 필요 사항</span>
+    </div>
+    <div class="rich-box" id="secIssues" data-key="issues" data-placeholder="진행 중 발생한 이슈, 지연 사유, 리스크를 적어주세요."></div>
+    <div class="editor-foot edit-only">
+      <span class="editor-hint">📸 캡처 붙여넣기 가능</span>
+      <button class="mini-btn" data-upload="secIssues">이미지 파일 첨부</button>
+    </div>
+  </div>
+
+  <!-- 다음주 계획 -->
+  <div class="card">
+    <div class="card-header">
+      <h2><span class="dot"></span>다음 주 계획</h2>
+      <label class="card-sub edit-only" style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+        <input type="checkbox" id="autoNext" style="accent-color:var(--accent);"> 스케줄러의 다음 주 일정 자동 포함
+      </label>
+    </div>
+    <div id="nextPreview" style="margin-bottom:12px;"></div>
+    <div class="rich-box" id="secNext" data-key="nextPlan" data-placeholder="다음 주에 집중할 업무와 목표를 적어주세요."></div>
+    <div class="editor-foot edit-only">
+      <span class="editor-hint">📸 캡처 붙여넣기 가능</span>
+      <button class="mini-btn" data-upload="secNext">이미지 파일 첨부</button>
+    </div>
+  </div>
+
+  <!-- 요청사항 -->
+  <div class="card">
+    <div class="card-header">
+      <h2><span class="dot"></span>요청 및 공유 사항</h2>
+      <span class="card-sub">협조 요청, 예산, 컨펌 필요 건</span>
+    </div>
+    <div class="rich-box" id="secRequests" data-key="requests" data-placeholder="컨펌이 필요한 건, 예산 승인, 타 팀 협조 요청 등을 적어주세요."></div>
+    <div class="editor-foot edit-only">
+      <span class="editor-hint">📸 캡처 붙여넣기 가능</span>
+      <button class="mini-btn" data-upload="secRequests">이미지 파일 첨부</button>
+    </div>
+  </div>
+
+  <div class="card edit-only" style="display:flex; justify-content:space-between; align-items:center; gap:12px; flex-wrap:wrap;">
+    <div>
+      <div style="font-size:13px; font-weight:700;">작성한 내용은 자동 저장됩니다</div>
+      <div class="editor-hint" id="saveInfo">스케줄러와 같은 시트에 주차별로 보관돼요.</div>
+    </div>
+    <div class="btn-group">
+      <button class="action-btn" onclick="saveNow()">지금 저장</button>
+      <button class="action-btn teal" onclick="switchTab('view')">보고서 보기 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 보고서 화면 ============ -->
+<div class="stack" id="viewPane" style="display:none;">
+  <div id="previewRoot"></div>
+</div>
+
+<div id="imgTool">
+  <button data-size="100">크게</button>
+  <button data-size="60">중간</button>
+  <button data-size="40">작게</button>
+  <button class="del" data-size="del">삭제</button>
+</div>
+
+<div id="toast"></div>
+<input type="file" id="filePicker" accept="image/*" multiple style="display:none;">
+
+<script>
+(async function () {
+  "use strict";
+
+  const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbyjLXPILrFl3pbgXQldCbDPTRufIeEXUhpewlt3unU_P9uZ16dj6FL-Q4Zbet9cWLPh1Q/exec";
+  const PRIMARY_KEY = "global_shared_scheduler_data";
+  const CHUNK = 35000;
+
+  const CATEGORY_COLORS = {
+    "PPL": { bg:"#fef08a", fg:"#854d0e" }, "택배": { bg:"#fed7aa", fg:"#9a3412" },
+    "SNS": { bg:"#e0f2fe", fg:"#0284c7" }, "디자인": { bg:"#f3e8ff", fg:"#9333ea" },
+    "서류": { bg:"#f1f5f9", fg:"#475569" }, "품의": { bg:"#fef3c7", fg:"#b45309" },
+    "지결": { bg:"#ccfbf1", fg:"#0f766e" }, "인플루언서": { bg:"#ffe4e6", fg:"#e11d48" },
+    "크리에이터": { bg:"#e0e7ff", fg:"#4338ca" }, "체험단": { bg:"#ecfccb", fg:"#4d7c0f" },
+    "이벤트": { bg:"#ffedd5", fg:"#c2410c" }, "촬영": { bg:"#e9d5ff", fg:"#6b21a8" },
+    "컨펌": { bg:"#d1fae5", fg:"#065f46" }, "미팅": { bg:"#fce7f3", fg:"#9d174d" },
+    "엠버서더": { bg:"#dbeafe", fg:"#1e40af" }, "무엠버서더": { bg:"#e0e7ff", fg:"#3730a3" },
+    "기타": { bg:"#f3f4f6", fg:"#374151" }
+  };
+  const DOW = ["일","월","화","수","목","금","토"];
+
+  const params = new URLSearchParams(location.search);
+  const isViewMode = params.get("mode") === "view";
+  if (isViewMode) document.body.classList.add("readonly-mode");
+
+  let taskList = [];
+  let anchor = new Date();
+  if (params.get("week")) {
+    const d = new Date(params.get("week"));
+    if (!isNaN(d)) anchor = d;
+  }
+  let groupByDay = true;
+  let loadedParts = 0;
+  let saveTimer = null;
+  let report = blankReport();
+
+  /* ---------- utils ---------- */
+  function fmtDate(d) {
+    return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0") + "-" + String(d.getDate()).padStart(2,"0");
+  }
+  function mondayOf(d) {
+    const x = new Date(d);
+    const day = x.getDay();
+    x.setDate(x.getDate() - day + (day === 0 ? -6 : 1));
+    x.setHours(0,0,0,0);
+    return x;
+  }
+  function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate()+n); return x; }
+  function esc(s) { return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+  function catColor(cat) {
+    const c = String(cat||"기타").trim();
+    if (CATEGORY_COLORS[c]) return CATEGORY_COLORS[c];
+    let h = 0; for (let i=0;i<c.length;i++) h = c.charCodeAt(i) + ((h<<5)-h);
+    return { bg:`hsl(${Math.abs(h)%360}, 85%, 90%)`, fg:`hsl(${Math.abs(h)%360}, 70%, 28%)` };
+  }
+  function toast(msg) {
+    const t = document.getElementById("toast");
+    t.textContent = msg; t.classList.add("show");
+    clearTimeout(t._h); t._h = setTimeout(()=>t.classList.remove("show"), 2600);
+  }
+  function setSync(msg, err) {
+    const el = document.getElementById("syncStatus");
+    el.textContent = (err ? "❌ " : "🟢 ") + msg;
+    el.style.color = err ? "#ef4444" : "#059669";
+  }
+  function weekKey() { return fmtDate(mondayOf(anchor)); }
+
+  function blankReport() {
+    return { title:"", writer:"", to:"", summary:"", issues:"", nextPlan:"", requests:"",
+             notes:{}, excluded:[], autoNext:true };
+  }
+  function sanitize(html) {
+    const d = document.createElement("div");
+    d.innerHTML = html || "";
+    d.querySelectorAll("script,style,iframe,object,embed,link,meta").forEach(n=>n.remove());
+    d.querySelectorAll("*").forEach(el => {
+      [...el.attributes].forEach(a => {
+        if (/^on/i.test(a.name)) el.removeAttribute(a.name);
+        if (a.name === "href" && /^javascript:/i.test(a.value)) el.removeAttribute(a.name);
+        if (a.name === "src" && !/^data:image\//i.test(a.value) && !/^https?:/i.test(a.value)) el.removeAttribute(a.name);
+      });
+    });
+    return d.innerHTML;
+  }
+
+  /* ---------- data ---------- */
+  async function fetchRows() {
+    const res = await fetch(SHEET_API_URL);
+    return await res.json();
+  }
+  function rowJson(row) {
+    if (!row) return null;
+    try { return typeof row.json === "string" ? JSON.parse(row.json) : row.json; }
+    catch (e) { return null; }
+  }
+
+  async function loadAll() {
+    try {
+      const rows = await fetchRows();
+      const main = rowJson(Array.isArray(rows) ? rows.find(r => r.key === PRIMARY_KEY
+        || r.key === "my_main_scheduler_data" || r.key === "global_dashboard_data") : null);
+      if (main && Array.isArray(main.taskList)) taskList = main.taskList;
+      window._rows = rows;
+      loadReportFor(weekKey(), rows);
+      setSync("동기화 완료 (" + new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"}) + ")");
+    } catch (e) {
+      console.error(e);
+      setSync("동기화 실패 · 로컬 임시본 사용", true);
+      loadReportFor(weekKey(), []);
+    }
+    renderAll();
+  }
+
+  function loadReportFor(wk, rows) {
+    report = blankReport(); loadedParts = 0;
+    let loaded = null;
+    try {
+      const meta = rowJson((rows||[]).find(r => r.key === "wrmeta_" + wk));
+      if (meta && meta.parts > 0) {
+        let s = "";
+        for (let i = 0; i < meta.parts; i++) {
+          const part = rowJson((rows||[]).find(r => r.key === "wr_" + wk + "_" + i));
+          if (!part || typeof part.c !== "string") { s = null; break; }
+          s += part.c;
+        }
+        if (s) { loaded = JSON.parse(s); loadedParts = meta.parts; }
+      }
+    } catch (e) { console.warn("cloud report parse failed", e); }
+
+    let local = null;
+    try {
+      const raw = localStorage.getItem("wr_local_" + wk);
+      if (raw) local = JSON.parse(raw);
+    } catch (e) {}
+    if (local && (!loaded || (local._ts || 0) > (loaded._ts || 0))) loaded = local;
+
+    if (loaded) report = Object.assign(blankReport(), loaded);
+    report.notes = report.notes || {};
+    report.excluded = report.excluded || [];
+  }
+
+  async function saveNow() {
+    if (isViewMode) return;
+    collectFromUI();
+    const wk = weekKey();
+    report._ts = Date.now();
+    try { localStorage.setItem("wr_local_" + wk, JSON.stringify(report)); } catch (e) {}
+
+    setSync("저장 중...");
+    const json = JSON.stringify(report);
+    const chunks = [];
+    for (let i = 0; i < json.length; i += CHUNK) chunks.push(json.slice(i, i + CHUNK));
+
+    const payload = [{ key: "wrmeta_" + wk, json: JSON.stringify({ parts: chunks.length, updated: new Date().toISOString() }) }];
+    chunks.forEach((c, i) => payload.push({ key: "wr_" + wk + "_" + i, json: JSON.stringify({ c }) }));
+    for (let i = chunks.length; i < loadedParts; i++) payload.push({ key: "wr_" + wk + "_" + i, json: JSON.stringify({ c: "" }) });
+    loadedParts = chunks.length;
+
+    try {
+      await fetch(SHEET_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
+      });
+      setSync("저장 완료 (" + new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"}) + ")");
+      const kb = Math.round(json.length / 1024);
+      document.getElementById("saveInfo").textContent =
+        `주차별로 보관 중 · 현재 보고서 용량 ${kb.toLocaleString()}KB (이미지 포함)`;
+    } catch (e) {
+      console.error(e);
+      setSync("저장 실패 · 이 기기에는 임시 저장됨", true);
+    }
+  }
+  window.saveNow = saveNow;
+
+  function scheduleSave() {
+    if (isViewMode) return;
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(saveNow, 1500);
+  }
+
+  function collectFromUI() {
+    report.title = document.getElementById("fTitle").value.trim();
+    report.writer = document.getElementById("fWriter").value.trim();
+    report.to = document.getElementById("fTo").value.trim();
+    report.autoNext = document.getElementById("autoNext").checked;
+    document.querySelectorAll(".rich-box").forEach(box => {
+      report[box.dataset.key] = sanitize(box.innerHTML);
+    });
+  }
+
+  /* ---------- week tasks ---------- */
+  function weekTasks(baseMonday) {
+    const days = [];
+    for (let i = 0; i < 5; i++) {
+      const d = addDays(baseMonday, i);
+      const ds = fmtDate(d);
+      const items = taskList.filter(t => t.startDate <= ds && ds <= t.endDate);
+      days.push({ date: d, ds: ds, label: DOW[d.getDay()], items: items });
+    }
+    return days;
+  }
+  function uniqueTasks(days) {
+    const seen = new Set(); const out = [];
+    days.forEach(d => d.items.forEach(t => { if (!seen.has(t.id)) { seen.add(t.id); out.push(t); } }));
+    return out;
+  }
+  function isIncluded(id) { return report.excluded.indexOf(id) === -1; }
+
+  /* ---------- render ---------- */
+  function renderAll() {
+    const mon = mondayOf(anchor), fri = addDays(mon, 4);
+    document.getElementById("weekTitle").textContent =
+      `${mon.getFullYear()}년 ${mon.getMonth()+1}월 ${weekOfMonth(mon)}주차`;
+    document.getElementById("weekSub").textContent =
+      `${fmtDate(mon)}(월) ~ ${fmtDate(fri)}(금)`;
+
+    document.getElementById("fTitle").value = report.title;
+    document.getElementById("fWriter").value = report.writer;
+    document.getElementById("fTo").value = report.to;
+    document.getElementById("autoNext").checked = !!report.autoNext;
+    document.querySelectorAll(".rich-box").forEach(box => {
+      box.innerHTML = sanitize(report[box.dataset.key] || "");
+    });
+
+    renderTasks();
+    renderNextPreview();
+    if (document.getElementById("viewPane").style.display !== "none") renderPreview();
+  }
+
+  function weekOfMonth(d) {
+    const first = new Date(d.getFullYear(), d.getMonth(), 1);
+    return Math.floor((d.getDate() + first.getDay() - 1) / 7) + 1;
+  }
+
+  function renderTasks() {
+    const days = weekTasks(mondayOf(anchor));
+    const all = uniqueTasks(days);
+    const inc = all.filter(t => isIncluded(t.id));
+    const done = inc.filter(t => t.done).length;
+    const rate = inc.length ? Math.round(done / inc.length * 100) : 0;
+
+    document.getElementById("statStrip").innerHTML = `
+      <div class="stat">총 업무 <b>${inc.length}</b>건</div>
+      <div class="stat">완료 <b>${done}</b>건</div>
+      <div class="stat">진행중 <b>${inc.length - done}</b>건</div>
+      <div class="stat">완료율 <b>${rate}%</b></div>`;
+
+    const counts = {};
+    inc.forEach(t => { const c = t.category || "기타"; counts[c] = (counts[c]||0)+1; });
+    document.getElementById("catChips").innerHTML = Object.keys(counts)
+      .sort((a,b)=>counts[b]-counts[a])
+      .map(c => { const col = catColor(c);
+        return `<span class="cat-chip" style="background:${col.bg};color:${col.fg};">${esc(c)} ${counts[c]}</span>`; })
+      .join("");
+
+    const area = document.getElementById("taskArea");
+    if (all.length === 0) {
+      area.innerHTML = `<div class="empty">이번 주 스케줄러에 등록된 업무가 없어요.<br>스케줄러에서 업무를 추가하면 여기에 자동으로 나타납니다.</div>`;
+      return;
+    }
+
+    if (groupByDay) {
+      const shown = new Set();
+      area.innerHTML = days.map(d => {
+        const items = d.items.filter(t => { if (shown.has(t.id)) return false; shown.add(t.id); return true; });
+        if (!items.length) return "";
+        return `<div class="day-block">
+          <div class="day-block-title">${d.label}요일 · ${d.date.getMonth()+1}/${d.date.getDate()}</div>
+          ${items.map(taskRowHtml).join("")}
+        </div>`;
+      }).join("") || `<div class="empty">이번 주 등록된 업무가 없어요.</div>`;
+    } else {
+      const byCat = {};
+      all.forEach(t => { const c = t.category || "기타"; (byCat[c] = byCat[c] || []).push(t); });
+      area.innerHTML = Object.keys(byCat).map(c => `
+        <div class="day-block">
+          <div class="day-block-title" style="background:${catColor(c).bg}; color:${catColor(c).fg};">${esc(c)} · ${byCat[c].length}건</div>
+          ${byCat[c].map(taskRowHtml).join("")}
+        </div>`).join("");
+    }
+  }
+
+  function taskRowHtml(t) {
+    const c = catColor(t.category);
+    const period = (t.startDate && t.endDate && t.startDate !== t.endDate)
+      ? `<span class="period-tag">🗓️ ${t.startDate.slice(5).replace("-","/")}~${t.endDate.slice(5).replace("-","/")}</span>` : "";
+    const on = isIncluded(t.id);
+    return `
+      <div class="task-row ${on ? "" : "excluded"}">
+        <input type="checkbox" class="inc-cb edit-only" data-id="${esc(t.id)}" ${on ? "checked" : ""} title="보고서 포함">
+        <span class="cat-tag" style="background:${c.bg}; color:${c.fg};">${esc(t.category||"기타")}</span>
+        <span class="task-txt">${esc(t.text)}</span>
+        ${period}
+        <span class="status-tag ${t.done ? "status-done" : "status-ing"}">${t.done ? "완료" : "진행중"}</span>
+        <input type="text" class="note-input edit-only" data-note="${esc(t.id)}"
+               value="${esc(report.notes[t.id] || "")}" placeholder="보고용 비고 — 성과·수치·특이사항 (예: 릴스 4건 발행, 조회수 12만)">
+      </div>`;
+  }
+
+  function renderNextPreview() {
+    const nextMon = addDays(mondayOf(anchor), 7);
+    const days = weekTasks(nextMon);
+    const all = uniqueTasks(days);
+    const box = document.getElementById("nextPreview");
+    if (!all.length) {
+      box.innerHTML = `<div class="editor-hint">다음 주(${fmtDate(nextMon)}~) 스케줄러에 등록된 일정이 없어요.</div>`;
+      return;
+    }
+    box.innerHTML = `<div class="editor-hint" style="margin-bottom:6px;">다음 주 등록 일정 ${all.length}건</div>` +
+      all.slice(0, 30).map(t => {
+        const c = catColor(t.category);
+        return `<div class="task-row" style="padding:7px 10px;">
+          <span class="cat-tag" style="background:${c.bg}; color:${c.fg};">${esc(t.category||"기타")}</span>
+          <span class="task-txt">${esc(t.text)}</span>
+          <span class="period-tag">${t.startDate.slice(5).replace("-","/")}</span>
+        </div>`;
+      }).join("");
+  }
+
+  /* ---------- preview ---------- */
+  function renderPreview() {
+    collectFromUI();
+    const mon = mondayOf(anchor), fri = addDays(mon, 4);
+    const days = weekTasks(mon);
+    const all = uniqueTasks(days).filter(t => isIncluded(t.id));
+    const done = all.filter(t => t.done).length;
+    const rate = all.length ? Math.round(done / all.length * 100) : 0;
+
+    const dayOf = {};
+    days.forEach(d => d.items.forEach(t => { if (!dayOf[t.id]) dayOf[t.id] = []; dayOf[t.id].push(d.label); }));
+
+    const rows = all.map(t => {
+      const c = catColor(t.category);
+      const period = (t.startDate !== t.endDate)
+        ? `${t.startDate.slice(5).replace("-","/")}~${t.endDate.slice(5).replace("-","/")}`
+        : (dayOf[t.id] ? dayOf[t.id].join(",") : t.startDate.slice(5).replace("-","/"));
+      return `<tr>
+        <td class="c"><span style="background:${c.bg};color:${c.fg};padding:2px 7px;border-radius:999px;font-size:11px;font-weight:700;">${esc(t.category||"기타")}</span></td>
+        <td>${esc(t.text)}</td>
+        <td class="c">${esc(period)}</td>
+        <td class="c">${t.done ? "완료" : "진행중"}</td>
+        <td>${esc(report.notes[t.id] || "")}</td>
+      </tr>`;
+    }).join("");
+
+    let nextAuto = "";
+    if (report.autoNext) {
+      const nextAll = uniqueTasks(weekTasks(addDays(mon, 7)));
+      if (nextAll.length) {
+        nextAuto = `<table class="pv-table" style="margin-bottom:12px;">
+          <thead><tr><th style="width:110px;">구분</th><th>예정 업무</th><th style="width:90px;">일자</th></tr></thead>
+          <tbody>${nextAll.map(t => {
+            const c = catColor(t.category);
+            return `<tr>
+              <td class="c"><span style="background:${c.bg};color:${c.fg};padding:2px 7px;border-radius:999px;font-size:11px;font-weight:700;">${esc(t.category||"기타")}</span></td>
+              <td>${esc(t.text)}</td>
+              <td class="c">${t.startDate.slice(5).replace("-","/")}</td>
+            </tr>`; }).join("")}</tbody></table>`;
+      }
+    }
+
+    const hasContent = (html) => {
+      if (!html) return false;
+      if (/<img/i.test(html)) return true;
+      return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim().length > 0;
+    };
+    const sec = (title, body, extra) => `
+      <div class="pv-sec">
+        <h3>${title}</h3>
+        ${extra || ""}
+        <div class="pv-body">${hasContent(body) ? body : `<span class="pv-empty">작성된 내용이 없습니다.</span>`}</div>
+      </div>`;
+
+    document.getElementById("previewRoot").innerHTML = `
+      <div class="pv-title">${esc(report.title || "마케팅 주간 업무 보고")}</div>
+      <div class="pv-meta">보고 기간 · ${fmtDate(mon)}(월) ~ ${fmtDate(fri)}(금)</div>
+      <div class="pv-meta">${report.writer ? "작성자 · " + esc(report.writer) : ""}${report.writer && report.to ? "&nbsp;&nbsp;|&nbsp;&nbsp;" : ""}${report.to ? "보고 대상 · " + esc(report.to) : ""}</div>
+      <div class="pv-rule"></div>
+
+      <div class="pv-sec">
+        <h3>1. 주간 업무 요약</h3>
+        <div class="pv-stats">
+          <span class="pv-stat">총 ${all.length}건</span>
+          <span class="pv-stat">완료 ${done}건</span>
+          <span class="pv-stat">진행중 ${all.length - done}건</span>
+          <span class="pv-stat">완료율 ${rate}%</span>
+        </div>
+        ${all.length ? `<table class="pv-table">
+          <thead><tr>
+            <th style="width:96px;">구분</th><th>업무 내용</th>
+            <th style="width:88px;">일정</th><th style="width:62px;">진행</th><th style="width:30%;">비고 / 성과</th>
+          </tr></thead>
+          <tbody>${rows}</tbody></table>`
+        : `<span class="pv-empty">등록된 업무가 없습니다.</span>`}
+      </div>
+
+      ${sec("2. 주요 성과 및 진행 현황", report.summary)}
+      ${sec("3. 이슈 및 특이사항", report.issues)}
+      ${sec("4. 다음 주 계획", report.nextPlan, nextAuto)}
+      ${sec("5. 요청 및 공유 사항", report.requests)}
+    `;
+  }
+
+  /* ---------- tabs ---------- */
+  window.switchTab = function (mode) {
+    const editOn = mode === "edit" && !isViewMode;
+    document.getElementById("editPane").style.display = editOn ? "flex" : "none";
+    document.getElementById("viewPane").style.display = editOn ? "none" : "flex";
+    document.getElementById("tabEdit").classList.toggle("active", editOn);
+    document.getElementById("tabView").classList.toggle("active", !editOn);
+    if (!editOn) renderPreview();
+  };
+
+  /* ---------- image handling ---------- */
+  function compressImage(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+          const maxW = 1100;
+          const scale = Math.min(1, maxW / img.width);
+          const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+          const cv = document.createElement("canvas");
+          cv.width = w; cv.height = h;
+          const ctx = cv.getContext("2d");
+          ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, w, h);
+          ctx.drawImage(img, 0, 0, w, h);
+          let out = cv.toDataURL("image/jpeg", 0.72);
+          if (out.length > 480000) out = cv.toDataURL("image/jpeg", 0.5);
+          resolve(out);
+        };
+        img.onerror = reject;
+        img.src = reader.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function insertImage(box, dataUrl) {
+    box.focus();
+    const html = `<img src="${dataUrl}" alt="첨부 이미지"><br>`;
+    if (!document.execCommand("insertHTML", false, html)) {
+      box.insertAdjacentHTML("beforeend", html);
+    }
+  }
+
+  async function handleFiles(box, files) {
+    const imgs = [...files].filter(f => f.type.startsWith("image/"));
+    if (!imgs.length) return;
+    toast(`이미지 ${imgs.length}장 넣는 중...`);
+    for (const f of imgs) {
+      try { insertImage(box, await compressImage(f)); }
+      catch (e) { toast("이미지를 넣지 못했어요. 다른 형식으로 시도해 보세요."); }
+    }
+    scheduleSave();
+  }
+
+  document.querySelectorAll(".rich-box").forEach(box => {
+    box.setAttribute("contenteditable", !isViewMode);
+
+    box.addEventListener("paste", async (e) => {
+      if (isViewMode) return;
+      const dt = e.clipboardData;
+      const files = dt && dt.files && dt.files.length ? dt.files
+        : (dt ? [...dt.items].filter(i => i.type.startsWith("image/")).map(i => i.getAsFile()).filter(Boolean) : []);
+      if (files && files.length) { e.preventDefault(); await handleFiles(box, files); return; }
+      e.preventDefault();
+      const text = dt ? dt.getData("text/plain") : "";
+      document.execCommand("insertText", false, text);
+    });
+
+    box.addEventListener("dragover", (e) => { if (isViewMode) return; e.preventDefault(); box.classList.add("drag-over"); });
+    box.addEventListener("dragleave", () => box.classList.remove("drag-over"));
+    box.addEventListener("drop", async (e) => {
+      if (isViewMode) return;
+      e.preventDefault(); box.classList.remove("drag-over");
+      if (e.dataTransfer.files.length) await handleFiles(box, e.dataTransfer.files);
+    });
+
+    box.addEventListener("input", scheduleSave);
+    box.addEventListener("blur", () => { if (!isViewMode) { collectFromUI(); } });
+  });
+
+  document.querySelectorAll("[data-upload]").forEach(btn => {
+    btn.onclick = () => {
+      const picker = document.getElementById("filePicker");
+      picker.onchange = async () => {
+        await handleFiles(document.getElementById(btn.dataset.upload), picker.files);
+        picker.value = "";
+      };
+      picker.click();
+    };
+  });
+
+  /* image resize / delete toolbar */
+  const imgTool = document.getElementById("imgTool");
+  let activeImg = null;
+  document.addEventListener("click", (e) => {
+    if (isViewMode) return;
+    if (e.target.tagName === "IMG" && e.target.closest(".rich-box")) {
+      activeImg = e.target;
+      const r = e.target.getBoundingClientRect();
+      imgTool.style.display = "flex";
+      imgTool.style.top = (window.scrollY + r.top + 8) + "px";
+      imgTool.style.left = (window.scrollX + r.left + 8) + "px";
+    } else if (!e.target.closest("#imgTool")) {
+      imgTool.style.display = "none"; activeImg = null;
+    }
+  });
+  imgTool.querySelectorAll("button").forEach(b => {
+    b.onclick = () => {
+      if (!activeImg) return;
+      const s = b.dataset.size;
+      if (s === "del") activeImg.remove();
+      else { activeImg.className = s === "100" ? "" : ("w-" + s); }
+      imgTool.style.display = "none"; activeImg = null;
+      scheduleSave();
+    };
+  });
+
+  /* ---------- inputs ---------- */
+  ["fTitle","fWriter","fTo"].forEach(id => {
+    const el = document.getElementById(id);
+    el.disabled = isViewMode;
+    el.addEventListener("input", scheduleSave);
+  });
+  document.getElementById("autoNext").addEventListener("change", () => { collectFromUI(); scheduleSave(); });
+
+  document.getElementById("taskArea").addEventListener("change", (e) => {
+    if (e.target.classList.contains("inc-cb")) {
+      const id = e.target.dataset.id;
+      if (e.target.checked) report.excluded = report.excluded.filter(x => x !== id);
+      else if (report.excluded.indexOf(id) === -1) report.excluded.push(id);
+      renderTasks(); scheduleSave();
+    }
+  });
+  document.getElementById("taskArea").addEventListener("input", (e) => {
+    if (e.target.dataset.note) { report.notes[e.target.dataset.note] = e.target.value; scheduleSave(); }
+  });
+
+  document.getElementById("groupToggle").onclick = (e) => {
+    groupByDay = !groupByDay;
+    e.target.textContent = groupByDay ? "요일별 보기" : "카테고리별 보기";
+    renderTasks();
+  };
+
+  function isEmptyReport() {
+    const r = report;
+    return !r.title && !r.writer && !r.to && !r.summary && !r.issues && !r.nextPlan && !r.requests
+      && Object.keys(r.notes || {}).length === 0 && (r.excluded || []).length === 0;
+  }
+
+  async function moveWeek(delta) {
+    if (!isViewMode) {
+      collectFromUI();
+      clearTimeout(saveTimer);
+      if (!isEmptyReport() || loadedParts > 0) await saveNow();
+    }
+    anchor = delta === 0 ? new Date() : addDays(mondayOf(anchor), delta * 7);
+    setSync("불러오는 중...");
+    try {
+      const rows = await fetchRows();
+      window._rows = rows;
+      const main = rowJson(rows.find(r => r.key === PRIMARY_KEY));
+      if (main && Array.isArray(main.taskList)) taskList = main.taskList;
+      loadReportFor(weekKey(), rows);
+      setSync("동기화 완료 (" + new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"}) + ")");
+    } catch (e) {
+      loadReportFor(weekKey(), window._rows || []);
+      setSync("동기화 실패", true);
+    }
+    renderAll();
+  }
+  document.getElementById("wPrev").onclick = () => moveWeek(-1);
+  document.getElementById("wNext").onclick = () => moveWeek(1);
+  document.getElementById("wThis").onclick = () => moveWeek(0);
+
+  /* ---------- header actions ---------- */
+  window.goScheduler = function () {
+    const base = location.pathname.replace(/[^/]*$/, "");
+    location.href = base + "index.html" + (isViewMode ? "?mode=view" : "");
+  };
+  window.copyReportLink = function () {
+    const url = location.origin + location.pathname + "?mode=view&week=" + weekKey();
+    navigator.clipboard.writeText(url)
+      .then(() => toast("🔒 이번 주 보고서 링크를 복사했어요."))
+      .catch(() => prompt("아래 주소를 복사하세요", url));
+  };
+  window.copyReportBody = async function () {
+    renderPreview();
+    const root = document.getElementById("previewRoot");
+    const html = `<div style="font-family:'맑은 고딕',sans-serif;">${root.innerHTML}</div>`;
+    const text = root.innerText;
+    try {
+      await navigator.clipboard.write([new ClipboardItem({
+        "text/html": new Blob([html], { type: "text/html" }),
+        "text/plain": new Blob([text], { type: "text/plain" })
+      })]);
+      toast("📋 복사 완료 — 메일·워드·노션에 그대로 붙여넣으세요.");
+    } catch (e) {
+      const r = document.createRange(); r.selectNode(root);
+      const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+      const ok = document.execCommand("copy"); s.removeAllRanges();
+      toast(ok ? "📋 복사 완료 — 붙여넣기 해보세요." : "복사에 실패했어요. 보고서 영역을 직접 드래그해 복사해 주세요.");
+    }
+  };
+
+  window.addEventListener("beforeunload", () => {
+    if (!isViewMode && saveTimer) { collectFromUI(); try { localStorage.setItem("wr_local_" + weekKey(), JSON.stringify(report)); } catch (e) {} }
+  });
+
+  /* ---------- init ---------- */
+  await loadAll();
+  if (isViewMode) switchTab("view");
+})();
+</script>
+</body>
+</html>
