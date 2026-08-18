@@ -172,6 +172,47 @@
   .pv-stats { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
   .pv-stat { background: var(--accent-soft); border-radius: 8px; padding: 7px 12px; font-size: 12px; font-weight: 700; color: var(--accent-dark); }
 
+  .toolbar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:12px; }
+  .sel-info { font-size:11.5px; color:var(--text-soft); font-weight:600; }
+  .task-main { flex:1; min-width:200px; display:flex; flex-direction:column; gap:4px; }
+  .label-input {
+    border:1px solid var(--border); border-radius:8px; padding:7px 9px; font-size:13px;
+    font-family:inherit; outline:none; background:#fff; width:100%;
+  }
+  .label-input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(244,114,182,.12); }
+  .label-input::placeholder { color:#c9b6be; }
+  .raw-text { font-size:11px; color:#b8a5ad; word-break:break-word; }
+  .pick { display:flex; align-items:center; gap:4px; font-size:11px; color:var(--text-soft); font-weight:700; cursor:pointer; white-space:nowrap; }
+  .pick input { width:15px; height:15px; accent-color:#8b5cf6; }
+  .merge-card { border:1.5px solid var(--accent); background:#fff5f9; }
+  .merge-badge { font-size:10px; font-weight:800; background:var(--accent); color:#fff; padding:3px 7px; border-radius:999px; white-space:nowrap; }
+  .merge-members { font-size:11px; color:var(--text-soft); line-height:1.6; flex-basis:100%; padding-left:2px; }
+  .unmerge-btn { border:none; background:#fff; border:1px solid var(--border); color:var(--accent-dark); border-radius:7px; padding:4px 8px; font-size:11px; font-weight:700; cursor:pointer; }
+
+  .table-scroll { overflow-x:auto; }
+  table.edit-table { width:100%; border-collapse:collapse; font-size:12.5px; min-width:900px; }
+  table.edit-table th {
+    background:var(--accent-soft); color:var(--accent-dark); font-size:11.5px; font-weight:700;
+    padding:8px 6px; border:1px solid var(--border); white-space:nowrap;
+  }
+  table.edit-table td { border:1px solid var(--border); padding:3px; vertical-align:middle; }
+  table.edit-table input, table.edit-table select {
+    width:100%; border:none; outline:none; font-size:12.5px; font-family:inherit;
+    padding:6px; background:transparent; border-radius:6px;
+  }
+  table.edit-table input:focus, table.edit-table select:focus { background:#fff; box-shadow:0 0 0 2px rgba(244,114,182,.28); }
+  table.edit-table td.num input { text-align:right; }
+  table.edit-table td.c { text-align:center; font-weight:700; color:var(--accent-dark); white-space:nowrap; }
+  table.edit-table tfoot td { background:#fdf7f9; font-weight:800; padding:8px 6px; text-align:right; white-space:nowrap; }
+  table.edit-table tfoot td.l { text-align:left; }
+  .row-del { border:none; background:transparent; color:var(--danger); cursor:pointer; font-size:15px; font-weight:800; padding:2px 6px; border-radius:6px; }
+  .row-del:hover { background:#fee2e2; }
+  .paste-area {
+    width:100%; min-height:90px; border:1px dashed var(--border); border-radius:10px; padding:10px;
+    font-size:12.5px; font-family:inherit; outline:none; margin-top:10px; resize:vertical;
+  }
+  .paste-area:focus { border-style:solid; border-color:var(--accent); }
+
   #toast {
     position: fixed; left: 50%; bottom: 34px; transform: translateX(-50%) translateY(12px);
     background: #2b2430; color: #fff; padding: 11px 18px; border-radius: 10px; font-size: 13px; font-weight: 600;
@@ -264,15 +305,48 @@
       <h2><span class="dot"></span>이번 주 수행 업무</h2>
       <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
         <span class="card-sub">스케줄러에서 자동으로 불러옵니다</span>
-        <button class="mini-btn edit-only" id="groupToggle">요일별 보기</button>
+        <button class="mini-btn edit-only" id="groupToggle">구분별로 보기</button>
       </div>
     </div>
     <div class="stat-strip" id="statStrip"></div>
     <div class="cat-chips" id="catChips"></div>
     <div class="editor-hint edit-only" style="margin-bottom:10px;">
-      💡 체크를 해제하면 보고서에서 빠져요. 각 업무 아래 칸에 <b>성과·수치·특이사항</b>을 적으면 보고서 비고란에 들어갑니다.
+      💡 왼쪽 체크를 해제하면 보고서에서 빠져요. <b>보고용 문구</b> 칸을 비워두면 스케줄러 원문이 그대로 나갑니다.<br>
+      비슷한 업무는 오른쪽 <b>묶기</b>를 체크한 뒤 아래 버튼으로 한 줄로 합칠 수 있어요.
+    </div>
+    <div class="toolbar edit-only">
+      <button class="mini-btn" id="mergeBtn">선택한 업무 묶기</button>
+      <button class="mini-btn" id="autoMergeBtn">구분별로 자동 묶기</button>
+      <button class="mini-btn" id="addExtraBtn">+ 항목 직접 추가</button>
+      <span class="sel-info" id="selInfo"></span>
     </div>
     <div id="taskArea"></div>
+  </div>
+
+  <!-- PPL 성과 -->
+  <div class="card">
+    <div class="card-header">
+      <h2><span class="dot"></span>PPL 성과 (인플루언서별)</h2>
+      <div class="btn-group edit-only">
+        <button class="mini-btn" id="pplAddRow">+ 인플루언서 추가</button>
+        <button class="mini-btn" id="pplPasteToggle">표 붙여넣기</button>
+      </div>
+    </div>
+    <div class="editor-hint edit-only" style="margin-bottom:10px;">
+      💡 유입·구매전환만 채워도 전환율과 합계는 자동으로 계산돼요. 값이 하나도 없는 열은 보고서에서 자동으로 빠집니다.
+    </div>
+    <div class="table-scroll"><table class="edit-table" id="pplTable"></table></div>
+    <div id="pplPasteWrap" style="display:none;">
+      <div class="editor-hint" style="margin-top:12px;">
+        엑셀·스프레드시트·대시보드에서 복사한 표를 아래에 붙여넣으세요.
+        열 순서는 <b>브랜드 · 인플루언서 · 채널 · 노출 · 유입 · 구매전환 · 매출 · 비고</b> 입니다.
+      </div>
+      <textarea class="paste-area" id="pplPasteBox" placeholder="온살	지지뷰티	인스타그램	32000	1240	38	1140000	릴스 2건"></textarea>
+      <div class="btn-group" style="margin-top:8px;">
+        <button class="mini-btn" id="pplPasteApply">붙여넣은 내용 표에 넣기</button>
+        <button class="mini-btn" id="pplPasteCancel">취소</button>
+      </div>
+    </div>
   </div>
 
   <!-- 주요 성과 -->
@@ -426,8 +500,22 @@
 
   function blankReport() {
     return { title:"", writer:"", to:"", summary:"", issues:"", nextPlan:"", requests:"",
-             notes:{}, excluded:[], autoNext:true };
+             notes:{}, labels:{}, merges:[], extras:[], excluded:[], autoNext:true,
+             ppl:{ rows:[] } };
   }
+  function normalizeReport(r) {
+    r.notes = r.notes || {}; r.labels = r.labels || {};
+    r.merges = r.merges || []; r.extras = r.extras || []; r.excluded = r.excluded || [];
+    r.ppl = r.ppl || { rows: [] };
+    r.ppl.rows = r.ppl.rows || [];
+    return r;
+  }
+  function nid(pre) { return pre + Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
+  function parseNum(v) {
+    const n = parseFloat(String(v == null ? "" : v).replace(/[^0-9.-]/g, ""));
+    return isNaN(n) ? 0 : n;
+  }
+  function nfmt(n) { return (Math.round(n * 10) / 10).toLocaleString("ko-KR"); }
   function sanitize(html) {
     const d = document.createElement("div");
     d.innerHTML = html || "";
@@ -494,8 +582,7 @@
     if (local && (!loaded || (local._ts || 0) > (loaded._ts || 0))) loaded = local;
 
     if (loaded) report = Object.assign(blankReport(), loaded);
-    report.notes = report.notes || {};
-    report.excluded = report.excluded || [];
+    normalizeReport(report);
   }
 
   async function saveNow() {
@@ -566,6 +653,69 @@
   }
   function isIncluded(id) { return report.excluded.indexOf(id) === -1; }
 
+  function periodText(tasks, dayOf) {
+    if (!tasks.length) return "";
+    const starts = tasks.map(t => t.startDate).sort();
+    const ends = tasks.map(t => t.endDate).sort();
+    const s = starts[0], e = ends[ends.length - 1];
+    if (s !== e) return s.slice(5).replace("-", "/") + "~" + e.slice(5).replace("-", "/");
+    const labels = [];
+    tasks.forEach(t => (dayOf[t.id] || []).forEach(l => { if (labels.indexOf(l) === -1) labels.push(l); }));
+    return labels.length ? labels.join(",") : s.slice(5).replace("-", "/");
+  }
+  function statusOf(tasks) {
+    if (!tasks.length) return "진행중";
+    const d = tasks.filter(t => t.done).length;
+    return d === tasks.length ? "완료" : (d === 0 ? "진행중" : "일부 완료");
+  }
+
+  function buildItems(includeExcluded) {
+    const mon = mondayOf(anchor);
+    const days = weekTasks(mon);
+    const dayOf = {};
+    days.forEach(d => d.items.forEach(t => { (dayOf[t.id] = dayOf[t.id] || []).push(d.label); }));
+    const all = uniqueTasks(days);
+    const byId = {}; all.forEach(t => { byId[t.id] = t; });
+
+    const used = {};
+    const items = [];
+
+    report.merges.forEach(m => {
+      const ts = (m.taskIds || []).filter(id => byId[id]).map(id => byId[id]);
+      if (!ts.length) return;
+      ts.forEach(t => { used[t.id] = 1; });
+      items.push({
+        kind: "merge", id: m.id, label: m.label || "", raw: ts.map(t => t.text).join(" / "),
+        category: m.category || ts[0].category || "기타", members: ts,
+        note: m.note || "", status: statusOf(ts),
+        period: periodText(ts, dayOf), order: ts.map(t => t.startDate).sort()[0]
+      });
+    });
+
+    all.forEach(t => {
+      if (used[t.id]) return;
+      items.push({
+        kind: "task", id: t.id, label: report.labels[t.id] || "", raw: t.text,
+        category: t.category || "기타", members: [t],
+        note: report.notes[t.id] || "", status: statusOf([t]),
+        period: periodText([t], dayOf), order: t.startDate
+      });
+    });
+
+    report.extras.forEach(x => {
+      items.push({
+        kind: "extra", id: x.id, label: x.label || "", raw: "", category: x.category || "기타",
+        members: [], note: x.note || "", status: x.status || "완료",
+        period: x.period || "", order: x.order || fmtDate(mon)
+      });
+    });
+
+    items.sort((a, b) => (a.order > b.order ? 1 : a.order < b.order ? -1 : 0));
+    if (includeExcluded) return items;
+    return items.filter(i => isIncluded(i.id) && (i.kind !== "extra" || i.label.trim()));
+  }
+  function itemLabel(i) { return i.label || i.raw || "(내용 없음)"; }
+
   /* ---------- render ---------- */
   function renderAll() {
     const mon = mondayOf(anchor), fri = addDays(mon, 4);
@@ -583,6 +733,7 @@
     });
 
     renderTasks();
+    renderPPL();
     renderNextPreview();
     if (document.getElementById("viewPane").style.display !== "none") renderPreview();
   }
@@ -593,68 +744,186 @@
   }
 
   function renderTasks() {
-    const days = weekTasks(mondayOf(anchor));
-    const all = uniqueTasks(days);
-    const inc = all.filter(t => isIncluded(t.id));
-    const done = inc.filter(t => t.done).length;
+    const items = buildItems(true);
+    const inc = items.filter(i => isIncluded(i.id));
+    const done = inc.filter(i => i.status === "완료").length;
+    const partial = inc.filter(i => i.status === "일부 완료").length;
     const rate = inc.length ? Math.round(done / inc.length * 100) : 0;
 
     document.getElementById("statStrip").innerHTML = `
-      <div class="stat">총 업무 <b>${inc.length}</b>건</div>
+      <div class="stat">보고 항목 <b>${inc.length}</b>건</div>
       <div class="stat">완료 <b>${done}</b>건</div>
-      <div class="stat">진행중 <b>${inc.length - done}</b>건</div>
+      <div class="stat">진행중 <b>${inc.length - done - partial}</b>건</div>
+      ${partial ? `<div class="stat">일부 완료 <b>${partial}</b>건</div>` : ""}
       <div class="stat">완료율 <b>${rate}%</b></div>`;
 
     const counts = {};
-    inc.forEach(t => { const c = t.category || "기타"; counts[c] = (counts[c]||0)+1; });
+    inc.forEach(i => { counts[i.category] = (counts[i.category] || 0) + 1; });
     document.getElementById("catChips").innerHTML = Object.keys(counts)
-      .sort((a,b)=>counts[b]-counts[a])
+      .sort((a, b) => counts[b] - counts[a])
       .map(c => { const col = catColor(c);
         return `<span class="cat-chip" style="background:${col.bg};color:${col.fg};">${esc(c)} ${counts[c]}</span>`; })
       .join("");
 
     const area = document.getElementById("taskArea");
-    if (all.length === 0) {
-      area.innerHTML = `<div class="empty">이번 주 스케줄러에 등록된 업무가 없어요.<br>스케줄러에서 업무를 추가하면 여기에 자동으로 나타납니다.</div>`;
+    if (!items.length) {
+      area.innerHTML = `<div class="empty">이번 주 스케줄러에 등록된 업무가 없어요.<br>스케줄러에서 업무를 추가하거나, 위의 <b>항목 직접 추가</b>로 넣어보세요.</div>`;
+      updateSelInfo();
       return;
     }
 
-    if (groupByDay) {
-      const shown = new Set();
-      area.innerHTML = days.map(d => {
-        const items = d.items.filter(t => { if (shown.has(t.id)) return false; shown.add(t.id); return true; });
-        if (!items.length) return "";
-        return `<div class="day-block">
-          <div class="day-block-title">${d.label}요일 · ${d.date.getMonth()+1}/${d.date.getDate()}</div>
-          ${items.map(taskRowHtml).join("")}
-        </div>`;
-      }).join("") || `<div class="empty">이번 주 등록된 업무가 없어요.</div>`;
-    } else {
-      const byCat = {};
-      all.forEach(t => { const c = t.category || "기타"; (byCat[c] = byCat[c] || []).push(t); });
-      area.innerHTML = Object.keys(byCat).map(c => `
-        <div class="day-block">
-          <div class="day-block-title" style="background:${catColor(c).bg}; color:${catColor(c).fg};">${esc(c)} · ${byCat[c].length}건</div>
-          ${byCat[c].map(taskRowHtml).join("")}
-        </div>`).join("");
-    }
+    const groups = [];
+    const map = {};
+    items.forEach(i => {
+      const key = groupByDay ? i.order : i.category;
+      if (!map[key]) { map[key] = { key: key, items: [] }; groups.push(map[key]); }
+      map[key].items.push(i);
+    });
+
+    area.innerHTML = groups.map(g => {
+      let title, style = "";
+      if (groupByDay) {
+        const d = new Date(g.key);
+        title = isNaN(d) ? "기타" : `${DOW[d.getDay()]}요일 · ${d.getMonth() + 1}/${d.getDate()}`;
+      } else {
+        const col = catColor(g.key);
+        title = `${esc(g.key)} · ${g.items.length}건`;
+        style = `background:${col.bg}; color:${col.fg};`;
+      }
+      return `<div class="day-block">
+        <div class="day-block-title" style="${style}">${title}</div>
+        ${g.items.map(itemRowHtml).join("")}
+      </div>`;
+    }).join("");
+    updateSelInfo();
   }
 
-  function taskRowHtml(t) {
-    const c = catColor(t.category);
-    const period = (t.startDate && t.endDate && t.startDate !== t.endDate)
-      ? `<span class="period-tag">🗓️ ${t.startDate.slice(5).replace("-","/")}~${t.endDate.slice(5).replace("-","/")}</span>` : "";
-    const on = isIncluded(t.id);
+  function itemRowHtml(i) {
+    const c = catColor(i.category);
+    const on = isIncluded(i.id);
+    const statusClass = i.status === "완료" ? "status-done" : "status-ing";
+    const members = i.kind === "merge"
+      ? `<div class="merge-members">묶인 업무 ${i.members.length}건 — ${esc(i.members.map(t => t.text).join(" · "))}</div>` : "";
+    const raw = (i.kind === "task" && i.label) ? `<div class="raw-text">원문: ${esc(i.raw)}</div>` : "";
+    const catCell = i.kind === "extra"
+      ? `<select class="cat-tag extra-cat edit-only" data-id="${esc(i.id)}" style="background:${c.bg};color:${c.fg};border:none;padding:3px 6px;">
+           ${Object.keys(CATEGORY_COLORS).map(k => `<option value="${k}" ${k === i.category ? "selected" : ""}>${k}</option>`).join("")}
+         </select>`
+      : `<span class="cat-tag" style="background:${c.bg}; color:${c.fg};">${esc(i.category)}</span>`;
+
     return `
-      <div class="task-row ${on ? "" : "excluded"}">
-        <input type="checkbox" class="inc-cb edit-only" data-id="${esc(t.id)}" ${on ? "checked" : ""} title="보고서 포함">
-        <span class="cat-tag" style="background:${c.bg}; color:${c.fg};">${esc(t.category||"기타")}</span>
-        <span class="task-txt">${esc(t.text)}</span>
-        ${period}
-        <span class="status-tag ${t.done ? "status-done" : "status-ing"}">${t.done ? "완료" : "진행중"}</span>
-        <input type="text" class="note-input edit-only" data-note="${esc(t.id)}"
-               value="${esc(report.notes[t.id] || "")}" placeholder="보고용 비고 — 성과·수치·특이사항 (예: 릴스 4건 발행, 조회수 12만)">
+      <div class="task-row ${on ? "" : "excluded"} ${i.kind === "merge" ? "merge-card" : ""}">
+        <input type="checkbox" class="inc-cb edit-only" data-id="${esc(i.id)}" ${on ? "checked" : ""} title="보고서 포함">
+        ${catCell}
+        ${i.kind === "merge" ? `<span class="merge-badge">묶음</span>` : ""}
+        <div class="task-main">
+          <input type="text" class="label-input edit-only" data-label="${esc(i.id)}" data-kind="${i.kind}"
+                 value="${esc(i.label)}" placeholder="${esc(i.raw || "보고용 문구를 입력하세요")}">
+          <span class="task-txt" style="display:none;">${esc(itemLabel(i))}</span>
+          ${raw}
+        </div>
+        <span class="status-tag ${statusClass}">${i.status}</span>
+        ${i.period ? `<span class="period-tag">${esc(i.period)}</span>` : ""}
+        ${i.kind === "merge"
+          ? `<button class="unmerge-btn edit-only" data-unmerge="${esc(i.id)}">묶음 풀기</button>`
+          : (i.kind === "extra"
+            ? `<button class="row-del edit-only" data-delextra="${esc(i.id)}" title="삭제">×</button>`
+            : `<label class="pick edit-only"><input type="checkbox" class="sel-cb" data-sel="${esc(i.id)}"> 묶기</label>`)}
+        <input type="text" class="note-input edit-only" data-note="${esc(i.id)}"
+               value="${esc(i.note)}" placeholder="보고용 비고 — 성과·수치·특이사항 (예: 릴스 4건 발행, 조회수 12만)">
+        ${members}
       </div>`;
+  }
+
+  function updateSelInfo() {
+    const n = document.querySelectorAll(".sel-cb:checked").length;
+    const el = document.getElementById("selInfo");
+    if (el) el.textContent = n ? `${n}건 선택됨 — 묶기 버튼을 누르면 한 줄로 합쳐져요.` : "";
+  }
+
+  /* ---------- PPL 성과 ---------- */
+  const PPL_CHANNELS = ["인스타그램", "유튜브", "블로그", "틱톡", "기타"];
+  const PPL_COLS = [
+    { k:"brand",   h:"브랜드",   w:"90px",  type:"text" },
+    { k:"name",    h:"인플루언서", w:"130px", type:"text" },
+    { k:"channel", h:"채널",     w:"104px", type:"select" },
+    { k:"link",    h:"콘텐츠 링크", w:"150px", type:"text" },
+    { k:"reach",   h:"노출/조회수", w:"92px",  type:"num" },
+    { k:"clicks",  h:"유입(클릭)", w:"92px",  type:"num" },
+    { k:"orders",  h:"구매전환(건)", w:"92px", type:"num" },
+    { k:"revenue", h:"매출(원)",  w:"104px", type:"num" },
+    { k:"note",    h:"비고",     w:"150px", type:"text" }
+  ];
+
+  function pplTotals() {
+    const t = { reach:0, clicks:0, orders:0, revenue:0 };
+    report.ppl.rows.forEach(r => {
+      t.reach += parseNum(r.reach); t.clicks += parseNum(r.clicks);
+      t.orders += parseNum(r.orders); t.revenue += parseNum(r.revenue);
+    });
+    t.cvr = t.clicks ? (t.orders / t.clicks * 100) : 0;
+    return t;
+  }
+  function rowCvr(r) {
+    const c = parseNum(r.clicks), o = parseNum(r.orders);
+    return c ? (o / c * 100) : null;
+  }
+
+  function renderPPL() {
+    const table = document.getElementById("pplTable");
+    const rows = report.ppl.rows;
+    if (!rows.length) {
+      table.innerHTML = `<tbody><tr><td style="border:none;">
+        <div class="empty">아직 등록된 인플루언서가 없어요.<br>
+        <b>+ 인플루언서 추가</b>를 누르거나, 대시보드에서 복사한 표를 <b>표 붙여넣기</b>로 한 번에 넣어보세요.</div>
+      </td></tr></tbody>`;
+      return;
+    }
+    const t = pplTotals();
+    table.innerHTML = `
+      <thead><tr>
+        ${PPL_COLS.map(c => `<th style="width:${c.w}">${c.h}</th>`).join("")}
+        <th style="width:70px;">전환율</th>
+        <th class="edit-only" style="width:38px;"></th>
+      </tr></thead>
+      <tbody>
+        ${rows.map((r, idx) => `<tr>
+          ${PPL_COLS.map(c => {
+            if (c.type === "select") {
+              return `<td><select data-ppl="${c.k}" data-idx="${idx}" ${isViewMode ? "disabled" : ""}>
+                ${PPL_CHANNELS.map(ch => `<option ${ch === (r.channel || "인스타그램") ? "selected" : ""}>${ch}</option>`).join("")}
+              </select></td>`;
+            }
+            return `<td class="${c.type === "num" ? "num" : ""}">
+              <input type="text" data-ppl="${c.k}" data-idx="${idx}" value="${esc(r[c.k] || "")}"
+                ${c.type === "num" ? 'inputmode="numeric"' : ""} ${isViewMode ? "readonly" : ""}
+                placeholder="${c.k === "link" ? "https://" : ""}"></td>`;
+          }).join("")}
+          <td class="c" data-cvr="${idx}">${rowCvr(r) == null ? "-" : nfmt(rowCvr(r)) + "%"}</td>
+          <td class="edit-only" style="text-align:center;"><button class="row-del" data-pplerase="${idx}" title="행 삭제">×</button></td>
+        </tr>`).join("")}
+      </tbody>
+      <tfoot><tr>
+        <td class="l" colspan="4">합계 · 인플루언서 ${rows.length}명</td>
+        <td id="tReach">${nfmt(t.reach)}</td>
+        <td id="tClicks">${nfmt(t.clicks)}</td>
+        <td id="tOrders">${nfmt(t.orders)}</td>
+        <td id="tRevenue">${nfmt(t.revenue)}</td>
+        <td></td>
+        <td id="tCvr" style="text-align:center;">${nfmt(t.cvr)}%</td>
+        <td class="edit-only"></td>
+      </tr></tfoot>`;
+  }
+
+  function refreshPplNumbers() {
+    const t = pplTotals();
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set("tReach", nfmt(t.reach)); set("tClicks", nfmt(t.clicks));
+    set("tOrders", nfmt(t.orders)); set("tRevenue", nfmt(t.revenue)); set("tCvr", nfmt(t.cvr) + "%");
+    report.ppl.rows.forEach((r, idx) => {
+      const cell = document.querySelector(`[data-cvr="${idx}"]`);
+      if (cell) cell.textContent = rowCvr(r) == null ? "-" : nfmt(rowCvr(r)) + "%";
+    });
   }
 
   function renderNextPreview() {
@@ -681,28 +950,70 @@
   function renderPreview() {
     collectFromUI();
     const mon = mondayOf(anchor), fri = addDays(mon, 4);
-    const days = weekTasks(mon);
-    const all = uniqueTasks(days).filter(t => isIncluded(t.id));
-    const done = all.filter(t => t.done).length;
-    const rate = all.length ? Math.round(done / all.length * 100) : 0;
+    const items = buildItems();
+    const done = items.filter(i => i.status === "완료").length;
+    const rate = items.length ? Math.round(done / items.length * 100) : 0;
 
-    const dayOf = {};
-    days.forEach(d => d.items.forEach(t => { if (!dayOf[t.id]) dayOf[t.id] = []; dayOf[t.id].push(d.label); }));
-
-    const rows = all.map(t => {
-      const c = catColor(t.category);
-      const period = (t.startDate !== t.endDate)
-        ? `${t.startDate.slice(5).replace("-","/")}~${t.endDate.slice(5).replace("-","/")}`
-        : (dayOf[t.id] ? dayOf[t.id].join(",") : t.startDate.slice(5).replace("-","/"));
+    const rows = items.map(i => {
+      const c = catColor(i.category);
       return `<tr>
-        <td class="c"><span style="background:${c.bg};color:${c.fg};padding:2px 7px;border-radius:999px;font-size:11px;font-weight:700;">${esc(t.category||"기타")}</span></td>
-        <td>${esc(t.text)}</td>
-        <td class="c">${esc(period)}</td>
-        <td class="c">${t.done ? "완료" : "진행중"}</td>
-        <td>${esc(report.notes[t.id] || "")}</td>
+        <td class="c"><span style="background:${c.bg};color:${c.fg};padding:2px 7px;border-radius:999px;font-size:11px;font-weight:700;">${esc(i.category)}</span></td>
+        <td>${esc(itemLabel(i))}</td>
+        <td class="c">${esc(i.period)}</td>
+        <td class="c">${esc(i.status)}</td>
+        <td>${esc(i.note)}</td>
       </tr>`;
     }).join("");
 
+    /* --- PPL 성과 --- */
+    let pplSection = "";
+    const pr = report.ppl.rows.filter(r => (r.name || "").trim() || parseNum(r.clicks) || parseNum(r.orders));
+    if (pr.length) {
+      const has = k => pr.some(r => String(r[k] || "").trim() !== "" && (["reach","clicks","orders","revenue"].indexOf(k) === -1 || parseNum(r[k]) !== 0));
+      const cols = PPL_COLS.filter(c => c.k !== "link" && has(c.k));
+      const t = { reach:0, clicks:0, orders:0, revenue:0 };
+      pr.forEach(r => { t.reach += parseNum(r.reach); t.clicks += parseNum(r.clicks); t.orders += parseNum(r.orders); t.revenue += parseNum(r.revenue); });
+      const cvr = t.clicks ? t.orders / t.clicks * 100 : 0;
+      const showCvr = has("clicks") && has("orders");
+
+      pplSection = `
+        <div class="pv-stats">
+          ${has("reach") ? `<span class="pv-stat">총 노출 ${nfmt(t.reach)}</span>` : ""}
+          ${has("clicks") ? `<span class="pv-stat">총 유입 ${nfmt(t.clicks)}</span>` : ""}
+          ${has("orders") ? `<span class="pv-stat">구매전환 ${nfmt(t.orders)}건</span>` : ""}
+          ${showCvr ? `<span class="pv-stat">전환율 ${nfmt(cvr)}%</span>` : ""}
+          ${has("revenue") ? `<span class="pv-stat">매출 ${nfmt(t.revenue)}원</span>` : ""}
+          <span class="pv-stat">인플루언서 ${pr.length}명</span>
+        </div>
+        <table class="pv-table">
+          <thead><tr>
+            ${cols.map(c => `<th${c.type === "num" ? ' style="text-align:right;"' : ""}>${c.h}</th>`).join("")}
+            ${showCvr ? `<th style="width:66px; text-align:center;">전환율</th>` : ""}
+          </tr></thead>
+          <tbody>
+            ${pr.map(r => `<tr>
+              ${cols.map(c => {
+                let v = esc(r[c.k] || "");
+                if (c.k === "name" && (r.link || "").trim())
+                  v = `<a href="${esc(r.link)}" style="color:#0f766e;">${v}</a>`;
+                if (c.type === "num") return `<td style="text-align:right;">${v ? nfmt(parseNum(r[c.k])) : ""}</td>`;
+                return `<td>${v}</td>`;
+              }).join("")}
+              ${showCvr ? `<td class="c">${rowCvr(r) == null ? "-" : nfmt(rowCvr(r)) + "%"}</td>` : ""}
+            </tr>`).join("")}
+          </tbody>
+          <tfoot><tr style="background:#fdf7f9; font-weight:800;">
+            ${cols.map((c, n) => {
+              if (n === 0) return `<td>합계</td>`;
+              if (c.type === "num") return `<td style="text-align:right;">${nfmt(t[c.k])}</td>`;
+              return `<td></td>`;
+            }).join("")}
+            ${showCvr ? `<td class="c">${nfmt(cvr)}%</td>` : ""}
+          </tr></tfoot>
+        </table>`;
+    }
+
+    /* --- 다음 주 --- */
     let nextAuto = "";
     if (report.autoNext) {
       const nextAll = uniqueTasks(weekTasks(addDays(mon, 7)));
@@ -712,9 +1023,9 @@
           <tbody>${nextAll.map(t => {
             const c = catColor(t.category);
             return `<tr>
-              <td class="c"><span style="background:${c.bg};color:${c.fg};padding:2px 7px;border-radius:999px;font-size:11px;font-weight:700;">${esc(t.category||"기타")}</span></td>
+              <td class="c"><span style="background:${c.bg};color:${c.fg};padding:2px 7px;border-radius:999px;font-size:11px;font-weight:700;">${esc(t.category || "기타")}</span></td>
               <td>${esc(t.text)}</td>
-              <td class="c">${t.startDate.slice(5).replace("-","/")}</td>
+              <td class="c">${t.startDate.slice(5).replace("-", "/")}</td>
             </tr>`; }).join("")}</tbody></table>`;
       }
     }
@@ -724,40 +1035,48 @@
       if (/<img/i.test(html)) return true;
       return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim().length > 0;
     };
-    const sec = (title, body, extra) => `
-      <div class="pv-sec">
-        <h3>${title}</h3>
+
+    let n = 0;
+    const sec = (name, body, extra) => {
+      n++;
+      return `<div class="pv-sec">
+        <h3>${n}. ${name}</h3>
         ${extra || ""}
         <div class="pv-body">${hasContent(body) ? body : `<span class="pv-empty">작성된 내용이 없습니다.</span>`}</div>
       </div>`;
+    };
+
+    n++;
+    const summarySec = `<div class="pv-sec">
+      <h3>${n}. 주간 업무 요약</h3>
+      <div class="pv-stats">
+        <span class="pv-stat">총 ${items.length}건</span>
+        <span class="pv-stat">완료 ${done}건</span>
+        <span class="pv-stat">진행중 ${items.length - done}건</span>
+        <span class="pv-stat">완료율 ${rate}%</span>
+      </div>
+      ${items.length ? `<table class="pv-table">
+        <thead><tr>
+          <th style="width:96px;">구분</th><th>업무 내용</th>
+          <th style="width:88px;">일정</th><th style="width:70px;">진행</th><th style="width:30%;">비고 / 성과</th>
+        </tr></thead>
+        <tbody>${rows}</tbody></table>` : `<span class="pv-empty">등록된 업무가 없습니다.</span>`}
+    </div>`;
+
+    let pplBlock = "";
+    if (pplSection) { n++; pplBlock = `<div class="pv-sec"><h3>${n}. PPL 성과 (인플루언서별)</h3>${pplSection}</div>`; }
 
     document.getElementById("previewRoot").innerHTML = `
       <div class="pv-title">${esc(report.title || "마케팅 주간 업무 보고")}</div>
       <div class="pv-meta">보고 기간 · ${fmtDate(mon)}(월) ~ ${fmtDate(fri)}(금)</div>
       <div class="pv-meta">${report.writer ? "작성자 · " + esc(report.writer) : ""}${report.writer && report.to ? "&nbsp;&nbsp;|&nbsp;&nbsp;" : ""}${report.to ? "보고 대상 · " + esc(report.to) : ""}</div>
       <div class="pv-rule"></div>
-
-      <div class="pv-sec">
-        <h3>1. 주간 업무 요약</h3>
-        <div class="pv-stats">
-          <span class="pv-stat">총 ${all.length}건</span>
-          <span class="pv-stat">완료 ${done}건</span>
-          <span class="pv-stat">진행중 ${all.length - done}건</span>
-          <span class="pv-stat">완료율 ${rate}%</span>
-        </div>
-        ${all.length ? `<table class="pv-table">
-          <thead><tr>
-            <th style="width:96px;">구분</th><th>업무 내용</th>
-            <th style="width:88px;">일정</th><th style="width:62px;">진행</th><th style="width:30%;">비고 / 성과</th>
-          </tr></thead>
-          <tbody>${rows}</tbody></table>`
-        : `<span class="pv-empty">등록된 업무가 없습니다.</span>`}
-      </div>
-
-      ${sec("2. 주요 성과 및 진행 현황", report.summary)}
-      ${sec("3. 이슈 및 특이사항", report.issues)}
-      ${sec("4. 다음 주 계획", report.nextPlan, nextAuto)}
-      ${sec("5. 요청 및 공유 사항", report.requests)}
+      ${summarySec}
+      ${pplBlock}
+      ${sec("주요 성과 및 진행 현황", report.summary)}
+      ${sec("이슈 및 특이사항", report.issues)}
+      ${sec("다음 주 계획", report.nextPlan, nextAuto)}
+      ${sec("요청 및 공유 사항", report.requests)}
     `;
   }
 
@@ -888,28 +1207,193 @@
   });
   document.getElementById("autoNext").addEventListener("change", () => { collectFromUI(); scheduleSave(); });
 
-  document.getElementById("taskArea").addEventListener("change", (e) => {
-    if (e.target.classList.contains("inc-cb")) {
-      const id = e.target.dataset.id;
-      if (e.target.checked) report.excluded = report.excluded.filter(x => x !== id);
+  const taskArea = document.getElementById("taskArea");
+
+  taskArea.addEventListener("change", (e) => {
+    const el = e.target;
+    if (el.classList.contains("inc-cb")) {
+      const id = el.dataset.id;
+      if (el.checked) report.excluded = report.excluded.filter(x => x !== id);
       else if (report.excluded.indexOf(id) === -1) report.excluded.push(id);
+      renderTasks(); scheduleSave();
+    } else if (el.classList.contains("sel-cb")) {
+      updateSelInfo();
+    } else if (el.classList.contains("extra-cat")) {
+      const x = report.extras.find(v => v.id === el.dataset.id);
+      if (x) { x.category = el.value; renderTasks(); scheduleSave(); }
+    }
+  });
+
+  taskArea.addEventListener("input", (e) => {
+    const el = e.target;
+    if (el.dataset.note !== undefined && el.dataset.note !== "") {
+      const id = el.dataset.note;
+      const m = report.merges.find(v => v.id === id);
+      const x = report.extras.find(v => v.id === id);
+      if (m) m.note = el.value;
+      else if (x) x.note = el.value;
+      else report.notes[id] = el.value;
+      scheduleSave();
+    } else if (el.dataset.label !== undefined && el.dataset.label !== "") {
+      const id = el.dataset.label;
+      const m = report.merges.find(v => v.id === id);
+      const x = report.extras.find(v => v.id === id);
+      if (m) m.label = el.value;
+      else if (x) x.label = el.value;
+      else {
+        if (el.value.trim()) report.labels[id] = el.value;
+        else delete report.labels[id];
+      }
+      scheduleSave();
+    }
+  });
+
+  taskArea.addEventListener("click", (e) => {
+    const un = e.target.dataset && e.target.dataset.unmerge;
+    const dx = e.target.dataset && e.target.dataset.delextra;
+    if (un) {
+      report.merges = report.merges.filter(m => m.id !== un);
+      report.excluded = report.excluded.filter(x => x !== un);
+      renderTasks(); scheduleSave();
+      toast("묶음을 풀었어요.");
+    } else if (dx) {
+      report.extras = report.extras.filter(x => x.id !== dx);
       renderTasks(); scheduleSave();
     }
   });
-  document.getElementById("taskArea").addEventListener("input", (e) => {
-    if (e.target.dataset.note) { report.notes[e.target.dataset.note] = e.target.value; scheduleSave(); }
+
+  function mergeSelected(ids, category) {
+    if (ids.length < 2) { toast("묶으려면 2건 이상 선택해 주세요."); return null; }
+    const items = buildItems(true);
+    const picked = items.filter(i => ids.indexOf(i.id) !== -1 && i.kind === "task");
+    if (picked.length < 2) { toast("묶음이나 직접 추가한 항목은 함께 묶을 수 없어요."); return null; }
+    const m = {
+      id: nid("m"),
+      label: picked.map(i => itemLabel(i)).join(" / "),
+      category: category || picked[0].category,
+      taskIds: picked.map(i => i.id),
+      note: picked.map(i => i.note).filter(Boolean).join(" / ")
+    };
+    report.merges.push(m);
+    return m;
+  }
+
+  document.getElementById("mergeBtn").onclick = () => {
+    const ids = [...document.querySelectorAll(".sel-cb:checked")].map(c => c.dataset.sel);
+    const m = mergeSelected(ids);
+    if (!m) return;
+    renderTasks(); scheduleSave();
+    toast("한 줄로 묶었어요. 문구를 보고용으로 다듬어 주세요.");
+    const input = document.querySelector(`[data-label="${m.id}"]`);
+    if (input) { input.focus(); input.select(); }
+  };
+
+  document.getElementById("autoMergeBtn").onclick = () => {
+    const items = buildItems(true).filter(i => i.kind === "task");
+    const byCat = {};
+    items.forEach(i => { (byCat[i.category] = byCat[i.category] || []).push(i.id); });
+    let made = 0;
+    Object.keys(byCat).forEach(cat => {
+      if (byCat[cat].length >= 2) { if (mergeSelected(byCat[cat], cat)) made++; }
+    });
+    if (!made) { toast("같은 구분으로 2건 이상인 업무가 없어요."); return; }
+    renderTasks(); scheduleSave();
+    toast(`${made}개 구분으로 묶었어요. 문구를 다듬어 주세요.`);
+  };
+
+  document.getElementById("addExtraBtn").onclick = () => {
+    const mon0 = mondayOf(anchor), fri0 = addDays(mon0, 4), today0 = fmtDate(new Date());
+    const place = (today0 >= fmtDate(mon0) && today0 <= fmtDate(fri0)) ? today0 : fmtDate(fri0);
+    const x = { id: nid("x"), label: "", category: "기타", note: "", status: "완료",
+                period: "", order: place };
+    report.extras.push(x);
+    renderTasks(); scheduleSave();
+    const input = document.querySelector(`[data-label="${x.id}"]`);
+    if (input) input.focus();
+  };
+
+  /* ---------- PPL 이벤트 ---------- */
+  const pplTable = document.getElementById("pplTable");
+
+  pplTable.addEventListener("input", (e) => {
+    const k = e.target.dataset.ppl;
+    if (!k) return;
+    const row = report.ppl.rows[Number(e.target.dataset.idx)];
+    if (!row) return;
+    row[k] = e.target.value;
+    if (["reach", "clicks", "orders", "revenue"].indexOf(k) !== -1) refreshPplNumbers();
+    scheduleSave();
   });
+  pplTable.addEventListener("change", (e) => {
+    const k = e.target.dataset.ppl;
+    if (k === "channel") {
+      const row = report.ppl.rows[Number(e.target.dataset.idx)];
+      if (row) { row.channel = e.target.value; scheduleSave(); }
+    }
+  });
+  pplTable.addEventListener("click", (e) => {
+    const idx = e.target.dataset && e.target.dataset.pplerase;
+    if (idx === undefined) return;
+    report.ppl.rows.splice(Number(idx), 1);
+    renderPPL(); scheduleSave();
+  });
+
+  function addPplRow(data) {
+    report.ppl.rows.push(Object.assign(
+      { brand:"", name:"", channel:"인스타그램", link:"", reach:"", clicks:"", orders:"", revenue:"", note:"" },
+      data || {}));
+  }
+
+  document.getElementById("pplAddRow").onclick = () => {
+    addPplRow(); renderPPL(); scheduleSave();
+    const inputs = document.querySelectorAll('#pplTable [data-ppl="name"]');
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  };
+
+  document.getElementById("pplPasteToggle").onclick = () => {
+    const w = document.getElementById("pplPasteWrap");
+    w.style.display = w.style.display === "none" ? "block" : "none";
+    if (w.style.display === "block") document.getElementById("pplPasteBox").focus();
+  };
+  document.getElementById("pplPasteCancel").onclick = () => {
+    document.getElementById("pplPasteWrap").style.display = "none";
+    document.getElementById("pplPasteBox").value = "";
+  };
+  document.getElementById("pplPasteApply").onclick = () => {
+    const raw = document.getElementById("pplPasteBox").value.trim();
+    if (!raw) { toast("붙여넣은 내용이 없어요."); return; }
+    const keys = ["brand", "name", "channel", "reach", "clicks", "orders", "revenue", "note"];
+    let added = 0;
+    raw.split(/\r?\n/).forEach(line => {
+      if (!line.trim()) return;
+      const cells = line.indexOf("\t") !== -1 ? line.split("\t") : line.split(",");
+      if (/인플루언서|브랜드|유입|전환/.test(cells.join(" ")) && added === 0 && !/\d/.test(cells.join(""))) return;
+      const data = {};
+      keys.forEach((k, i) => { if (cells[i] !== undefined) data[k] = cells[i].trim(); });
+      if (data.channel && PPL_CHANNELS.indexOf(data.channel) === -1) {
+        data.note = (data.note ? data.note + " " : "") + data.channel;
+        data.channel = "인스타그램";
+      }
+      addPplRow(data); added++;
+    });
+    document.getElementById("pplPasteBox").value = "";
+    document.getElementById("pplPasteWrap").style.display = "none";
+    renderPPL(); scheduleSave();
+    toast(`${added}행을 표에 넣었어요.`);
+  };
 
   document.getElementById("groupToggle").onclick = (e) => {
     groupByDay = !groupByDay;
-    e.target.textContent = groupByDay ? "요일별 보기" : "카테고리별 보기";
+    e.target.textContent = groupByDay ? "구분별로 보기" : "요일별로 보기";
     renderTasks();
   };
 
   function isEmptyReport() {
     const r = report;
     return !r.title && !r.writer && !r.to && !r.summary && !r.issues && !r.nextPlan && !r.requests
-      && Object.keys(r.notes || {}).length === 0 && (r.excluded || []).length === 0;
+      && Object.keys(r.notes || {}).length === 0 && Object.keys(r.labels || {}).length === 0
+      && (r.excluded || []).length === 0 && (r.merges || []).length === 0
+      && (r.extras || []).length === 0 && (r.ppl && r.ppl.rows ? r.ppl.rows.length : 0) === 0;
   }
 
   async function moveWeek(delta) {
