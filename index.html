@@ -42,6 +42,7 @@
     border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: 700;
   }
   .action-btn.secondary { background: #8b5cf6; }
+  .action-btn.report { background: #0f766e; }
   .action-btn:hover { opacity: 0.9; }
 
   .banner-readonly {
@@ -228,9 +229,10 @@
       <h1>📋 스케줄러</h1>
       <span class="sync-badge" id="syncStatus">🔄 데이터 로딩 중...</span>
     </div>
-    <div class="btn-group edit-only">
-      <button class="action-btn" onclick="copyLink('edit')">✏️ 편집용 링크 복사</button>
-      <button class="action-btn secondary" onclick="copyLink('view')">🔒 보고용 링크 복사</button>
+    <div class="btn-group">
+      <button class="action-btn edit-only" onclick="copyLink('edit')">✏️ 편집용 링크 복사</button>
+      <button class="action-btn secondary edit-only" onclick="copyLink('view')">🔒 보고용 링크 복사</button>
+      <button class="action-btn report" onclick="goWeeklyReport()">📊 마케터 주간보고</button>
     </div>
   </div>
 </header>
@@ -959,6 +961,11 @@
 
   document.getElementById("prevMonth").onclick = () => { calMonth--; if(calMonth < 0) { calMonth = 11; calYear--; } renderCalendar(); };
   document.getElementById("nextMonth").onclick = () => { calMonth++; if(calMonth > 11) { calMonth = 0; calYear++; } renderCalendar(); };
+
+  window.goWeeklyReport = function() {
+    const base = window.location.pathname.replace(/[^/]*$/, '');
+    window.location.href = base + 'report.html' + (isViewMode ? '?mode=view' : '');
+  };
 
   window.copyLink = function(type) {
     const baseUrl = window.location.origin + window.location.pathname;
