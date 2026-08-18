@@ -213,6 +213,32 @@
   }
   .paste-area:focus { border-style:solid; border-color:var(--accent); }
 
+  /* 카드 접기/펼치기 */
+  .card.collapsible .card-header { cursor: pointer; user-select: none; }
+  .card-toggle {
+    border: none; background: var(--accent-soft); color: var(--accent-dark); border-radius: 8px;
+    width: 26px; height: 26px; font-size: 12px; font-weight: 800; cursor: pointer; line-height: 1;
+    transition: transform .18s;
+  }
+  .card.collapsed .card-toggle { transform: rotate(-90deg); }
+  .card.collapsed .card-body { display: none; }
+  .card.collapsed .card-header { margin-bottom: 0; }
+  .head-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  .collapse-peek { font-size: 11.5px; color: var(--text-soft); font-weight: 600; display: none; }
+  .card.collapsed .collapse-peek { display: inline; }
+
+  /* 본문 안 표 (엑셀 형식) */
+  .rich-box table, .pv-body table {
+    border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 12.5px;
+  }
+  .rich-box table th, .pv-body table th {
+    border: 1px solid #e8cfd9; background: var(--accent-soft); color: var(--accent-dark);
+    padding: 7px 9px; text-align: left; font-weight: 700;
+  }
+  .rich-box table td, .pv-body table td { border: 1px solid #e8cfd9; padding: 7px 9px; vertical-align: top; }
+  .rich-box table td:focus, .rich-box table th:focus { background: #fff5f9; outline: none; }
+  .table-tools { display: flex; gap: 5px; flex-wrap: wrap; }
+
   #toast {
     position: fixed; left: 50%; bottom: 34px; transform: translateX(-50%) translateY(12px);
     background: #2b2430; color: #fff; padding: 11px 18px; border-radius: 10px; font-size: 13px; font-weight: 600;
@@ -302,6 +328,26 @@
   <!-- 이번주 수행 업무 -->
   <div class="card">
     <div class="card-header">
+      <h2><span class="dot"></span>이번 주 수행 업무 요약</h2>
+      <div class="btn-group edit-only">
+        <button class="mini-btn" id="autoSummaryBtn">✨ 자동으로 요약 만들기</button>
+      </div>
+    </div>
+    <div class="rich-box" id="secWeekSummary" data-key="weekSummary" data-placeholder="이번 주에 어떤 업무를 어떻게 진행했는지 3~5줄로 요약해 주세요. 위 버튼을 누르면 스케줄러 업무와 PPL 성과를 바탕으로 초안이 만들어집니다."></div>
+    <div class="editor-foot edit-only">
+      <span class="editor-hint">📸 캡처 붙여넣기 · 📊 엑셀 표 붙여넣기 가능</span>
+      <div class="table-tools">
+        <button class="mini-btn" data-table="secWeekSummary" data-act="insert">표 넣기</button>
+        <button class="mini-btn" data-table="secWeekSummary" data-act="row">행 추가</button>
+        <button class="mini-btn" data-table="secWeekSummary" data-act="col">열 추가</button>
+        <button class="mini-btn" data-table="secWeekSummary" data-act="delrow">행 삭제</button>
+        <button class="mini-btn" data-upload="secWeekSummary">이미지 첨부</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
       <h2><span class="dot"></span>이번 주 수행 업무</h2>
       <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
         <span class="card-sub">스케줄러에서 자동으로 불러옵니다</span>
@@ -358,7 +404,13 @@
     <div class="rich-box" id="secSummary" data-key="summary" data-placeholder="이번 주 핵심 성과를 적어주세요. (예: 온살 8월 인플루언서 PPL 12명 발행 완료 / 총 노출 32만, 유입 1,240건)  캡처 이미지는 Ctrl+V로 바로 붙여넣으세요."></div>
     <div class="editor-foot edit-only">
       <span class="editor-hint">📸 Ctrl+V 붙여넣기 · 이미지 드래그&드롭 · 이미지 클릭 시 크기 조절/삭제</span>
-      <button class="mini-btn" data-upload="secSummary">이미지 파일 첨부</button>
+      <div class="table-tools">
+        <button class="mini-btn" data-table="secSummary" data-act="insert">표 넣기</button>
+        <button class="mini-btn" data-table="secSummary" data-act="row">행 추가</button>
+        <button class="mini-btn" data-table="secSummary" data-act="col">열 추가</button>
+        <button class="mini-btn" data-table="secSummary" data-act="delrow">행 삭제</button>
+        <button class="mini-btn" data-upload="secSummary">이미지 첨부</button>
+      </div>
     </div>
   </div>
 
@@ -370,8 +422,14 @@
     </div>
     <div class="rich-box" id="secIssues" data-key="issues" data-placeholder="진행 중 발생한 이슈, 지연 사유, 리스크를 적어주세요."></div>
     <div class="editor-foot edit-only">
-      <span class="editor-hint">📸 캡처 붙여넣기 가능</span>
-      <button class="mini-btn" data-upload="secIssues">이미지 파일 첨부</button>
+      <span class="editor-hint">📸 캡처 붙여넣기 · 📊 엑셀 표 붙여넣기 가능</span>
+      <div class="table-tools">
+        <button class="mini-btn" data-table="secIssues" data-act="insert">표 넣기</button>
+        <button class="mini-btn" data-table="secIssues" data-act="row">행 추가</button>
+        <button class="mini-btn" data-table="secIssues" data-act="col">열 추가</button>
+        <button class="mini-btn" data-table="secIssues" data-act="delrow">행 삭제</button>
+        <button class="mini-btn" data-upload="secIssues">이미지 첨부</button>
+      </div>
     </div>
   </div>
 
@@ -386,8 +444,14 @@
     <div id="nextPreview" style="margin-bottom:12px;"></div>
     <div class="rich-box" id="secNext" data-key="nextPlan" data-placeholder="다음 주에 집중할 업무와 목표를 적어주세요."></div>
     <div class="editor-foot edit-only">
-      <span class="editor-hint">📸 캡처 붙여넣기 가능</span>
-      <button class="mini-btn" data-upload="secNext">이미지 파일 첨부</button>
+      <span class="editor-hint">📸 캡처 붙여넣기 · 📊 엑셀 표 붙여넣기 가능</span>
+      <div class="table-tools">
+        <button class="mini-btn" data-table="secNext" data-act="insert">표 넣기</button>
+        <button class="mini-btn" data-table="secNext" data-act="row">행 추가</button>
+        <button class="mini-btn" data-table="secNext" data-act="col">열 추가</button>
+        <button class="mini-btn" data-table="secNext" data-act="delrow">행 삭제</button>
+        <button class="mini-btn" data-upload="secNext">이미지 첨부</button>
+      </div>
     </div>
   </div>
 
@@ -399,8 +463,14 @@
     </div>
     <div class="rich-box" id="secRequests" data-key="requests" data-placeholder="컨펌이 필요한 건, 예산 승인, 타 팀 협조 요청 등을 적어주세요."></div>
     <div class="editor-foot edit-only">
-      <span class="editor-hint">📸 캡처 붙여넣기 가능</span>
-      <button class="mini-btn" data-upload="secRequests">이미지 파일 첨부</button>
+      <span class="editor-hint">📸 캡처 붙여넣기 · 📊 엑셀 표 붙여넣기 가능</span>
+      <div class="table-tools">
+        <button class="mini-btn" data-table="secRequests" data-act="insert">표 넣기</button>
+        <button class="mini-btn" data-table="secRequests" data-act="row">행 추가</button>
+        <button class="mini-btn" data-table="secRequests" data-act="col">열 추가</button>
+        <button class="mini-btn" data-table="secRequests" data-act="delrow">행 삭제</button>
+        <button class="mini-btn" data-upload="secRequests">이미지 첨부</button>
+      </div>
     </div>
   </div>
 
@@ -499,7 +569,7 @@
   function weekKey() { return fmtDate(mondayOf(anchor)); }
 
   function blankReport() {
-    return { title:"", writer:"", to:"", summary:"", issues:"", nextPlan:"", requests:"",
+    return { title:"", writer:"", to:"", weekSummary:"", summary:"", issues:"", nextPlan:"", requests:"",
              notes:{}, labels:{}, merges:[], extras:[], excluded:[], autoNext:true,
              ppl:{ rows:[] } };
   }
@@ -735,6 +805,7 @@
     renderTasks();
     renderPPL();
     renderNextPreview();
+    updatePeeks();
     if (document.getElementById("viewPane").style.display !== "none") renderPreview();
   }
 
@@ -1048,7 +1119,8 @@
 
     n++;
     const summarySec = `<div class="pv-sec">
-      <h3>${n}. 주간 업무 요약</h3>
+      <h3>${n}. 이번 주 수행 업무 요약</h3>
+      ${hasContent(report.weekSummary) ? `<div class="pv-body" style="margin-bottom:14px;">${report.weekSummary}</div>` : ""}
       <div class="pv-stats">
         <span class="pv-stat">총 ${items.length}건</span>
         <span class="pv-stat">완료 ${done}건</span>
@@ -1090,6 +1162,238 @@
     if (!editOn) renderPreview();
   };
 
+  /* ---------- 커서 위치 삽입 (execCommand 대체 포함) ---------- */
+  function insertHtmlAtCaret(box, html) {
+    box.focus();
+    try { if (document.execCommand && document.execCommand("insertHTML", false, html)) return true; } catch (e) {}
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount && box.contains(sel.anchorNode)) {
+      const range = sel.getRangeAt(0);
+      range.deleteContents();
+      const frag = range.createContextualFragment(html);
+      const last = frag.lastChild;
+      range.insertNode(frag);
+      if (last) { range.setStartAfter(last); range.collapse(true); sel.removeAllRanges(); sel.addRange(range); }
+      return true;
+    }
+    box.insertAdjacentHTML("beforeend", html);
+    return true;
+  }
+  function insertTextAtCaret(box, text) {
+    try { if (document.execCommand && document.execCommand("insertText", false, text)) return; } catch (e) {}
+    insertHtmlAtCaret(box, esc(text).replace(/\n/g, "<br>"));
+  }
+
+  /* ---------- 자동 요약 ---------- */
+  function buildAutoSummary() {
+    const items = buildItems();
+    const mon = mondayOf(anchor), fri = addDays(mon, 4);
+    if (!items.length && !report.ppl.rows.length) return "";
+
+    const done = items.filter(i => i.status === "완료");
+    const openItems = items.filter(i => i.status !== "완료");
+    const rate = items.length ? Math.round(done.length / items.length * 100) : 0;
+
+    const byCat = {};
+    items.forEach(i => { (byCat[i.category] = byCat[i.category] || []).push(i); });
+    const cats = Object.keys(byCat).sort((a, b) => byCat[b].length - byCat[a].length);
+
+    const out = [];
+    let head = `${mon.getMonth() + 1}/${mon.getDate()}~${fri.getMonth() + 1}/${fri.getDate()} 총 ${items.length}건의 업무를 진행해 ${done.length}건을 완료했습니다(완료율 ${rate}%).`;
+    if (cats.length) {
+      head += ` 구분별로는 ${cats.slice(0, 3).map(c => `${c} ${byCat[c].length}건`).join(", ")}${cats.length > 3 ? " 등" : ""} 순으로 비중이 높았습니다.`;
+    }
+    out.push(`<p>${head}</p>`);
+
+    const t = pplTotals();
+    if (report.ppl.rows.length && (t.clicks || t.orders || t.reach)) {
+      const names = report.ppl.rows.map(r => (r.name || "").trim()).filter(Boolean);
+      let p = `PPL은 인플루언서 ${names.length || report.ppl.rows.length}명이 집행되어`;
+      const bits = [];
+      if (t.reach) bits.push(`노출 ${nfmt(t.reach)}`);
+      if (t.clicks) bits.push(`유입 ${nfmt(t.clicks)}건`);
+      if (t.orders) bits.push(`구매전환 ${nfmt(t.orders)}건`);
+      p += ` ${bits.join(", ")}을 기록했습니다`;
+      if (t.clicks && t.orders) p += ` (전환율 ${nfmt(t.cvr)}%)`;
+      if (t.revenue) p += `. 매출은 ${nfmt(t.revenue)}원입니다`;
+      out.push(`<p>${p}.</p>`);
+    }
+
+    if (cats.length) {
+      out.push("<p><b>주요 진행 내용</b></p>");
+      out.push("<ul>" + cats.map(c => {
+        const list = byCat[c];
+        const d = list.filter(i => i.status === "완료").length;
+        const txt = list.map(i => itemLabel(i)).join(" · ");
+        return `<li><b>${esc(c)}</b> — ${esc(txt)} <span style="color:#8a7480;">(${list.length}건 중 ${d}건 완료)</span></li>`;
+      }).join("") + "</ul>");
+    }
+
+    if (openItems.length) {
+      out.push(`<p>진행 중인 업무는 ${esc(openItems.slice(0, 3).map(i => itemLabel(i)).join(", "))}${openItems.length > 3 ? " 등" : ""} ${openItems.length}건으로, 다음 주에 이어서 진행할 예정입니다.</p>`);
+    }
+    return out.join("");
+  }
+
+  const autoBtn = document.getElementById("autoSummaryBtn");
+  if (autoBtn) autoBtn.onclick = () => {
+    const box = document.getElementById("secWeekSummary");
+    const html = buildAutoSummary();
+    if (!html) { toast("요약할 업무가 없어요. 스케줄러에 업무를 먼저 등록해 주세요."); return; }
+    const cur = box.innerHTML.replace(/<[^>]*>/g, "").trim();
+    if (cur && !confirm("이미 작성한 요약이 있어요. 새 초안으로 덮어쓸까요?")) return;
+    box.innerHTML = html;
+    collectFromUI(); scheduleSave();
+    toast("요약 초안을 만들었어요. 표현은 자유롭게 다듬으세요.");
+  };
+
+  /* ---------- 본문 표 (엑셀 형식) ---------- */
+  function makeTableHtml(cols, rows, headers) {
+    const th = (headers || []).length
+      ? headers.map(h => `<th>${esc(h)}</th>`).join("")
+      : Array.from({ length: cols }, (_, i) => `<th>항목 ${i + 1}</th>`).join("");
+    const body = (rows && rows.length)
+      ? rows.map(r => `<tr>${Array.from({ length: cols }, (_, i) => `<td>${esc(r[i] || "")}</td>`).join("")}</tr>`).join("")
+      : Array.from({ length: 2 }, () => `<tr>${Array.from({ length: cols }, () => "<td><br></td>").join("")}</tr>`).join("");
+    return `<table><thead><tr>${th}</tr></thead><tbody>${body}</tbody></table><p><br></p>`;
+  }
+  function caretTable(box) {
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return null;
+    let n = sel.anchorNode;
+    if (!box.contains(n)) return null;
+    while (n && n !== box) { if (n.tagName === "TABLE") return n; n = n.parentNode; }
+    return null;
+  }
+  function caretCellIndex(box) {
+    const sel = window.getSelection();
+    let n = sel && sel.anchorNode;
+    while (n && n !== box) { if (n.tagName === "TD" || n.tagName === "TH") return n.cellIndex; n = n.parentNode; }
+    return -1;
+  }
+  function caretRow(box) {
+    const sel = window.getSelection();
+    let n = sel && sel.anchorNode;
+    while (n && n !== box) { if (n.tagName === "TR") return n; n = n.parentNode; }
+    return null;
+  }
+
+  document.querySelectorAll("[data-table]").forEach(btn => {
+    btn.onclick = () => {
+      const box = document.getElementById(btn.dataset.table);
+      const act = btn.dataset.act;
+      box.focus();
+      const tbl = caretTable(box);
+
+      if (act === "insert") {
+        insertHtmlAtCaret(box, makeTableHtml(3));
+        toast("표를 넣었어요. 칸을 클릭해서 바로 입력하세요.");
+      } else if (!tbl) {
+        toast("먼저 표 안의 칸을 클릭한 뒤 눌러주세요.");
+        return;
+      } else if (act === "row") {
+        const body = tbl.tBodies[0] || tbl;
+        const cols = tbl.rows[0] ? tbl.rows[0].cells.length : 3;
+        const tr = document.createElement("tr");
+        for (let i = 0; i < cols; i++) tr.innerHTML += "<td><br></td>";
+        const cur = caretRow(box);
+        if (cur && cur.parentNode === body) body.insertBefore(tr, cur.nextSibling);
+        else body.appendChild(tr);
+      } else if (act === "col") {
+        [...tbl.rows].forEach((r, i) => {
+          const cell = document.createElement(r.parentNode.tagName === "THEAD" ? "th" : "td");
+          cell.innerHTML = r.parentNode.tagName === "THEAD" ? "항목" : "<br>";
+          r.appendChild(cell);
+        });
+      } else if (act === "delrow") {
+        const cur = caretRow(box);
+        if (!cur || cur.parentNode.tagName === "THEAD") { toast("삭제할 데이터 행을 클릭해 주세요."); return; }
+        if ((tbl.tBodies[0] || tbl).rows.length <= 1) { tbl.remove(); toast("표를 삭제했어요."); }
+        else cur.remove();
+      }
+      collectFromUI(); scheduleSave();
+    };
+  });
+
+  function htmlToCleanTable(html) {
+    const tmp = document.createElement("div");
+    tmp.innerHTML = html;
+    const src = tmp.querySelector("table");
+    if (!src) return null;
+    const rows = [...src.rows].map(r => [...r.cells].map(c => c.innerText.replace(/\s+/g, " ").trim()));
+    if (!rows.length) return null;
+    const cols = Math.max(...rows.map(r => r.length));
+    return makeTableHtml(cols, rows.slice(1), rows[0]);
+  }
+  function tsvToTable(text) {
+    const lines = text.replace(/\r/g, "").split("\n").filter(l => l.trim());
+    if (lines.length < 2 || lines.filter(l => l.indexOf("\t") !== -1).length < 2) return null;
+    const rows = lines.map(l => l.split("\t"));
+    const cols = Math.max(...rows.map(r => r.length));
+    return makeTableHtml(cols, rows.slice(1), rows[0]);
+  }
+
+  /* ---------- 카드 접기/펼치기 ---------- */
+  function setupCollapsible() {
+    let openState = {};
+    try { openState = JSON.parse(localStorage.getItem("wr_cards") || "{}"); } catch (e) {}
+    document.querySelectorAll("#editPane .card").forEach((card, idx) => {
+      const head = card.querySelector(".card-header");
+      if (!head) return;
+      const body = document.createElement("div");
+      body.className = "card-body";
+      let n = head.nextSibling;
+      while (n) { const next = n.nextSibling; body.appendChild(n); n = next; }
+      card.appendChild(body);
+      card.classList.add("collapsible");
+
+      const key = "c" + idx;
+      const h2 = head.querySelector("h2");
+      const right = document.createElement("div");
+      right.className = "head-right";
+      let m = h2 ? h2.nextSibling : head.firstChild;
+      while (m) { const next = m.nextSibling; right.appendChild(m); m = next; }
+      head.appendChild(right);
+
+      const btn = document.createElement("button");
+      btn.className = "card-toggle";
+      btn.type = "button";
+      btn.textContent = "▾";
+      btn.setAttribute("aria-label", "카드 접기/펼치기");
+      right.appendChild(btn);
+
+      const peek = document.createElement("span");
+      peek.className = "collapse-peek";
+      head.querySelector("h2").appendChild(peek);
+
+      const apply = () => {
+        const closed = openState[key] === 0;
+        card.classList.toggle("collapsed", closed);
+        btn.setAttribute("aria-expanded", closed ? "false" : "true");
+      };
+      apply();
+
+      head.addEventListener("click", (e) => {
+        if (e.target.closest("input, select, textarea, a") ) return;
+        if (e.target.closest("button") && e.target !== btn) return;
+        openState[key] = openState[key] === 0 ? 1 : 0;
+        try { localStorage.setItem("wr_cards", JSON.stringify(openState)); } catch (err) {}
+        apply();
+      });
+    });
+  }
+  function updatePeeks() {
+    const items = buildItems();
+    document.querySelectorAll("#editPane .card").forEach(card => {
+      const h2 = card.querySelector("h2");
+      const peek = card.querySelector(".collapse-peek");
+      if (!h2 || !peek) return;
+      const t = h2.textContent;
+      if (t.indexOf("수행 업무") !== -1 && t.indexOf("요약") === -1) peek.textContent = `  · ${items.length}건`;
+      else if (t.indexOf("PPL") !== -1) peek.textContent = `  · ${report.ppl.rows.length}명`;
+    });
+  }
+
   /* ---------- image handling ---------- */
   function compressImage(file) {
     return new Promise((resolve, reject) => {
@@ -1118,11 +1422,7 @@
   }
 
   function insertImage(box, dataUrl) {
-    box.focus();
-    const html = `<img src="${dataUrl}" alt="첨부 이미지"><br>`;
-    if (!document.execCommand("insertHTML", false, html)) {
-      box.insertAdjacentHTML("beforeend", html);
-    }
+    insertHtmlAtCaret(box, `<img src="${dataUrl}" alt="첨부 이미지"><br>`);
   }
 
   async function handleFiles(box, files) {
@@ -1146,8 +1446,16 @@
         : (dt ? [...dt.items].filter(i => i.type.startsWith("image/")).map(i => i.getAsFile()).filter(Boolean) : []);
       if (files && files.length) { e.preventDefault(); await handleFiles(box, files); return; }
       e.preventDefault();
+      const asHtml = dt ? dt.getData("text/html") : "";
       const text = dt ? dt.getData("text/plain") : "";
-      document.execCommand("insertText", false, text);
+      const tbl = (asHtml && /<table/i.test(asHtml)) ? htmlToCleanTable(asHtml) : tsvToTable(text);
+      if (tbl) {
+        insertHtmlAtCaret(box, tbl);
+        toast("엑셀 표를 옮겨왔어요.");
+        scheduleSave();
+        return;
+      }
+      insertTextAtCaret(box, text);
     });
 
     box.addEventListener("dragover", (e) => { if (isViewMode) return; e.preventDefault(); box.classList.add("drag-over"); });
@@ -1390,7 +1698,7 @@
 
   function isEmptyReport() {
     const r = report;
-    return !r.title && !r.writer && !r.to && !r.summary && !r.issues && !r.nextPlan && !r.requests
+    return !r.title && !r.writer && !r.to && !r.weekSummary && !r.summary && !r.issues && !r.nextPlan && !r.requests
       && Object.keys(r.notes || {}).length === 0 && Object.keys(r.labels || {}).length === 0
       && (r.excluded || []).length === 0 && (r.merges || []).length === 0
       && (r.extras || []).length === 0 && (r.ppl && r.ppl.rows ? r.ppl.rows.length : 0) === 0;
@@ -1457,6 +1765,8 @@
 
   /* ---------- init ---------- */
   await loadAll();
+  if (!isViewMode) setupCollapsible();
+  updatePeeks();
   if (isViewMode) switchTab("view");
 })();
 </script>
