@@ -404,6 +404,8 @@
     el.style.color = isError ? "#ef4444" : "#059669";
   }
 
+  let dataLoaded = false;
+
   async function loadData() {
     try {
       const res = await fetch(SHEET_API_URL);
@@ -412,7 +414,12 @@
       let loadedData = null;
       if (Array.isArray(rows) && rows.length > 0) {
         let target = rows.find(r => r.key === PRIMARY_KEY || r.key === "my_main_scheduler_data" || r.key === "global_dashboard_data");
-        if (!target) target = rows.find(r => r.json);
+        if (!target) target = rows.find(r => {
+          try {
+            const o = typeof r.json === 'string' ? JSON.parse(r.json) : r.json;
+            return o && (o.taskList || o.dailyTasks || o.memoCards);
+          } catch (e) { return false; }
+        });
         if (target && target.json) {
           loadedData = typeof target.json === 'string' ? JSON.parse(target.json) : target.json;
         }
@@ -437,27 +444,69 @@
         }
       }
 
+      if (loadedData) {
+        dataLoaded = true;
+        try { localStorage.setItem('sched_backup', JSON.stringify({ data: loadedData, at: Date.now() })); } catch (e) {}
+      } else {
+        let backup = null;
+        try { backup = JSON.parse(localStorage.getItem('sched_backup') || 'null'); } catch (e) {}
+        if (backup && backup.data && (backup.data.taskList || []).length) {
+          state.taskList = backup.data.taskList || [];
+          state.memoCards = backup.data.memoCards || [];
+          state.customCategories = backup.data.customCategories || [];
+          dataLoaded = true;
+          updateSyncUI("서버가 비어 있어 이 기기의 백업을 불러왔어요", true);
+          renderAll();
+          alert("서버에 저장된 일정이 없어서, 이 기기에 남아있던 백업을 불러왔습니다.\n내용이 맞으면 아무 업무나 하나 수정해 저장하시면 서버에 다시 올라갑니다.");
+          return;
+        }
+        dataLoaded = true;
+      }
+
       const nowTime = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
       updateSyncUI(`동기화 완료 (${nowTime})`);
       renderAll();
     } catch (e) {
       console.error(e);
-      updateSyncUI("동기화 실패", true);
+      dataLoaded = false;
+      updateSyncUI("불러오기 실패 · 저장 잠금", true);
     }
   }
 
   async function saveData() {
     if (isViewMode) return;
+    if (!dataLoaded) {
+      updateSyncUI("불러오기 실패 상태 · 저장을 막았어요", true);
+      return;
+    }
     updateSyncUI("저장 중...");
 
-    const payload = [{
+    const mine = {
       key: PRIMARY_KEY,
       json: JSON.stringify({
         taskList: state.taskList,
         memoCards: state.memoCards,
         customCategories: state.customCategories
       })
-    }];
+    };
+    try { localStorage.setItem('sched_backup', JSON.stringify({ data: JSON.parse(mine.json), at: Date.now() })); } catch (e) {}
+
+    // 다른 페이지(주간보고 등)가 저장해 둔 행이 지워지지 않도록 전부 함께 다시 보냅니다.
+    let payload = [mine];
+    try {
+      const res = await fetch(SHEET_API_URL);
+      const rows = await res.json();
+      if (Array.isArray(rows)) {
+        const others = rows
+          .filter(r => r && r.key && r.key !== PRIMARY_KEY)
+          .map(r => ({ key: r.key, json: typeof r.json === 'string' ? r.json : JSON.stringify(r.json) }));
+        payload = [mine].concat(others);
+      }
+    } catch (e) {
+      console.error(e);
+      updateSyncUI("서버 확인 실패 · 저장을 멈췄어요", true);
+      return;
+    }
 
     try {
       await fetch(SHEET_API_URL, {
