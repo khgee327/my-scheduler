@@ -357,10 +357,12 @@
     <div class="stat-strip" id="statStrip"></div>
     <div class="cat-chips" id="catChips"></div>
     <div class="editor-hint edit-only" style="margin-bottom:10px;">
-      💡 왼쪽 체크를 해제하면 보고서에서 빠져요. <b>보고용 문구</b> 칸을 비워두면 스케줄러 원문이 그대로 나갑니다.<br>
+      💡 <b>왼쪽 체크를 켠 업무만</b> 보고서에 들어갑니다. <b>보고용 문구</b> 칸을 비워두면 스케줄러 원문이 그대로 나가요.<br>
       비슷한 업무는 오른쪽 <b>묶기</b>를 체크한 뒤 아래 버튼으로 한 줄로 합칠 수 있어요.
     </div>
     <div class="toolbar edit-only">
+      <button class="mini-btn" id="pickAllBtn">전체 선택</button>
+      <button class="mini-btn" id="pickNoneBtn">전체 해제</button>
       <button class="mini-btn" id="mergeBtn">선택한 업무 묶기</button>
       <button class="mini-btn" id="autoMergeBtn">구분별로 자동 묶기</button>
       <button class="mini-btn" id="addExtraBtn">+ 항목 직접 추가</button>
@@ -438,8 +440,13 @@
     <div class="card-header">
       <h2><span class="dot"></span>다음 주 계획</h2>
       <label class="card-sub edit-only" style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-        <input type="checkbox" id="autoNext" style="accent-color:var(--accent);"> 스케줄러의 다음 주 일정 자동 포함
+        <input type="checkbox" id="autoNext" style="accent-color:var(--accent);"> 선택한 다음 주 일정 보고서에 포함
       </label>
+    </div>
+    <div class="toolbar edit-only" style="margin-bottom:8px;">
+      <button class="mini-btn" id="nextAllBtn">전체 선택</button>
+      <button class="mini-btn" id="nextNoneBtn">전체 해제</button>
+      <span class="sel-info" id="nextSelInfo"></span>
     </div>
     <div id="nextPreview" style="margin-bottom:12px;"></div>
     <div class="rich-box" id="secNext" data-key="nextPlan" data-placeholder="다음 주에 집중할 업무와 목표를 적어주세요."></div>
@@ -571,12 +578,14 @@
 
   function blankReport() {
     return { title:"", writer:"", to:"", weekSummary:"", summary:"", issues:"", nextPlan:"", requests:"",
-             notes:{}, labels:{}, merges:[], extras:[], excluded:[], autoNext:true,
+             notes:{}, labels:{}, merges:[], extras:[], excluded:[],
+             included:[], nextIncluded:[], v:2, autoNext:true,
              ppl:{ rows:[] } };
   }
   function normalizeReport(r) {
     r.notes = r.notes || {}; r.labels = r.labels || {};
     r.merges = r.merges || []; r.extras = r.extras || []; r.excluded = r.excluded || [];
+    r.included = r.included || []; r.nextIncluded = r.nextIncluded || [];
     r.ppl = r.ppl || { rows: [] };
     r.ppl.rows = r.ppl.rows || [];
     return r;
@@ -654,7 +663,11 @@
     } catch (e) {}
     if (local && (!loaded || (local._ts || 0) > (loaded._ts || 0))) loaded = local;
 
-    if (loaded) report = Object.assign(blankReport(), loaded);
+    if (loaded) {
+      const legacy = !loaded.v;                 // 예전 방식(전체 포함 + 제외 목록)으로 저장된 보고서
+      report = Object.assign(blankReport(), loaded);
+      if (legacy) report.v = 1;                 // renderAll에서 선택 방식으로 한 번 변환
+    }
     normalizeReport(report);
   }
 
@@ -754,7 +767,22 @@
     days.forEach(d => d.items.forEach(t => { if (!seen.has(t.id)) { seen.add(t.id); out.push(t); } }));
     return out;
   }
-  function isIncluded(id) { return report.excluded.indexOf(id) === -1; }
+  function isIncluded(id) { return report.included.indexOf(id) !== -1; }
+  function setIncluded(id, on) {
+    const i = report.included.indexOf(id);
+    if (on && i === -1) report.included.push(id);
+    if (!on && i !== -1) report.included.splice(i, 1);
+  }
+  function isNextIncluded(id) { return report.nextIncluded.indexOf(id) !== -1; }
+
+  // 예전 방식(전체 포함 + 제외 목록)으로 저장된 보고서를 선택 방식으로 한 번만 옮깁니다.
+  function migrateSelection() {
+    if (report.v === 2) return;
+    const all = buildItems(true);
+    report.included = all.map(i => i.id).filter(id => report.excluded.indexOf(id) === -1);
+    report.nextIncluded = uniqueTasks(weekTasks(addDays(mondayOf(anchor), 7))).map(t => t.id);
+    report.v = 2;
+  }
 
   function periodText(tasks, dayOf) {
     if (!tasks.length) return "";
@@ -816,6 +844,7 @@
     items.sort((a, b) => (a.order > b.order ? 1 : a.order < b.order ? -1 : 0));
     if (includeExcluded) return items;
     return items.filter(i => isIncluded(i.id) && (i.kind !== "extra" || i.label.trim()));
+
   }
   function itemLabel(i) { return i.label || i.raw || "(내용 없음)"; }
 
@@ -835,6 +864,7 @@
       box.innerHTML = sanitize(report[box.dataset.key] || "");
     });
 
+    migrateSelection();
     renderTasks();
     renderPPL();
     renderNextPreview();
@@ -942,7 +972,11 @@
   function updateSelInfo() {
     const n = document.querySelectorAll(".sel-cb:checked").length;
     const el = document.getElementById("selInfo");
-    if (el) el.textContent = n ? `${n}건 선택됨 — 묶기 버튼을 누르면 한 줄로 합쳐져요.` : "";
+    if (!el) return;
+    if (n) { el.textContent = `묶기 ${n}건 선택됨 — 묶기 버튼을 누르면 한 줄로 합쳐져요.`; return; }
+    const total = buildItems(true).length;
+    const on = buildItems().length;
+    el.textContent = total ? `보고서에 넣을 업무 ${on}건 선택됨 (전체 ${total}건)` : "";
   }
 
   /* ---------- PPL 성과 ---------- */
@@ -1039,10 +1073,16 @@
       box.innerHTML = `<div class="editor-hint">다음 주(${fmtDate(nextMon)}~) 스케줄러에 등록된 일정이 없어요.</div>`;
       return;
     }
-    box.innerHTML = `<div class="editor-hint" style="margin-bottom:6px;">다음 주 등록 일정 ${all.length}건</div>` +
-      all.slice(0, 30).map(t => {
+    const picked = all.filter(t => isNextIncluded(t.id)).length;
+    const info = document.getElementById("nextSelInfo");
+    if (info) info.textContent = `${all.length}건 중 ${picked}건 선택됨`;
+
+    box.innerHTML = `<div class="editor-hint" style="margin-bottom:6px;">체크한 일정만 보고서에 들어갑니다.</div>` +
+      all.slice(0, 40).map(t => {
         const c = catColor(t.category);
-        return `<div class="task-row" style="padding:7px 10px;">
+        const on = isNextIncluded(t.id);
+        return `<div class="task-row ${on ? "" : "excluded"}" style="padding:7px 10px;">
+          <input type="checkbox" class="next-cb edit-only" data-next="${esc(t.id)}" ${on ? "checked" : ""}>
           <span class="cat-tag" style="background:${c.bg}; color:${c.fg};">${esc(t.category||"기타")}</span>
           <span class="task-txt">${esc(t.text)}</span>
           <span class="period-tag">${t.startDate.slice(5).replace("-","/")}</span>
@@ -1120,7 +1160,7 @@
     /* --- 다음 주 --- */
     let nextAuto = "";
     if (report.autoNext) {
-      const nextAll = uniqueTasks(weekTasks(addDays(mon, 7)));
+      const nextAll = uniqueTasks(weekTasks(addDays(mon, 7))).filter(t => isNextIncluded(t.id));
       if (nextAll.length) {
         nextAuto = `<table class="pv-table" style="margin-bottom:12px;">
           <thead><tr><th style="width:110px;">구분</th><th>예정 업무</th><th style="width:90px;">일자</th></tr></thead>
@@ -1165,7 +1205,7 @@
           <th style="width:96px;">구분</th><th>업무 내용</th>
           <th style="width:88px;">일정</th><th style="width:70px;">진행</th><th style="width:30%;">비고 / 성과</th>
         </tr></thead>
-        <tbody>${rows}</tbody></table>` : `<span class="pv-empty">등록된 업무가 없습니다.</span>`}
+        <tbody>${rows}</tbody></table>` : `<span class="pv-empty">보고서에 넣을 업무를 아직 선택하지 않았습니다.</span>`}
     </div>`;
 
     let pplBlock = "";
@@ -1553,9 +1593,7 @@
   taskArea.addEventListener("change", (e) => {
     const el = e.target;
     if (el.classList.contains("inc-cb")) {
-      const id = el.dataset.id;
-      if (el.checked) report.excluded = report.excluded.filter(x => x !== id);
-      else if (report.excluded.indexOf(id) === -1) report.excluded.push(id);
+      setIncluded(el.dataset.id, el.checked);
       renderTasks(); scheduleSave();
     } else if (el.classList.contains("sel-cb")) {
       updateSelInfo();
@@ -1593,8 +1631,11 @@
     const un = e.target.dataset && e.target.dataset.unmerge;
     const dx = e.target.dataset && e.target.dataset.delextra;
     if (un) {
+      const gone = report.merges.find(m => m.id === un);
+      const wasOn = isIncluded(un);
       report.merges = report.merges.filter(m => m.id !== un);
-      report.excluded = report.excluded.filter(x => x !== un);
+      setIncluded(un, false);
+      if (gone && wasOn) (gone.taskIds || []).forEach(id => setIncluded(id, true));
       renderTasks(); scheduleSave();
       toast("묶음을 풀었어요.");
     } else if (dx) {
@@ -1615,9 +1656,37 @@
       taskIds: picked.map(i => i.id),
       note: picked.map(i => i.note).filter(Boolean).join(" / ")
     };
+    const anyOn = picked.some(i => isIncluded(i.id));
+    picked.forEach(i => setIncluded(i.id, false));
     report.merges.push(m);
+    if (anyOn) setIncluded(m.id, true);
     return m;
   }
+
+  document.getElementById("pickAllBtn").onclick = () => {
+    buildItems(true).forEach(i => setIncluded(i.id, true));
+    renderTasks(); scheduleSave();
+  };
+  document.getElementById("pickNoneBtn").onclick = () => {
+    report.included = [];
+    renderTasks(); scheduleSave();
+  };
+  document.getElementById("nextAllBtn").onclick = () => {
+    report.nextIncluded = uniqueTasks(weekTasks(addDays(mondayOf(anchor), 7))).map(t => t.id);
+    renderNextPreview(); scheduleSave();
+  };
+  document.getElementById("nextNoneBtn").onclick = () => {
+    report.nextIncluded = [];
+    renderNextPreview(); scheduleSave();
+  };
+  document.getElementById("nextPreview").addEventListener("change", (e) => {
+    const id = e.target.dataset && e.target.dataset.next;
+    if (!id) return;
+    const i = report.nextIncluded.indexOf(id);
+    if (e.target.checked && i === -1) report.nextIncluded.push(id);
+    if (!e.target.checked && i !== -1) report.nextIncluded.splice(i, 1);
+    renderNextPreview(); scheduleSave();
+  });
 
   document.getElementById("mergeBtn").onclick = () => {
     const ids = [...document.querySelectorAll(".sel-cb:checked")].map(c => c.dataset.sel);
@@ -1648,6 +1717,7 @@
     const x = { id: nid("x"), label: "", category: "기타", note: "", status: "완료",
                 period: "", order: place };
     report.extras.push(x);
+    setIncluded(x.id, true);
     renderTasks(); scheduleSave();
     const input = document.querySelector(`[data-label="${x.id}"]`);
     if (input) input.focus();
