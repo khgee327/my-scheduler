@@ -258,6 +258,24 @@
     border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit;
   }
   .tab-hint { font-size: 11.5px; color: var(--text-soft); font-weight: 500; }
+  .tab-count { font-size: 10.5px; font-weight: 700; opacity: .6; margin-left: 2px; }
+
+  /* 글자 서식 바 */
+  .fmt-bar { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; margin-bottom: 7px; }
+  .fmt-btn {
+    border: 1px solid var(--border); background: #fff; color: var(--text); border-radius: 7px;
+    min-width: 28px; height: 26px; padding: 0 7px; font-size: 12px; font-weight: 700;
+    cursor: pointer; font-family: inherit; line-height: 1;
+  }
+  .fmt-btn:hover { background: var(--accent-soft); }
+  .fmt-sep { width: 1px; height: 16px; background: var(--border); margin: 0 4px; }
+  .fmt-color {
+    display: inline-flex; align-items: center; gap: 4px; border: 1px solid var(--border);
+    border-radius: 7px; height: 26px; padding: 0 6px; font-size: 11px; font-weight: 700;
+    cursor: pointer; background: #fff; color: var(--text-soft);
+  }
+  .fmt-color input[type=color] { width: 20px; height: 17px; border: none; padding: 0; background: none; cursor: pointer; }
+  .fmt-swatch { width: 18px; height: 18px; border-radius: 5px; border: 1px solid var(--border); cursor: pointer; padding: 0; }
 
   .pv-sub { margin-bottom: 18px; }
   .pv-sub-title {
@@ -369,7 +387,7 @@
     </div>
     <div class="rich-box" id="secWeekSummary" data-key="weekSummary" data-placeholder="이번 주에 어떤 업무를 어떻게 진행했는지 3~5줄로 요약해 주세요. 위 버튼을 누르면 스케줄러 업무와 PPL 성과를 바탕으로 초안이 만들어집니다."></div>
     <div class="editor-foot edit-only">
-      <span class="editor-hint">📸 캡처 붙여넣기 · 📊 표 붙여넣기 · ↔️ 표 선·이미지 모서리를 끌면 크기 조절</span>
+      <span class="editor-hint">📸 캡처 붙여넣기 · ↔️ 표 선·이미지 모서리를 끌면 크기 조절 · ⌨️ Ctrl+B 굵게, Ctrl+] / Ctrl+[ 글씨 크기</span>
       <div class="table-tools">
         <button class="mini-btn" data-insta="secWeekSummary">📷 인스타 링크</button>
         <button class="mini-btn" data-table="secWeekSummary" data-act="insert">표 넣기</button>
@@ -410,24 +428,22 @@
   <div class="card">
     <div class="card-header">
       <h2><span class="dot"></span>PPL 성과 (인플루언서별)</h2>
-      <div class="btn-group edit-only">
-        <button class="mini-btn" id="pplAddRow">+ 인플루언서 추가</button>
-        <button class="mini-btn" id="pplPasteToggle">표 붙여넣기</button>
-      </div>
+      <span class="card-sub">인플루언서별로 탭을 나눠 자유롭게 정리하세요</span>
     </div>
-    <div class="editor-hint edit-only" style="margin-bottom:10px;">
-      💡 유입·구매전환만 채워도 전환율과 합계는 자동으로 계산돼요. 값이 하나도 없는 열은 보고서에서 자동으로 빠집니다.
+    <div class="tab-bar edit-only" id="pplTabBar"></div>
+    <div class="tab-hint edit-only" style="margin-bottom:10px;">
+      💡 탭 이름을 <b>더블클릭</b>하면 바꿀 수 있어요. 대시보드·엑셀에서 복사한 표를 그대로 붙여넣어도 됩니다.
     </div>
-    <div class="table-scroll"><table class="edit-table" id="pplTable"></table></div>
-    <div id="pplPasteWrap" style="display:none;">
-      <div class="editor-hint" style="margin-top:12px;">
-        엑셀·스프레드시트·대시보드에서 복사한 표를 아래에 붙여넣으세요.
-        열 순서는 <b>브랜드 · 인플루언서 · 채널 · 노출 · 유입 · 구매전환 · 매출 · 비고</b> 입니다.
-      </div>
-      <textarea class="paste-area" id="pplPasteBox" placeholder="온살	지지뷰티	인스타그램	32000	1240	38	1140000	릴스 2건"></textarea>
-      <div class="btn-group" style="margin-top:8px;">
-        <button class="mini-btn" id="pplPasteApply">붙여넣은 내용 표에 넣기</button>
-        <button class="mini-btn" id="pplPasteCancel">취소</button>
+    <div id="pplTabBody"></div>
+    <div class="editor-foot edit-only">
+      <span class="editor-hint">📸 Ctrl+V 붙여넣기 · ↔️ 표 선·이미지 모서리를 끌면 크기 조절 · ⌨️ Ctrl+B 굵게, Ctrl+] / Ctrl+[ 글씨 크기</span>
+      <div class="table-tools">
+        <button class="mini-btn" data-insta="secPpl">📷 인스타 링크</button>
+        <button class="mini-btn" data-table="secPpl" data-act="insert">표 넣기</button>
+        <button class="mini-btn" data-table="secPpl" data-act="row">행 추가</button>
+        <button class="mini-btn" data-table="secPpl" data-act="col">열 추가</button>
+        <button class="mini-btn" data-table="secPpl" data-act="delrow">행 삭제</button>
+        <button class="mini-btn" data-upload="secPpl">이미지 첨부</button>
       </div>
     </div>
   </div>
@@ -444,7 +460,7 @@
     </div>
     <div id="sumTabBody"></div>
     <div class="editor-foot edit-only">
-      <span class="editor-hint">📸 Ctrl+V 붙여넣기 · 이미지 모서리를 끌면 크기 조절 · 표 선을 끌면 행·열 크기 조절</span>
+      <span class="editor-hint">📸 Ctrl+V 붙여넣기 · ↔️ 표 선·이미지 모서리를 끌면 크기 조절 · ⌨️ Ctrl+B 굵게, Ctrl+] / Ctrl+[ 글씨 크기</span>
       <div class="table-tools">
         <button class="mini-btn" data-insta="secSummary">📷 인스타 링크</button>
         <button class="mini-btn" data-table="secSummary" data-act="insert">표 넣기</button>
@@ -464,7 +480,7 @@
     </div>
     <div class="rich-box" id="secIssues" data-key="issues" data-placeholder="진행 중 발생한 이슈, 지연 사유, 리스크를 적어주세요."></div>
     <div class="editor-foot edit-only">
-      <span class="editor-hint">📸 캡처 붙여넣기 · 📊 표 붙여넣기 · ↔️ 표 선·이미지 모서리를 끌면 크기 조절</span>
+      <span class="editor-hint">📸 캡처 붙여넣기 · ↔️ 표 선·이미지 모서리를 끌면 크기 조절 · ⌨️ Ctrl+B 굵게, Ctrl+] / Ctrl+[ 글씨 크기</span>
       <div class="table-tools">
         <button class="mini-btn" data-insta="secIssues">📷 인스타 링크</button>
         <button class="mini-btn" data-table="secIssues" data-act="insert">표 넣기</button>
@@ -495,7 +511,7 @@
     <div id="nextPreview" style="margin-bottom:12px; display:none;"></div>
     <div class="rich-box" id="secNext" data-key="nextPlan" data-placeholder="다음 주에 집중할 업무와 목표를 적어주세요."></div>
     <div class="editor-foot edit-only">
-      <span class="editor-hint">📸 캡처 붙여넣기 · 📊 표 붙여넣기 · ↔️ 표 선·이미지 모서리를 끌면 크기 조절</span>
+      <span class="editor-hint">📸 캡처 붙여넣기 · ↔️ 표 선·이미지 모서리를 끌면 크기 조절 · ⌨️ Ctrl+B 굵게, Ctrl+] / Ctrl+[ 글씨 크기</span>
       <div class="table-tools">
         <button class="mini-btn" data-insta="secNext">📷 인스타 링크</button>
         <button class="mini-btn" data-table="secNext" data-act="insert">표 넣기</button>
@@ -515,7 +531,7 @@
     </div>
     <div class="rich-box" id="secRequests" data-key="requests" data-placeholder="컨펌이 필요한 건, 예산 승인, 타 팀 협조 요청 등을 적어주세요."></div>
     <div class="editor-foot edit-only">
-      <span class="editor-hint">📸 캡처 붙여넣기 · 📊 표 붙여넣기 · ↔️ 표 선·이미지 모서리를 끌면 크기 조절</span>
+      <span class="editor-hint">📸 캡처 붙여넣기 · ↔️ 표 선·이미지 모서리를 끌면 크기 조절 · ⌨️ Ctrl+B 굵게, Ctrl+] / Ctrl+[ 글씨 크기</span>
       <div class="table-tools">
         <button class="mini-btn" data-insta="secRequests">📷 인스타 링크</button>
         <button class="mini-btn" data-table="secRequests" data-act="insert">표 넣기</button>
@@ -623,7 +639,7 @@
   function weekKey() { return fmtDate(mondayOf(anchor)); }
 
   function blankReport() {
-    return { title:"", writer:"", to:"", weekSummary:"", summary:"", summaryTabs:[], issues:"", nextPlan:"", requests:"",
+    return { title:"", writer:"", to:"", weekSummary:"", summary:"", summaryTabs:[], issues:"", nextPlan:"", requests:"", pplTabs:[],
              notes:{}, labels:{}, merges:[], extras:[], excluded:[],
              included:[], nextIncluded:[], v:2, autoNext:true,
              ppl:{ rows:[] } };
@@ -639,7 +655,25 @@
       r.summary = "";                       // 옛 방식 내용은 첫 탭으로 옮김
     }
     r.summaryTabs.forEach(t => { t.id = t.id || nid("st"); t.name = t.name || "전체"; t.html = t.html || ""; });
+    if (!Array.isArray(r.pplTabs) || !r.pplTabs.length) {
+      r.pplTabs = [{ id: nid("pt"), name: "전체", rows: (r.ppl && r.ppl.rows) ? r.ppl.rows : [] }];
+      r.ppl = { rows: [] };                 // 옛 방식 표는 첫 탭으로 옮김
+    }
+    r.pplTabs.forEach(t => {
+      t.id = t.id || nid("pt"); t.name = t.name || "전체"; t.rows = t.rows || [];
+      if (typeof t.html !== "string") t.html = pplRowsToHtml(t.rows);   // 옛 표는 편집 가능한 표로 변환
+      if (t.html) t.rows = [];
+    });
     return r;
+  }
+  /* 예전 입력 표(행 데이터)를 그대로 편집 가능한 표 HTML로 바꿔 줍니다 */
+  function pplRowsToHtml(rows) {
+    if (!rows || !rows.length) return "";
+    const H = ["브랜드","인플루언서","채널","콘텐츠 링크","노출/조회수","유입(클릭)","구매전환(건)","매출(원)","비고"];
+    const K = ["brand","name","channel","link","reach","clicks","orders","revenue","note"];
+    const th = H.map(h => `<th>${esc(h)}</th>`).join("");
+    const tb = rows.map(r => `<tr>${K.map(k => `<td>${esc(r[k] || "")}</td>`).join("")}</tr>`).join("");
+    return `<table><thead><tr>${th}</tr></thead><tbody>${tb}</tbody></table><p><br></p>`;
   }
   function nid(pre) { return pre + Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
   function parseNum(v) {
@@ -802,6 +836,10 @@
     });
     document.querySelectorAll("#sumTabBody .tab-box").forEach(box => {
       const t = (report.summaryTabs || []).find(x => x.id === box.dataset.tab);
+      if (t) t.html = serializeBox(box);
+    });
+    document.querySelectorAll("#pplTabBody .tab-box").forEach(box => {
+      const t = (report.pplTabs || []).find(x => x.id === box.dataset.tab);
       if (t) t.html = serializeBox(box);
     });
   }
@@ -1050,9 +1088,20 @@
     { k:"note",    h:"비고",     w:"150px", type:"text" }
   ];
 
-  function pplTotals() {
+  let activePplTab = null;
+  function pplTabList() {
+    const l = report.pplTabs || (report.pplTabs = []);
+    if (!l.length) l.push({ id: nid("pt"), name: "전체", rows: [] });
+    if (!l.some(t => t.id === activePplTab)) activePplTab = l[0].id;
+    return l;
+  }
+  function pplActive() { const l = pplTabList(); return l.find(t => t.id === activePplTab) || l[0]; }
+  function pplRows() { return pplActive().rows; }
+  function allPplRows() { return (report.pplTabs || []).reduce((a, t) => a.concat(t.rows || []), []); }
+
+  function pplTotals(rowsIn) {
     const t = { reach:0, clicks:0, orders:0, revenue:0 };
-    report.ppl.rows.forEach(r => {
+    (rowsIn || pplRows()).forEach(r => {
       t.reach += parseNum(r.reach); t.clicks += parseNum(r.clicks);
       t.orders += parseNum(r.orders); t.revenue += parseNum(r.revenue);
     });
@@ -1064,60 +1113,38 @@
     return c ? (o / c * 100) : null;
   }
 
-  function renderPPL() {
-    const table = document.getElementById("pplTable");
-    const rows = report.ppl.rows;
-    if (!rows.length) {
-      table.innerHTML = `<tbody><tr><td style="border:none;">
-        <div class="empty">아직 등록된 인플루언서가 없어요.<br>
-        <b>+ 인플루언서 추가</b>를 누르거나, 대시보드에서 복사한 표를 <b>표 붙여넣기</b>로 한 번에 넣어보세요.</div>
-      </td></tr></tbody>`;
-      return;
-    }
-    const t = pplTotals();
-    table.innerHTML = `
-      <thead><tr>
-        ${PPL_COLS.map(c => `<th style="width:${c.w}">${c.h}</th>`).join("")}
-        <th style="width:70px;">전환율</th>
-        <th class="edit-only" style="width:38px;"></th>
-      </tr></thead>
-      <tbody>
-        ${rows.map((r, idx) => `<tr>
-          ${PPL_COLS.map(c => {
-            if (c.type === "select") {
-              return `<td><select data-ppl="${c.k}" data-idx="${idx}" ${isViewMode ? "disabled" : ""}>
-                ${PPL_CHANNELS.map(ch => `<option ${ch === (r.channel || "인스타그램") ? "selected" : ""}>${ch}</option>`).join("")}
-              </select></td>`;
-            }
-            return `<td class="${c.type === "num" ? "num" : ""}">
-              <input type="text" data-ppl="${c.k}" data-idx="${idx}" value="${esc(r[c.k] || "")}"
-                ${c.type === "num" ? 'inputmode="numeric"' : ""} ${isViewMode ? "readonly" : ""}
-                placeholder="${c.k === "link" ? "https://" : ""}"></td>`;
-          }).join("")}
-          <td class="c" data-cvr="${idx}">${rowCvr(r) == null ? "-" : nfmt(rowCvr(r)) + "%"}</td>
-          <td class="edit-only" style="text-align:center;"><button class="row-del" data-pplerase="${idx}" title="행 삭제">×</button></td>
-        </tr>`).join("")}
-      </tbody>
-      <tfoot><tr>
-        <td class="l" colspan="4">합계 · 인플루언서 ${rows.length}명</td>
-        <td id="tReach">${nfmt(t.reach)}</td>
-        <td id="tClicks">${nfmt(t.clicks)}</td>
-        <td id="tOrders">${nfmt(t.orders)}</td>
-        <td id="tRevenue">${nfmt(t.revenue)}</td>
-        <td></td>
-        <td id="tCvr" style="text-align:center;">${nfmt(t.cvr)}%</td>
-        <td class="edit-only"></td>
-      </tr></tfoot>`;
+  function activePplBox() {
+    if (!activePplTab) return null;
+    return document.querySelector('#pplTabBody .tab-box[data-tab="' + activePplTab + '"]');
   }
 
-  function refreshPplNumbers() {
-    const t = pplTotals();
-    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
-    set("tReach", nfmt(t.reach)); set("tClicks", nfmt(t.clicks));
-    set("tOrders", nfmt(t.orders)); set("tRevenue", nfmt(t.revenue)); set("tCvr", nfmt(t.cvr) + "%");
-    report.ppl.rows.forEach((r, idx) => {
-      const cell = document.querySelector(`[data-cvr="${idx}"]`);
-      if (cell) cell.textContent = rowCvr(r) == null ? "-" : nfmt(rowCvr(r)) + "%";
+  function renderPPL() {
+    const bar = document.getElementById("pplTabBar");
+    const body = document.getElementById("pplTabBody");
+    if (!bar || !body) return;
+    const tabs = pplTabList();
+
+    bar.innerHTML = tabs.map(t =>
+      `<button type="button" class="tab-pill ${t.id === activePplTab ? "active" : ""}" data-tab="${esc(t.id)}">
+         ${esc(t.name)}${tabs.length > 1 ? `<span class="x" data-del="${esc(t.id)}" title="탭 삭제">✕</span>` : ""}
+       </button>`).join("") +
+      `<button type="button" class="tab-add" id="pplTabAdd">＋ 탭 추가</button>`;
+
+    body.innerHTML = "";
+    tabs.forEach(t => {
+      const pane = document.createElement("div");
+      pane.className = "tab-pane";
+      if (t.id !== activePplTab) pane.style.display = "none";
+      const d = document.createElement("div");
+      d.className = "rich-box tab-box";
+      d.dataset.tab = t.id;
+      d.setAttribute("data-placeholder",
+        `${t.name} PPL 성과를 적어주세요. 대시보드·엑셀 표, 캡처 이미지, 인스타 링크를 그대로 붙여넣을 수 있어요.`);
+      d.innerHTML = sanitize(t.html || "");
+      pane.appendChild(d);
+      body.appendChild(pane);
+      bindRichBox(d);
+      hydrateIG(d);
     });
   }
 
@@ -1150,6 +1177,12 @@
   /* ---------- preview ---------- */
   function renderPreview() {
     collectFromUI();
+    const hasContent = (html) => {
+      if (!html) return false;
+      if (/<img|ig-embed/i.test(html)) return true;
+      return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim().length > 0;
+    };
+
     const mon = mondayOf(anchor), fri = addDays(mon, 4);
     const items = buildItems();
     const done = items.filter(i => i.status === "완료").length;
@@ -1166,52 +1199,14 @@
       </tr>`;
     }).join("");
 
-    /* --- PPL 성과 --- */
+    /* --- PPL 성과 (탭별) --- */
+    const pplGroups = (report.pplTabs || []).filter(t => hasContent(t.html));
+    const pplPlain = pplGroups.length === 1 && /^(전체|기본)$/.test((pplGroups[0].name || "").trim());
     let pplSection = "";
-    const pr = report.ppl.rows.filter(r => (r.name || "").trim() || parseNum(r.clicks) || parseNum(r.orders));
-    if (pr.length) {
-      const has = k => pr.some(r => String(r[k] || "").trim() !== "" && (["reach","clicks","orders","revenue"].indexOf(k) === -1 || parseNum(r[k]) !== 0));
-      const cols = PPL_COLS.filter(c => c.k !== "link" && has(c.k));
-      const t = { reach:0, clicks:0, orders:0, revenue:0 };
-      pr.forEach(r => { t.reach += parseNum(r.reach); t.clicks += parseNum(r.clicks); t.orders += parseNum(r.orders); t.revenue += parseNum(r.revenue); });
-      const cvr = t.clicks ? t.orders / t.clicks * 100 : 0;
-      const showCvr = has("clicks") && has("orders");
-
-      pplSection = `
-        <div class="pv-stats">
-          ${has("reach") ? `<span class="pv-stat">총 노출 ${nfmt(t.reach)}</span>` : ""}
-          ${has("clicks") ? `<span class="pv-stat">총 유입 ${nfmt(t.clicks)}</span>` : ""}
-          ${has("orders") ? `<span class="pv-stat">구매전환 ${nfmt(t.orders)}건</span>` : ""}
-          ${showCvr ? `<span class="pv-stat">전환율 ${nfmt(cvr)}%</span>` : ""}
-          ${has("revenue") ? `<span class="pv-stat">매출 ${nfmt(t.revenue)}원</span>` : ""}
-          <span class="pv-stat">인플루언서 ${pr.length}명</span>
-        </div>
-        <table class="pv-table">
-          <thead><tr>
-            ${cols.map(c => `<th${c.type === "num" ? ' style="text-align:right;"' : ""}>${c.h}</th>`).join("")}
-            ${showCvr ? `<th style="width:66px; text-align:center;">전환율</th>` : ""}
-          </tr></thead>
-          <tbody>
-            ${pr.map(r => `<tr>
-              ${cols.map(c => {
-                let v = esc(r[c.k] || "");
-                if (c.k === "name" && (r.link || "").trim())
-                  v = `<a href="${esc(r.link)}" style="color:#0f766e;">${v}</a>`;
-                if (c.type === "num") return `<td style="text-align:right;">${v ? nfmt(parseNum(r[c.k])) : ""}</td>`;
-                return `<td>${v}</td>`;
-              }).join("")}
-              ${showCvr ? `<td class="c">${rowCvr(r) == null ? "-" : nfmt(rowCvr(r)) + "%"}</td>` : ""}
-            </tr>`).join("")}
-          </tbody>
-          <tfoot><tr style="background:#fdf7f9; font-weight:800;">
-            ${cols.map((c, n) => {
-              if (n === 0) return `<td>합계</td>`;
-              if (c.type === "num") return `<td style="text-align:right;">${nfmt(t[c.k])}</td>`;
-              return `<td></td>`;
-            }).join("")}
-            ${showCvr ? `<td class="c">${nfmt(cvr)}%</td>` : ""}
-          </tr></tfoot>
-        </table>`;
+    if (pplGroups.length) {
+      pplSection = pplPlain
+        ? `<div class="pv-body">${pplGroups[0].html}</div>`
+        : pplGroups.map(g => `<div class="pv-sub"><div class="pv-sub-title">${esc(g.name)}</div><div class="pv-body">${g.html}</div></div>`).join("");
     }
 
     /* --- 다음 주 --- */
@@ -1230,12 +1225,6 @@
             </tr>`; }).join("")}</tbody></table>`;
       }
     }
-
-    const hasContent = (html) => {
-      if (!html) return false;
-      if (/<img|ig-embed/i.test(html)) return true;
-      return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim().length > 0;
-    };
 
     let n = 0;
     /* 내용이 없는 섹션은 보고서에서 통째로 빠집니다 */
@@ -1330,7 +1319,8 @@
   function buildAutoSummary() {
     const items = buildItems();
     const mon = mondayOf(anchor), fri = addDays(mon, 4);
-    if (!items.length && !report.ppl.rows.length) return "";
+    const pplAll = allPplRows();
+    if (!items.length && !pplAll.length) return "";
 
     const done = items.filter(i => i.status === "완료");
     const openItems = items.filter(i => i.status !== "완료");
@@ -1347,10 +1337,10 @@
     }
     out.push(`<p>${head}</p>`);
 
-    const t = pplTotals();
-    if (report.ppl.rows.length && (t.clicks || t.orders || t.reach)) {
-      const names = report.ppl.rows.map(r => (r.name || "").trim()).filter(Boolean);
-      let p = `PPL은 인플루언서 ${names.length || report.ppl.rows.length}명이 집행되어`;
+    const t = pplTotals(pplAll);
+    if (pplAll.length && (t.clicks || t.orders || t.reach)) {
+      const names = pplAll.map(r => (r.name || "").trim()).filter(Boolean);
+      let p = `PPL은 인플루언서 ${names.length || pplAll.length}명이 집행되어`;
       const bits = [];
       if (t.reach) bits.push(`노출 ${nfmt(t.reach)}`);
       if (t.clicks) bits.push(`유입 ${nfmt(t.clicks)}건`);
@@ -1534,7 +1524,7 @@
       if (!h2 || !peek) return;
       const t = h2.textContent;
       if (t.indexOf("수행 업무") !== -1 && t.indexOf("요약") === -1) peek.textContent = `  · ${items.length}건`;
-      else if (t.indexOf("PPL") !== -1) peek.textContent = `  · ${report.ppl.rows.length}명`;
+      else if (t.indexOf("PPL") !== -1) peek.textContent = `  · ${(report.pplTabs || []).filter(x => (x.html || "").trim()).length}개 탭`;
     });
   }
 
@@ -1616,6 +1606,15 @@
       if (isViewMode) return;
       e.preventDefault(); box.classList.remove("drag-over");
       if (e.dataTransfer.files.length) await handleFiles(box, e.dataTransfer.files);
+    });
+
+    box.addEventListener("keydown", (e) => {
+      if (isViewMode) return;
+      if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+      const k = e.key;
+      if (k === "b" || k === "B") { e.preventDefault(); applyFmt(box, "bold"); }
+      else if (k === "]") { e.preventDefault(); applyFmt(box, "fontUp"); }
+      else if (k === "[") { e.preventDefault(); applyFmt(box, "fontDown"); }
     });
 
     box.addEventListener("input", scheduleSave);
@@ -1767,9 +1766,8 @@
     box._bound = true;
     bindRichEdit(box);
     bindRichResize(box);
+    attachFormatBar(box);
   }
-  document.querySelectorAll(".rich-box").forEach(bindRichBox);
-
   /* ---------- 주요 성과: 탭 ---------- */
   let activeSumTab = null;
 
@@ -1779,6 +1777,7 @@
   }
   function getBoxById(id) {
     if (id === "secSummary") return activeSummaryBox() || document.getElementById(id);
+    if (id === "secPpl") return activePplBox();
     return document.getElementById(id);
   }
 
@@ -1798,14 +1797,17 @@
 
     body.innerHTML = "";
     tabs.forEach(t => {
+      const pane = document.createElement("div");
+      pane.className = "tab-pane";
+      if (t.id !== activeSumTab) pane.style.display = "none";
       const d = document.createElement("div");
       d.className = "rich-box tab-box";
       d.dataset.tab = t.id;
       d.setAttribute("data-placeholder",
         `${t.name} 성과를 적어주세요. 캡처 이미지 · 표 · 인스타 링크를 그대로 붙여넣을 수 있어요.`);
-      if (t.id !== activeSumTab) d.style.display = "none";
       d.innerHTML = sanitize(t.html || "");
-      body.appendChild(d);
+      pane.appendChild(d);
+      body.appendChild(pane);
       bindRichBox(d);
       hydrateIG(d);
     });
@@ -1829,7 +1831,8 @@
         return;
       }
       if (e.target.closest("#sumTabAdd")) {
-        const name = prompt("탭 이름을 적어주세요.\n예) 지지뷰티, 마이크로, 체험단, 앰배서더");
+        const name = prompt("탭 이름을 적어주세요.\n예) 지지뷰티, 마이크로, 체험단, 앰배서더",
+          "인플루언서 " + ((report.summaryTabs || []).length));
         if (!name || !name.trim()) return;
         collectFromUI();
         const t = { id: nid("st"), name: name.trim(), html: "" };
@@ -1852,6 +1855,144 @@
       if (!nm || !nm.trim()) return;
       collectFromUI(); t.name = nm.trim();
       renderSumTabs(); scheduleSave();
+    });
+  }
+
+  /* ---------- PPL 성과: 탭 ---------- */
+  const pplBar = document.getElementById("pplTabBar");
+  if (pplBar) {
+    pplBar.addEventListener("click", (e) => {
+      if (isViewMode) return;
+      const del = e.target.closest("[data-del]");
+      if (del) {
+        e.stopPropagation();
+        const id = del.dataset.del;
+        const t = (report.pplTabs || []).find(x => x.id === id);
+        if ((report.pplTabs || []).length <= 1) { toast("탭은 최소 1개 있어야 해요."); return; }
+        if (!confirm(`'${t ? t.name : ""}' 탭을 삭제할까요? 안에 쓴 내용도 같이 지워집니다.`)) return;
+        collectFromUI();
+        report.pplTabs = report.pplTabs.filter(x => x.id !== id);
+        if (activePplTab === id) activePplTab = report.pplTabs[0].id;
+        renderPPL(); scheduleSave();
+        return;
+      }
+      if (e.target.closest("#pplTabAdd")) {
+        const name = prompt("탭 이름을 적어주세요.\n예) 인플루언서 1, 마이크로, 체험단",
+          "인플루언서 " + ((report.pplTabs || []).length));
+        if (!name || !name.trim()) return;
+        collectFromUI();
+        const t = { id: nid("pt"), name: name.trim(), rows: [], html: "" };
+        report.pplTabs.push(t);
+        activePplTab = t.id;
+        renderPPL(); scheduleSave();
+        return;
+      }
+      const pill = e.target.closest(".tab-pill");
+      if (pill) { collectFromUI(); activePplTab = pill.dataset.tab; renderPPL(); }
+    });
+
+    pplBar.addEventListener("dblclick", (e) => {
+      if (isViewMode) return;
+      const pill = e.target.closest(".tab-pill");
+      if (!pill) return;
+      const t = (report.pplTabs || []).find(x => x.id === pill.dataset.tab);
+      if (!t) return;
+      const nm = prompt("탭 이름", t.name);
+      if (!nm || !nm.trim()) return;
+      collectFromUI(); t.name = nm.trim();
+      renderPPL(); scheduleSave();
+    });
+  }
+
+  /* ---------- 글자 서식 (굵게 / 크기 / 색 / 배경색) ---------- */
+  const FONT_SCALE = [10, 11.5, 13.5, 16, 19, 23, 28, 34];
+  const FMT_HTML =
+    '<button type="button" class="fmt-btn" data-cmd="bold" title="굵게 (Ctrl+B)"><b>B</b></button>' +
+    '<button type="button" class="fmt-btn" data-cmd="italic" title="기울임 (Ctrl+I)"><i>I</i></button>' +
+    '<button type="button" class="fmt-btn" data-cmd="underline" title="밑줄 (Ctrl+U)"><u>U</u></button>' +
+    '<span class="fmt-sep"></span>' +
+    '<button type="button" class="fmt-btn" data-cmd="fontUp" title="글씨 크게 (Ctrl+])">가+</button>' +
+    '<button type="button" class="fmt-btn" data-cmd="fontDown" title="글씨 작게 (Ctrl+[)">가−</button>' +
+    '<span class="fmt-sep"></span>' +
+    '<label class="fmt-color" title="글씨 색">글자<input type="color" data-cmd="foreColor" value="#e11d48"></label>' +
+    '<label class="fmt-color" title="글씨 배경색(형광펜)">형광<input type="color" data-cmd="hiliteColor" value="#fff3a3"></label>' +
+    '<button type="button" class="fmt-btn" data-cmd="removeFormat" title="서식 지우기">서식 지우기</button>';
+
+  let lastRange = null, lastFmtBox = null;
+  document.addEventListener("selectionchange", () => {
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount) return;
+    let n = sel.anchorNode;
+    if (n && n.nodeType === 3) n = n.parentElement;
+    const box = n && n.closest ? n.closest(".rich-box") : null;
+    if (box) { lastRange = sel.getRangeAt(0).cloneRange(); lastFmtBox = box; }
+  });
+  function restoreSel(box) {
+    box.focus();
+    if (lastFmtBox !== box || !lastRange) return;
+    const sel = window.getSelection();
+    try { sel.removeAllRanges(); sel.addRange(lastRange); } catch (e) {}
+  }
+  function curFontPx() {
+    const sel = window.getSelection();
+    let n = sel && sel.anchorNode;
+    if (n && n.nodeType === 3) n = n.parentElement;
+    if (!n || n.nodeType !== 1) return 13.5;
+    const v = parseFloat(window.getComputedStyle(n).fontSize);
+    return isNaN(v) ? 13.5 : v;
+  }
+  function stepFont(box, dir) {
+    const cur = curFontPx();
+    let i = 0, best = Infinity;
+    FONT_SCALE.forEach((v, idx) => { const d = Math.abs(v - cur); if (d < best) { best = d; i = idx; } });
+    const px = FONT_SCALE[Math.max(0, Math.min(FONT_SCALE.length - 1, i + dir))];
+    try { document.execCommand("styleWithCSS", false, true); } catch (e) {}
+    document.execCommand("fontSize", false, "7");
+    box.querySelectorAll('font[size="7"]').forEach(el => {
+      const sp = document.createElement("span");
+      sp.style.fontSize = px + "px";
+      sp.innerHTML = el.innerHTML;
+      el.replaceWith(sp);
+    });
+    box.querySelectorAll("span").forEach(el => {
+      const f = el.style.fontSize || "";
+      if (f === "xxx-large" || f === "-webkit-xxx-large") el.style.fontSize = px + "px";
+    });
+  }
+  function applyFmt(box, cmd, val) {
+    if (isViewMode) return;
+    restoreSel(box);
+    try { document.execCommand("styleWithCSS", false, true); } catch (e) {}
+    try {
+      if (cmd === "fontUp") stepFont(box, 1);
+      else if (cmd === "fontDown") stepFont(box, -1);
+      else if (cmd === "hiliteColor") {
+        if (!document.execCommand("hiliteColor", false, val)) document.execCommand("backColor", false, val);
+      } else if (cmd === "removeFormat") {
+        document.execCommand("removeFormat");
+        try { document.execCommand("hiliteColor", false, "transparent"); } catch (e) {}
+      } else {
+        document.execCommand(cmd, false, val);
+      }
+    } catch (e) { console.warn("format failed", cmd, e); }
+    collectFromUI(); scheduleSave();
+  }
+  function attachFormatBar(box) {
+    if (isViewMode) return;
+    const prev = box.previousElementSibling;
+    if (prev && prev.classList.contains("fmt-bar")) return;
+    const bar = document.createElement("div");
+    bar.className = "fmt-bar edit-only";
+    bar.innerHTML = FMT_HTML;
+    box.parentNode.insertBefore(bar, box);
+    bar.addEventListener("mousedown", (e) => { if (e.target.closest("button, label")) e.preventDefault(); });
+    bar.addEventListener("click", (e) => {
+      const b = e.target.closest("button[data-cmd]");
+      if (!b) return;
+      applyFmt(box, b.dataset.cmd);
+    });
+    bar.querySelectorAll("input[type=color]").forEach(inp => {
+      inp.addEventListener("input", () => applyFmt(box, inp.dataset.cmd, inp.value));
     });
   }
 
@@ -2107,76 +2248,6 @@
     if (input) input.focus();
   };
 
-  /* ---------- PPL 이벤트 ---------- */
-  const pplTable = document.getElementById("pplTable");
-
-  pplTable.addEventListener("input", (e) => {
-    const k = e.target.dataset.ppl;
-    if (!k) return;
-    const row = report.ppl.rows[Number(e.target.dataset.idx)];
-    if (!row) return;
-    row[k] = e.target.value;
-    if (["reach", "clicks", "orders", "revenue"].indexOf(k) !== -1) refreshPplNumbers();
-    scheduleSave();
-  });
-  pplTable.addEventListener("change", (e) => {
-    const k = e.target.dataset.ppl;
-    if (k === "channel") {
-      const row = report.ppl.rows[Number(e.target.dataset.idx)];
-      if (row) { row.channel = e.target.value; scheduleSave(); }
-    }
-  });
-  pplTable.addEventListener("click", (e) => {
-    const idx = e.target.dataset && e.target.dataset.pplerase;
-    if (idx === undefined) return;
-    report.ppl.rows.splice(Number(idx), 1);
-    renderPPL(); scheduleSave();
-  });
-
-  function addPplRow(data) {
-    report.ppl.rows.push(Object.assign(
-      { brand:"", name:"", channel:"인스타그램", link:"", reach:"", clicks:"", orders:"", revenue:"", note:"" },
-      data || {}));
-  }
-
-  document.getElementById("pplAddRow").onclick = () => {
-    addPplRow(); renderPPL(); scheduleSave();
-    const inputs = document.querySelectorAll('#pplTable [data-ppl="name"]');
-    if (inputs.length) inputs[inputs.length - 1].focus();
-  };
-
-  document.getElementById("pplPasteToggle").onclick = () => {
-    const w = document.getElementById("pplPasteWrap");
-    w.style.display = w.style.display === "none" ? "block" : "none";
-    if (w.style.display === "block") document.getElementById("pplPasteBox").focus();
-  };
-  document.getElementById("pplPasteCancel").onclick = () => {
-    document.getElementById("pplPasteWrap").style.display = "none";
-    document.getElementById("pplPasteBox").value = "";
-  };
-  document.getElementById("pplPasteApply").onclick = () => {
-    const raw = document.getElementById("pplPasteBox").value.trim();
-    if (!raw) { toast("붙여넣은 내용이 없어요."); return; }
-    const keys = ["brand", "name", "channel", "reach", "clicks", "orders", "revenue", "note"];
-    let added = 0;
-    raw.split(/\r?\n/).forEach(line => {
-      if (!line.trim()) return;
-      const cells = line.indexOf("\t") !== -1 ? line.split("\t") : line.split(",");
-      if (/인플루언서|브랜드|유입|전환/.test(cells.join(" ")) && added === 0 && !/\d/.test(cells.join(""))) return;
-      const data = {};
-      keys.forEach((k, i) => { if (cells[i] !== undefined) data[k] = cells[i].trim(); });
-      if (data.channel && PPL_CHANNELS.indexOf(data.channel) === -1) {
-        data.note = (data.note ? data.note + " " : "") + data.channel;
-        data.channel = "인스타그램";
-      }
-      addPplRow(data); added++;
-    });
-    document.getElementById("pplPasteBox").value = "";
-    document.getElementById("pplPasteWrap").style.display = "none";
-    renderPPL(); scheduleSave();
-    toast(`${added}행을 표에 넣었어요.`);
-  };
-
   document.getElementById("groupToggle").onclick = (e) => {
     groupByDay = !groupByDay;
     e.target.textContent = groupByDay ? "구분별로 보기" : "요일별로 보기";
@@ -2188,7 +2259,10 @@
     return !r.title && !r.writer && !r.to && !r.weekSummary && !r.summary && !r.issues && !r.nextPlan && !r.requests
       && Object.keys(r.notes || {}).length === 0 && Object.keys(r.labels || {}).length === 0
       && (r.excluded || []).length === 0 && (r.merges || []).length === 0
-      && (r.extras || []).length === 0 && (r.ppl && r.ppl.rows ? r.ppl.rows.length : 0) === 0;
+      && (r.extras || []).length === 0
+      && !(r.summaryTabs || []).some(t => (t.html || "").trim())
+      && (r.pplTabs || []).every(t => !(t.rows || []).length && !(t.html || "").trim())
+      && (r.ppl && r.ppl.rows ? r.ppl.rows.length : 0) === 0;
   }
 
   async function moveWeek(delta) {
@@ -2253,6 +2327,7 @@
   });
 
   /* ---------- init ---------- */
+  document.querySelectorAll(".rich-box").forEach(bindRichBox);
   await loadAll();
   if (!isViewMode) setupCollapsible();
   updatePeeks();
