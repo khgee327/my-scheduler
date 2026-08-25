@@ -277,6 +277,11 @@
   .fmt-color input[type=color] { width: 20px; height: 17px; border: none; padding: 0; background: none; cursor: pointer; }
   .fmt-swatch { width: 18px; height: 18px; border-radius: 5px; border: 1px solid var(--border); cursor: pointer; padding: 0; }
 
+  /* 링크 */
+  .rich-box a, .pv-body a { color: #0f766e; text-decoration: underline; text-underline-offset: 2px; word-break: break-all; }
+  .rich-box a { cursor: pointer; }
+  .rich-box a:hover, .pv-body a:hover { color: var(--accent-dark); }
+
   .pv-sub { margin-bottom: 18px; }
   .pv-sub-title {
     display: inline-block; font-size: 12.5px; font-weight: 800; color: #fff;
@@ -389,6 +394,7 @@
     <div class="editor-foot edit-only">
       <span class="editor-hint">📸 캡처 붙여넣기 · ↔️ 표 선·이미지 모서리를 끌면 크기 조절 · ⌨️ Ctrl+B 굵게, Ctrl+] / Ctrl+[ 글씨 크기</span>
       <div class="table-tools">
+        <button class="mini-btn" data-link="secWeekSummary">🔗 링크</button>
         <button class="mini-btn" data-insta="secWeekSummary">📷 인스타 링크</button>
         <button class="mini-btn" data-table="secWeekSummary" data-act="insert">표 넣기</button>
         <button class="mini-btn" data-table="secWeekSummary" data-act="row">행 추가</button>
@@ -438,6 +444,7 @@
     <div class="editor-foot edit-only">
       <span class="editor-hint">📸 Ctrl+V 붙여넣기 · ↔️ 표 선·이미지 모서리를 끌면 크기 조절 · ⌨️ Ctrl+B 굵게, Ctrl+] / Ctrl+[ 글씨 크기</span>
       <div class="table-tools">
+        <button class="mini-btn" data-link="secPpl">🔗 링크</button>
         <button class="mini-btn" data-insta="secPpl">📷 인스타 링크</button>
         <button class="mini-btn" data-table="secPpl" data-act="insert">표 넣기</button>
         <button class="mini-btn" data-table="secPpl" data-act="row">행 추가</button>
@@ -462,6 +469,7 @@
     <div class="editor-foot edit-only">
       <span class="editor-hint">📸 Ctrl+V 붙여넣기 · ↔️ 표 선·이미지 모서리를 끌면 크기 조절 · ⌨️ Ctrl+B 굵게, Ctrl+] / Ctrl+[ 글씨 크기</span>
       <div class="table-tools">
+        <button class="mini-btn" data-link="secSummary">🔗 링크</button>
         <button class="mini-btn" data-insta="secSummary">📷 인스타 링크</button>
         <button class="mini-btn" data-table="secSummary" data-act="insert">표 넣기</button>
         <button class="mini-btn" data-table="secSummary" data-act="row">행 추가</button>
@@ -482,6 +490,7 @@
     <div class="editor-foot edit-only">
       <span class="editor-hint">📸 캡처 붙여넣기 · ↔️ 표 선·이미지 모서리를 끌면 크기 조절 · ⌨️ Ctrl+B 굵게, Ctrl+] / Ctrl+[ 글씨 크기</span>
       <div class="table-tools">
+        <button class="mini-btn" data-link="secIssues">🔗 링크</button>
         <button class="mini-btn" data-insta="secIssues">📷 인스타 링크</button>
         <button class="mini-btn" data-table="secIssues" data-act="insert">표 넣기</button>
         <button class="mini-btn" data-table="secIssues" data-act="row">행 추가</button>
@@ -513,6 +522,7 @@
     <div class="editor-foot edit-only">
       <span class="editor-hint">📸 캡처 붙여넣기 · ↔️ 표 선·이미지 모서리를 끌면 크기 조절 · ⌨️ Ctrl+B 굵게, Ctrl+] / Ctrl+[ 글씨 크기</span>
       <div class="table-tools">
+        <button class="mini-btn" data-link="secNext">🔗 링크</button>
         <button class="mini-btn" data-insta="secNext">📷 인스타 링크</button>
         <button class="mini-btn" data-table="secNext" data-act="insert">표 넣기</button>
         <button class="mini-btn" data-table="secNext" data-act="row">행 추가</button>
@@ -533,6 +543,7 @@
     <div class="editor-foot edit-only">
       <span class="editor-hint">📸 캡처 붙여넣기 · ↔️ 표 선·이미지 모서리를 끌면 크기 조절 · ⌨️ Ctrl+B 굵게, Ctrl+] / Ctrl+[ 글씨 크기</span>
       <div class="table-tools">
+        <button class="mini-btn" data-link="secRequests">🔗 링크</button>
         <button class="mini-btn" data-insta="secRequests">📷 인스타 링크</button>
         <button class="mini-btn" data-table="secRequests" data-act="insert">표 넣기</button>
         <button class="mini-btn" data-table="secRequests" data-act="row">행 추가</button>
@@ -666,6 +677,60 @@
     });
     return r;
   }
+  /* ---------- 링크 자동 인식 ---------- */
+  const URL_RE = /(https?:\/\/[^\s<>"'\)\]]+|www\.[^\s<>"'\)\]]+)/g;
+  function cleanUrl(raw) {
+    let u = raw.replace(/[.,;:!?]+$/, "");
+    return { text: u, href: /^www\./i.test(u) ? "https://" + u : u };
+  }
+  function linkifyText(text) {
+    URL_RE.lastIndex = 0;
+    let out = "", last = 0, m, found = false;
+    while ((m = URL_RE.exec(text))) {
+      const { text: t, href } = cleanUrl(m[0]);
+      if (!t) continue;
+      found = true;
+      out += esc(text.slice(last, m.index));
+      out += `<a href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(t)}</a>`;
+      last = m.index + t.length;
+    }
+    out += esc(text.slice(last));
+    return found ? out.replace(/\n/g, "<br>") : null;
+  }
+  /* 화면에 이미 들어와 있는 맨 주소들을 클릭 가능한 링크로 바꿔 줍니다 */
+  function linkifyBox(box) {
+    if (!box) return false;
+    const walker = document.createTreeWalker(box, NodeFilter.SHOW_TEXT, null);
+    const targets = [];
+    let n;
+    while ((n = walker.nextNode())) {
+      const par = n.parentElement;
+      if (!par || par.closest("a, .ig-embed")) continue;
+      URL_RE.lastIndex = 0;
+      if (URL_RE.test(n.nodeValue || "")) targets.push(n);
+    }
+    if (!targets.length) return false;
+    targets.forEach(node => {
+      const txt = node.nodeValue;
+      const frag = document.createDocumentFragment();
+      let last = 0, m;
+      URL_RE.lastIndex = 0;
+      while ((m = URL_RE.exec(txt))) {
+        const { text: t, href } = cleanUrl(m[0]);
+        if (!t) continue;
+        if (m.index > last) frag.appendChild(document.createTextNode(txt.slice(last, m.index)));
+        const a = document.createElement("a");
+        a.href = href; a.target = "_blank"; a.rel = "noopener noreferrer";
+        a.textContent = t;
+        frag.appendChild(a);
+        last = m.index + t.length;
+      }
+      if (last < txt.length) frag.appendChild(document.createTextNode(txt.slice(last)));
+      node.replaceWith(frag);
+    });
+    return true;
+  }
+
   /* 예전 입력 표(행 데이터)를 그대로 편집 가능한 표 HTML로 바꿔 줍니다 */
   function pplRowsToHtml(rows) {
     if (!rows || !rows.length) return "";
@@ -691,6 +756,10 @@
         if (a.name === "href" && /^javascript:/i.test(a.value)) el.removeAttribute(a.name);
         if (a.name === "src" && !/^data:image\//i.test(a.value) && !/^https?:/i.test(a.value)) el.removeAttribute(a.name);
       });
+    });
+    d.querySelectorAll("a[href]").forEach(a => {
+      a.setAttribute("target", "_blank");
+      a.setAttribute("rel", "noopener noreferrer");
     });
     return d.innerHTML;
   }
@@ -955,6 +1024,7 @@
     document.getElementById("autoNext").checked = !!report.autoNext;
     document.querySelectorAll(".rich-box[data-key]").forEach(box => {
       box.innerHTML = sanitize(report[box.dataset.key] || "");
+      linkifyBox(box);
       hydrateIG(box);
     });
     renderSumTabs();
@@ -1141,6 +1211,7 @@
       d.setAttribute("data-placeholder",
         `${t.name} PPL 성과를 적어주세요. 대시보드·엑셀 표, 캡처 이미지, 인스타 링크를 그대로 붙여넣을 수 있어요.`);
       d.innerHTML = sanitize(t.html || "");
+      linkifyBox(d);
       pane.appendChild(d);
       body.appendChild(pane);
       bindRichBox(d);
@@ -1597,6 +1668,8 @@
         toast("인스타 게시물을 넣었어요. 이미지와 캡션이 잠시 뒤 표시됩니다.");
         return;
       }
+      const linked = linkifyText(text);
+      if (linked) { insertHtmlAtCaret(box, linked); collectFromUI(); scheduleSave(); return; }
       insertTextAtCaret(box, text);
     });
 
@@ -1617,8 +1690,20 @@
       else if (k === "[") { e.preventDefault(); applyFmt(box, "fontDown"); }
     });
 
+    box.addEventListener("click", (e) => {
+      const a = e.target.closest ? e.target.closest("a[href]") : null;
+      if (!a || !box.contains(a)) return;
+      if (e.altKey) return;              // Alt+클릭이면 링크 글자를 고칠 수 있게 커서만 놓습니다
+      e.preventDefault();
+      window.open(a.href, "_blank", "noopener");
+    });
+
     box.addEventListener("input", scheduleSave);
-    box.addEventListener("blur", () => { if (!isViewMode) { collectFromUI(); } });
+    box.addEventListener("blur", () => {
+      if (isViewMode) return;
+      if (linkifyBox(box)) scheduleSave();
+      collectFromUI();
+    });
   }
 
   document.querySelectorAll("[data-upload]").forEach(btn => {
@@ -1806,6 +1891,7 @@
       d.setAttribute("data-placeholder",
         `${t.name} 성과를 적어주세요. 캡처 이미지 · 표 · 인스타 링크를 그대로 붙여넣을 수 있어요.`);
       d.innerHTML = sanitize(t.html || "");
+      linkifyBox(d);
       pane.appendChild(d);
       body.appendChild(pane);
       bindRichBox(d);
@@ -2064,6 +2150,28 @@
     });
     return sanitize(d.innerHTML);
   }
+
+  document.querySelectorAll("[data-link]").forEach(btn => {
+    btn.onclick = () => {
+      const box = getBoxById(btn.dataset.link);
+      if (!box) return;
+      restoreSel(box);
+      const sel = window.getSelection();
+      const picked = sel ? sel.toString() : "";
+      const url = prompt("연결할 주소를 넣어주세요.\n(글자를 먼저 드래그해두면 그 글자에 링크가 걸립니다)", "https://");
+      if (!url || !url.trim() || url.trim() === "https://") return;
+      const href = /^https?:\/\//i.test(url.trim()) ? url.trim() : "https://" + url.trim();
+      restoreSel(box);
+      if (picked) {
+        try { document.execCommand("createLink", false, href); } catch (e) {}
+      } else {
+        insertHtmlAtCaret(box, `<a href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(href)}</a>&nbsp;`);
+      }
+      box.querySelectorAll("a[href]").forEach(a => { a.target = "_blank"; a.rel = "noopener noreferrer"; });
+      collectFromUI(); scheduleSave();
+      toast("링크를 걸었어요.");
+    };
+  });
 
   document.querySelectorAll("[data-insta]").forEach(btn => {
     btn.onclick = () => {
