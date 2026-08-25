@@ -169,7 +169,8 @@
   .pv-body img.w-40 { max-width: 40%; }
   .pv-empty { font-size: 13px; color: #b8a5ad; }
   table.pv-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-  table.pv-table th, table.pv-table td { border: 1px solid #ecd9e1; padding: 8px 10px; text-align: left; vertical-align: top; }
+  table.pv-table th, table.pv-table td { border: 1px solid #a9909d; padding: 8px 10px; text-align: left; vertical-align: top; }
+  table.pv-table thead th { border-bottom-width: 2px; }
   table.pv-table th { background: var(--accent-soft); font-weight: 700; color: var(--accent-dark); white-space: nowrap; }
   table.pv-table td.c { text-align: center; white-space: nowrap; }
   .pv-stats { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
@@ -235,10 +236,12 @@
     border-collapse: collapse; width: 100%; margin: 10px 0; font-size: 12.5px;
   }
   .rich-box table th, .pv-body table th {
-    border: 1px solid #e8cfd9; background: var(--accent-soft); color: var(--accent-dark);
+    border: 1px solid #a9909d; background: var(--accent-soft); color: var(--accent-dark);
     padding: 7px 9px; text-align: left; font-weight: 700;
   }
-  .rich-box table td, .pv-body table td { border: 1px solid #e8cfd9; padding: 7px 9px; vertical-align: top; }
+  .rich-box table td, .pv-body table td { border: 1px solid #a9909d; padding: 7px 9px; vertical-align: top; }
+  .rich-box table thead th, .pv-body table thead th { border-bottom-width: 2px; }
+  .pv-body table { max-width: 100%; }
   .pv-body table th, .pv-body table td { word-break: break-word; }
   .rich-box table td:focus, .rich-box table th:focus { outline: none; }
   .rich-box table th[style*="background"], .pv-body table th[style*="background"] { color: var(--text); }
@@ -343,6 +346,8 @@
     .stack { padding: 0; }
     #previewRoot { border: none; box-shadow: none; padding: 0; max-width: none; }
     .pv-sec { break-inside: avoid; }
+    .pv-body table th, .pv-body table td, table.pv-table th, table.pv-table td { border-color: #8c7280 !important; }
+    .pv-body table { max-width: 100% !important; table-layout: fixed !important; }
     table.pv-table { break-inside: auto; }
     tr { break-inside: avoid; }
     @page { margin: 14mm; }
@@ -428,6 +433,7 @@
         <button class="mini-btn" data-table="secWeekSummary" data-act="insert">표 넣기</button>
         <button class="mini-btn" data-table="secWeekSummary" data-act="row">행 추가</button>
         <button class="mini-btn" data-table="secWeekSummary" data-act="col">열 추가</button>
+        <button class="mini-btn" data-table="secWeekSummary" data-act="delcol">열 삭제</button>
         <button class="mini-btn" data-table="secWeekSummary" data-act="delrow">행 삭제</button>
         <button class="mini-btn" data-upload="secWeekSummary">이미지 첨부</button>
       </div>
@@ -480,6 +486,7 @@
         <button class="mini-btn" data-table="secPpl" data-act="insert">표 넣기</button>
         <button class="mini-btn" data-table="secPpl" data-act="row">행 추가</button>
         <button class="mini-btn" data-table="secPpl" data-act="col">열 추가</button>
+        <button class="mini-btn" data-table="secPpl" data-act="delcol">열 삭제</button>
         <button class="mini-btn" data-table="secPpl" data-act="delrow">행 삭제</button>
         <button class="mini-btn" data-upload="secPpl">이미지 첨부</button>
       </div>
@@ -507,6 +514,7 @@
         <button class="mini-btn" data-table="secSummary" data-act="insert">표 넣기</button>
         <button class="mini-btn" data-table="secSummary" data-act="row">행 추가</button>
         <button class="mini-btn" data-table="secSummary" data-act="col">열 추가</button>
+        <button class="mini-btn" data-table="secSummary" data-act="delcol">열 삭제</button>
         <button class="mini-btn" data-table="secSummary" data-act="delrow">행 삭제</button>
         <button class="mini-btn" data-upload="secSummary">이미지 첨부</button>
       </div>
@@ -534,6 +542,7 @@
         <button class="mini-btn" data-table="secSns" data-act="insert">표 넣기</button>
         <button class="mini-btn" data-table="secSns" data-act="row">행 추가</button>
         <button class="mini-btn" data-table="secSns" data-act="col">열 추가</button>
+        <button class="mini-btn" data-table="secSns" data-act="delcol">열 삭제</button>
         <button class="mini-btn" data-table="secSns" data-act="delrow">행 삭제</button>
         <button class="mini-btn" data-upload="secSns">이미지 첨부</button>
       </div>
@@ -561,6 +570,7 @@
         <button class="mini-btn" data-table="secTrial" data-act="insert">표 넣기</button>
         <button class="mini-btn" data-table="secTrial" data-act="row">행 추가</button>
         <button class="mini-btn" data-table="secTrial" data-act="col">열 추가</button>
+        <button class="mini-btn" data-table="secTrial" data-act="delcol">열 삭제</button>
         <button class="mini-btn" data-table="secTrial" data-act="delrow">행 삭제</button>
         <button class="mini-btn" data-upload="secTrial">이미지 첨부</button>
       </div>
@@ -588,6 +598,7 @@
         <button class="mini-btn" data-table="secCreator" data-act="insert">표 넣기</button>
         <button class="mini-btn" data-table="secCreator" data-act="row">행 추가</button>
         <button class="mini-btn" data-table="secCreator" data-act="col">열 추가</button>
+        <button class="mini-btn" data-table="secCreator" data-act="delcol">열 삭제</button>
         <button class="mini-btn" data-table="secCreator" data-act="delrow">행 삭제</button>
         <button class="mini-btn" data-upload="secCreator">이미지 첨부</button>
       </div>
@@ -611,6 +622,7 @@
         <button class="mini-btn" data-table="secIssues" data-act="insert">표 넣기</button>
         <button class="mini-btn" data-table="secIssues" data-act="row">행 추가</button>
         <button class="mini-btn" data-table="secIssues" data-act="col">열 추가</button>
+        <button class="mini-btn" data-table="secIssues" data-act="delcol">열 삭제</button>
         <button class="mini-btn" data-table="secIssues" data-act="delrow">행 삭제</button>
         <button class="mini-btn" data-upload="secIssues">이미지 첨부</button>
       </div>
@@ -645,6 +657,7 @@
         <button class="mini-btn" data-table="secNext" data-act="insert">표 넣기</button>
         <button class="mini-btn" data-table="secNext" data-act="row">행 추가</button>
         <button class="mini-btn" data-table="secNext" data-act="col">열 추가</button>
+        <button class="mini-btn" data-table="secNext" data-act="delcol">열 삭제</button>
         <button class="mini-btn" data-table="secNext" data-act="delrow">행 삭제</button>
         <button class="mini-btn" data-upload="secNext">이미지 첨부</button>
       </div>
@@ -668,6 +681,7 @@
         <button class="mini-btn" data-table="secRequests" data-act="insert">표 넣기</button>
         <button class="mini-btn" data-table="secRequests" data-act="row">행 추가</button>
         <button class="mini-btn" data-table="secRequests" data-act="col">열 추가</button>
+        <button class="mini-btn" data-table="secRequests" data-act="delcol">열 삭제</button>
         <button class="mini-btn" data-table="secRequests" data-act="delrow">행 삭제</button>
         <button class="mini-btn" data-upload="secRequests">이미지 첨부</button>
       </div>
@@ -1571,12 +1585,17 @@
     return null;
   }
 
+  /* 도구 버튼을 눌러도 표 안의 커서·선택이 풀리지 않게 */
+  document.querySelectorAll(".table-tools").forEach(tt => {
+    tt.addEventListener("mousedown", (e) => { if (e.target.closest("button, label")) e.preventDefault(); });
+  });
+
   document.querySelectorAll("[data-table]").forEach(btn => {
     btn.onclick = () => {
       const box = getBoxById(btn.dataset.table);
       if (!box) return;
       const act = btn.dataset.act;
-      box.focus();
+      restoreSel(box);
       const tbl = caretTable(box);
 
       if (act === "insert") {
@@ -1605,6 +1624,16 @@
           r.appendChild(cell);
         });
         if (tbl.querySelector("colgroup")) ensureColgroup(tbl);
+      } else if (act === "delcol") {
+        const ci = caretCellIndex(box);
+        if (ci < 0) { toast("삭제할 열의 칸을 먼저 클릭해 주세요."); return; }
+        const colCount = tbl.rows[0] ? tbl.rows[0].cells.length : 0;
+        if (colCount <= 1) { tbl.remove(); toast("표를 삭제했어요."); }
+        else {
+          [...tbl.rows].forEach(r => { if (r.cells[ci]) r.deleteCell(ci); });
+          const cg = tbl.querySelector("colgroup");
+          if (cg && cg.children[ci]) cg.children[ci].remove();
+        }
       } else if (act === "delrow") {
         const cur = caretRow(box);
         if (!cur || cur.parentNode.tagName === "THEAD") { toast("삭제할 데이터 행을 클릭해 주세요."); return; }
@@ -2074,12 +2103,13 @@
     try {
       inBox = !!(sel && sel.rangeCount && box.contains(sel.getRangeAt(0).commonAncestorContainer));
     } catch (e) {}
+    if (inBox) return;           /* 이미 박스 안을 선택 중이면 그대로 둡니다 */
     if (lastFmtBox === box && lastRange) {
       box.focus();
       try { sel.removeAllRanges(); sel.addRange(lastRange); } catch (e) {}
       return;
     }
-    if (!inBox) box.focus();     /* 이미 박스 안을 선택 중이면 건드리지 않습니다 */
+    box.focus();
   }
   /* 커서가 놓인 칸, 또는 드래그로 걸친 칸들을 모두 찾아 줍니다 */
   function selectedCells(box) {
