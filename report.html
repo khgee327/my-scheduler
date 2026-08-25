@@ -59,6 +59,7 @@
   .tab-btn.active { background: #fff; color: var(--accent-dark); box-shadow: 0 -2px 8px rgba(219,119,150,0.06); }
 
   .stack { display: flex; flex-direction: column; gap: 20px; padding: 12px 40px 60px; }
+  #viewPane { padding: 12px 20px 60px; }
   .card {
     background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
     box-shadow: var(--shadow); padding: 22px;
@@ -122,6 +123,7 @@
   .rich-box {
     min-height: 120px; border: 1px solid var(--border); border-radius: 12px; padding: 14px;
     font-size: 13.5px; line-height: 1.65; outline: none; background: #fff; word-break: break-word;
+    overflow-x: auto;
   }
   .rich-box:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(244,114,182,0.12); }
   .rich-box:empty:before { content: attr(data-placeholder); color: #c9b6be; }
@@ -129,6 +131,7 @@
   .rich-box img { max-width: 100%; border-radius: 8px; border: 1px solid var(--border); margin: 6px 0; display: block; cursor: pointer; }
   .rich-box img.w-60 { max-width: 60%; }
   .rich-box img.w-40 { max-width: 40%; }
+  .rich-box.hot-img img { cursor: nwse-resize; }
   .editor-foot { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
   .editor-hint { font-size: 11.5px; color: var(--text-soft); font-weight: 500; }
   .mini-btn {
@@ -150,7 +153,7 @@
   /* Preview */
   #previewRoot {
     background: #fff; border: 1px solid var(--border); border-radius: var(--radius);
-    box-shadow: var(--shadow); padding: 38px 40px; max-width: 940px; margin: 0 auto;
+    box-shadow: var(--shadow); padding: 38px 44px; max-width: 1560px; margin: 0 auto;
   }
   .pv-title { font-size: 24px; font-weight: 800; letter-spacing: -0.6px; margin-bottom: 6px; }
   .pv-meta { font-size: 12.5px; color: var(--text-soft); font-weight: 600; margin-bottom: 4px; }
@@ -160,7 +163,7 @@
     font-size: 14.5px; font-weight: 800; margin-bottom: 10px; padding-left: 10px;
     border-left: 4px solid var(--accent); line-height: 1.2;
   }
-  .pv-body { font-size: 13.5px; line-height: 1.7; word-break: break-word; }
+  .pv-body { font-size: 13.5px; line-height: 1.7; word-break: break-word; overflow-x: auto; }
   .pv-body img { max-width: 100%; border-radius: 8px; border: 1px solid #e5e7eb; margin: 8px 0; display: block; }
   .pv-body img.w-60 { max-width: 60%; }
   .pv-body img.w-40 { max-width: 40%; }
@@ -236,8 +239,38 @@
     padding: 7px 9px; text-align: left; font-weight: 700;
   }
   .rich-box table td, .pv-body table td { border: 1px solid #e8cfd9; padding: 7px 9px; vertical-align: top; }
+  .pv-body table th, .pv-body table td { word-break: break-word; }
   .rich-box table td:focus, .rich-box table th:focus { background: #fff5f9; outline: none; }
   .table-tools { display: flex; gap: 5px; flex-wrap: wrap; }
+
+  /* 성과 탭 */
+  .tab-bar { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-bottom: 10px; }
+  .tab-pill {
+    border: 1px solid var(--border); background: #fff; color: var(--text-soft);
+    border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 700;
+    cursor: pointer; display: inline-flex; align-items: center; gap: 7px; font-family: inherit;
+  }
+  .tab-pill.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .tab-pill .x { opacity: .5; font-size: 11px; }
+  .tab-pill .x:hover { opacity: 1; }
+  .tab-add {
+    border: 1px dashed var(--accent); background: #fff; color: var(--accent-dark);
+    border-radius: 999px; padding: 6px 12px; font-size: 12px; font-weight: 700; cursor: pointer; font-family: inherit;
+  }
+  .tab-hint { font-size: 11.5px; color: var(--text-soft); font-weight: 500; }
+
+  .pv-sub { margin-bottom: 18px; }
+  .pv-sub-title {
+    display: inline-block; font-size: 12.5px; font-weight: 800; color: #fff;
+    background: var(--accent); padding: 3px 12px; border-radius: 999px; margin-bottom: 8px;
+  }
+
+  /* 인스타그램 임베드 */
+  .ig-embed { max-width: 540px; margin: 10px 0; }
+  .ig-embed blockquote { margin: 0 !important; }
+  .ig-embed:empty:before {
+    content: "인스타그램 게시물을 불러오는 중..."; font-size: 12px; color: var(--text-soft);
+  }
 
   #toast {
     position: fixed; left: 50%; bottom: 34px; transform: translateX(-50%) translateY(12px);
@@ -328,15 +361,17 @@
   <!-- 이번주 수행 업무 -->
   <div class="card">
     <div class="card-header">
-      <h2><span class="dot"></span>이번 주 수행 업무 요약</h2>
+      <h2><span class="dot"></span>금주 주간 업무 요약</h2>
       <div class="btn-group edit-only">
+        <button class="mini-btn" id="toggleTaskCard">📋 스케줄러 업무 불러오기</button>
         <button class="mini-btn" id="autoSummaryBtn">✨ 자동으로 요약 만들기</button>
       </div>
     </div>
     <div class="rich-box" id="secWeekSummary" data-key="weekSummary" data-placeholder="이번 주에 어떤 업무를 어떻게 진행했는지 3~5줄로 요약해 주세요. 위 버튼을 누르면 스케줄러 업무와 PPL 성과를 바탕으로 초안이 만들어집니다."></div>
     <div class="editor-foot edit-only">
-      <span class="editor-hint">📸 캡처 붙여넣기 · 📊 엑셀 표 붙여넣기 가능</span>
+      <span class="editor-hint">📸 캡처 붙여넣기 · 📊 표 붙여넣기 · ↔️ 표 선·이미지 모서리를 끌면 크기 조절</span>
       <div class="table-tools">
+        <button class="mini-btn" data-insta="secWeekSummary">📷 인스타 링크</button>
         <button class="mini-btn" data-table="secWeekSummary" data-act="insert">표 넣기</button>
         <button class="mini-btn" data-table="secWeekSummary" data-act="row">행 추가</button>
         <button class="mini-btn" data-table="secWeekSummary" data-act="col">열 추가</button>
@@ -346,7 +381,7 @@
     </div>
   </div>
 
-  <div class="card">
+  <div class="card" id="cardTasks" style="display:none;">
     <div class="card-header">
       <h2><span class="dot"></span>이번 주 수행 업무</h2>
       <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
@@ -401,12 +436,17 @@
   <div class="card">
     <div class="card-header">
       <h2><span class="dot"></span>주요 성과 및 진행 현황</h2>
-      <span class="card-sub">캡처 이미지 붙여넣기 가능</span>
+      <span class="card-sub">인플루언서 · 마이크로 · 체험단처럼 탭으로 나눠 쓰세요</span>
     </div>
-    <div class="rich-box" id="secSummary" data-key="summary" data-placeholder="이번 주 핵심 성과를 적어주세요. (예: 온살 8월 인플루언서 PPL 12명 발행 완료 / 총 노출 32만, 유입 1,240건)  캡처 이미지는 Ctrl+V로 바로 붙여넣으세요."></div>
+    <div class="tab-bar edit-only" id="sumTabBar"></div>
+    <div class="tab-hint edit-only" style="margin-bottom:10px;">
+      💡 탭 이름을 <b>더블클릭</b>하면 이름을 바꿀 수 있어요. 내용을 쓴 탭만 보고서에 나갑니다.
+    </div>
+    <div id="sumTabBody"></div>
     <div class="editor-foot edit-only">
-      <span class="editor-hint">📸 Ctrl+V 붙여넣기 · 이미지 드래그&드롭 · 이미지 클릭 시 크기 조절/삭제</span>
+      <span class="editor-hint">📸 Ctrl+V 붙여넣기 · 이미지 모서리를 끌면 크기 조절 · 표 선을 끌면 행·열 크기 조절</span>
       <div class="table-tools">
+        <button class="mini-btn" data-insta="secSummary">📷 인스타 링크</button>
         <button class="mini-btn" data-table="secSummary" data-act="insert">표 넣기</button>
         <button class="mini-btn" data-table="secSummary" data-act="row">행 추가</button>
         <button class="mini-btn" data-table="secSummary" data-act="col">열 추가</button>
@@ -424,8 +464,9 @@
     </div>
     <div class="rich-box" id="secIssues" data-key="issues" data-placeholder="진행 중 발생한 이슈, 지연 사유, 리스크를 적어주세요."></div>
     <div class="editor-foot edit-only">
-      <span class="editor-hint">📸 캡처 붙여넣기 · 📊 엑셀 표 붙여넣기 가능</span>
+      <span class="editor-hint">📸 캡처 붙여넣기 · 📊 표 붙여넣기 · ↔️ 표 선·이미지 모서리를 끌면 크기 조절</span>
       <div class="table-tools">
+        <button class="mini-btn" data-insta="secIssues">📷 인스타 링크</button>
         <button class="mini-btn" data-table="secIssues" data-act="insert">표 넣기</button>
         <button class="mini-btn" data-table="secIssues" data-act="row">행 추가</button>
         <button class="mini-btn" data-table="secIssues" data-act="col">열 추가</button>
@@ -439,20 +480,24 @@
   <div class="card">
     <div class="card-header">
       <h2><span class="dot"></span>다음 주 계획</h2>
-      <label class="card-sub edit-only" style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-        <input type="checkbox" id="autoNext" style="accent-color:var(--accent);"> 선택한 다음 주 일정 보고서에 포함
-      </label>
+      <div class="head-right">
+        <label class="card-sub edit-only" id="autoNextLabel" style="display:none; align-items:center; gap:6px; cursor:pointer;">
+          <input type="checkbox" id="autoNext" style="accent-color:var(--accent);"> 선택한 다음 주 일정 보고서에 포함
+        </label>
+        <button class="mini-btn edit-only" id="toggleNextCard">📋 스케줄러 일정 불러오기</button>
+      </div>
     </div>
-    <div class="toolbar edit-only" style="margin-bottom:8px;">
+    <div class="toolbar edit-only" id="nextToolbar" style="margin-bottom:8px; display:none;">
       <button class="mini-btn" id="nextAllBtn">전체 선택</button>
       <button class="mini-btn" id="nextNoneBtn">전체 해제</button>
       <span class="sel-info" id="nextSelInfo"></span>
     </div>
-    <div id="nextPreview" style="margin-bottom:12px;"></div>
+    <div id="nextPreview" style="margin-bottom:12px; display:none;"></div>
     <div class="rich-box" id="secNext" data-key="nextPlan" data-placeholder="다음 주에 집중할 업무와 목표를 적어주세요."></div>
     <div class="editor-foot edit-only">
-      <span class="editor-hint">📸 캡처 붙여넣기 · 📊 엑셀 표 붙여넣기 가능</span>
+      <span class="editor-hint">📸 캡처 붙여넣기 · 📊 표 붙여넣기 · ↔️ 표 선·이미지 모서리를 끌면 크기 조절</span>
       <div class="table-tools">
+        <button class="mini-btn" data-insta="secNext">📷 인스타 링크</button>
         <button class="mini-btn" data-table="secNext" data-act="insert">표 넣기</button>
         <button class="mini-btn" data-table="secNext" data-act="row">행 추가</button>
         <button class="mini-btn" data-table="secNext" data-act="col">열 추가</button>
@@ -470,8 +515,9 @@
     </div>
     <div class="rich-box" id="secRequests" data-key="requests" data-placeholder="컨펌이 필요한 건, 예산 승인, 타 팀 협조 요청 등을 적어주세요."></div>
     <div class="editor-foot edit-only">
-      <span class="editor-hint">📸 캡처 붙여넣기 · 📊 엑셀 표 붙여넣기 가능</span>
+      <span class="editor-hint">📸 캡처 붙여넣기 · 📊 표 붙여넣기 · ↔️ 표 선·이미지 모서리를 끌면 크기 조절</span>
       <div class="table-tools">
+        <button class="mini-btn" data-insta="secRequests">📷 인스타 링크</button>
         <button class="mini-btn" data-table="secRequests" data-act="insert">표 넣기</button>
         <button class="mini-btn" data-table="secRequests" data-act="row">행 추가</button>
         <button class="mini-btn" data-table="secRequests" data-act="col">열 추가</button>
@@ -577,7 +623,7 @@
   function weekKey() { return fmtDate(mondayOf(anchor)); }
 
   function blankReport() {
-    return { title:"", writer:"", to:"", weekSummary:"", summary:"", issues:"", nextPlan:"", requests:"",
+    return { title:"", writer:"", to:"", weekSummary:"", summary:"", summaryTabs:[], issues:"", nextPlan:"", requests:"",
              notes:{}, labels:{}, merges:[], extras:[], excluded:[],
              included:[], nextIncluded:[], v:2, autoNext:true,
              ppl:{ rows:[] } };
@@ -588,6 +634,11 @@
     r.included = r.included || []; r.nextIncluded = r.nextIncluded || [];
     r.ppl = r.ppl || { rows: [] };
     r.ppl.rows = r.ppl.rows || [];
+    if (!Array.isArray(r.summaryTabs) || !r.summaryTabs.length) {
+      r.summaryTabs = [{ id: nid("st"), name: "전체", html: r.summary || "" }];
+      r.summary = "";                       // 옛 방식 내용은 첫 탭으로 옮김
+    }
+    r.summaryTabs.forEach(t => { t.id = t.id || nid("st"); t.name = t.name || "전체"; t.html = t.html || ""; });
     return r;
   }
   function nid(pre) { return pre + Date.now().toString(36) + Math.random().toString(36).slice(2,5); }
@@ -746,8 +797,12 @@
     report.writer = document.getElementById("fWriter").value.trim();
     report.to = document.getElementById("fTo").value.trim();
     report.autoNext = document.getElementById("autoNext").checked;
-    document.querySelectorAll(".rich-box").forEach(box => {
-      report[box.dataset.key] = sanitize(box.innerHTML);
+    document.querySelectorAll(".rich-box[data-key]").forEach(box => {
+      report[box.dataset.key] = serializeBox(box);
+    });
+    document.querySelectorAll("#sumTabBody .tab-box").forEach(box => {
+      const t = (report.summaryTabs || []).find(x => x.id === box.dataset.tab);
+      if (t) t.html = serializeBox(box);
     });
   }
 
@@ -860,9 +915,11 @@
     document.getElementById("fWriter").value = report.writer;
     document.getElementById("fTo").value = report.to;
     document.getElementById("autoNext").checked = !!report.autoNext;
-    document.querySelectorAll(".rich-box").forEach(box => {
+    document.querySelectorAll(".rich-box[data-key]").forEach(box => {
       box.innerHTML = sanitize(report[box.dataset.key] || "");
+      hydrateIG(box);
     });
+    renderSumTabs();
 
     migrateSelection();
     renderTasks();
@@ -1176,40 +1233,51 @@
 
     const hasContent = (html) => {
       if (!html) return false;
-      if (/<img/i.test(html)) return true;
+      if (/<img|ig-embed/i.test(html)) return true;
       return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim().length > 0;
     };
 
     let n = 0;
+    /* 내용이 없는 섹션은 보고서에서 통째로 빠집니다 */
     const sec = (name, body, extra) => {
+      const bodyOn  = hasContent(body);
+      const extraOn = !!(extra && extra.trim());
+      if (!bodyOn && !extraOn) return "";
       n++;
       return `<div class="pv-sec">
         <h3>${n}. ${name}</h3>
-        ${extra || ""}
-        <div class="pv-body">${hasContent(body) ? body : `<span class="pv-empty">작성된 내용이 없습니다.</span>`}</div>
+        ${extraOn ? extra : ""}
+        ${bodyOn ? `<div class="pv-body">${body}</div>` : ""}
       </div>`;
     };
 
-    n++;
-    const summarySec = `<div class="pv-sec">
-      <h3>${n}. 이번 주 수행 업무 요약</h3>
-      ${hasContent(report.weekSummary) ? `<div class="pv-body" style="margin-bottom:14px;">${report.weekSummary}</div>` : ""}
-      <div class="pv-stats">
-        <span class="pv-stat">총 ${items.length}건</span>
-        <span class="pv-stat">완료 ${done}건</span>
-        <span class="pv-stat">진행중 ${items.length - done}건</span>
-        <span class="pv-stat">완료율 ${rate}%</span>
-      </div>
-      ${items.length ? `<table class="pv-table">
-        <thead><tr>
-          <th style="width:96px;">구분</th><th>업무 내용</th>
-          <th style="width:88px;">일정</th><th style="width:70px;">진행</th><th style="width:30%;">비고 / 성과</th>
-        </tr></thead>
-        <tbody>${rows}</tbody></table>` : `<span class="pv-empty">보고서에 넣을 업무를 아직 선택하지 않았습니다.</span>`}
-    </div>`;
+    let summarySec = "";
+    if (hasContent(report.weekSummary) || items.length) {
+      n++;
+      summarySec = `<div class="pv-sec">
+        <h3>${n}. 금주 주간 업무 요약</h3>
+        ${hasContent(report.weekSummary) ? `<div class="pv-body"${items.length ? ' style="margin-bottom:14px;"' : ""}>${report.weekSummary}</div>` : ""}
+        ${items.length ? `<table class="pv-table">
+          <thead><tr>
+            <th style="width:96px;">구분</th><th>업무 내용</th>
+            <th style="width:88px;">일정</th><th style="width:70px;">진행</th><th style="width:30%;">비고 / 성과</th>
+          </tr></thead>
+          <tbody>${rows}</tbody></table>` : ""}
+      </div>`;
+    }
 
     let pplBlock = "";
     if (pplSection) { n++; pplBlock = `<div class="pv-sec"><h3>${n}. PPL 성과 (인플루언서별)</h3>${pplSection}</div>`; }
+
+    /* --- 주요 성과: 탭별로 소제목을 붙여 쌓아서 출력 --- */
+    const sumTabs = (report.summaryTabs || []).filter(t => hasContent(t.html));
+    const plain = sumTabs.length === 1 && /^(전체|기본|성과)$/.test((sumTabs[0].name || "").trim());
+    const sumStack = plain ? "" : sumTabs.map(t =>
+      `<div class="pv-sub"><div class="pv-sub-title">${esc(t.name)}</div><div class="pv-body">${t.html}</div></div>`
+    ).join("");
+    const sumSec = plain
+      ? sec("주요 성과 및 진행 현황", sumTabs[0].html)
+      : sec("주요 성과 및 진행 현황", "", sumStack);
 
     document.getElementById("previewRoot").innerHTML = `
       <div class="pv-title">${esc(report.title || "마케팅 주간 업무 보고")}</div>
@@ -1218,11 +1286,12 @@
       <div class="pv-rule"></div>
       ${summarySec}
       ${pplBlock}
-      ${sec("주요 성과 및 진행 현황", report.summary)}
+      ${sumSec}
       ${sec("이슈 및 특이사항", report.issues)}
       ${sec("다음 주 계획", report.nextPlan, nextAuto)}
       ${sec("요청 및 공유 사항", report.requests)}
     `;
+    hydrateIG(document.getElementById("previewRoot"));
   }
 
   /* ---------- tabs ---------- */
@@ -1353,7 +1422,8 @@
 
   document.querySelectorAll("[data-table]").forEach(btn => {
     btn.onclick = () => {
-      const box = document.getElementById(btn.dataset.table);
+      const box = getBoxById(btn.dataset.table);
+      if (!box) return;
       const act = btn.dataset.act;
       box.focus();
       const tbl = caretTable(box);
@@ -1378,6 +1448,7 @@
           cell.innerHTML = r.parentNode.tagName === "THEAD" ? "항목" : "<br>";
           r.appendChild(cell);
         });
+        if (tbl.querySelector("colgroup")) ensureColgroup(tbl);
       } else if (act === "delrow") {
         const cur = caretRow(box);
         if (!cur || cur.parentNode.tagName === "THEAD") { toast("삭제할 데이터 행을 클릭해 주세요."); return; }
@@ -1509,7 +1580,7 @@
     scheduleSave();
   }
 
-  document.querySelectorAll(".rich-box").forEach(box => {
+  function bindRichEdit(box) {
     box.setAttribute("contenteditable", !isViewMode);
 
     box.addEventListener("paste", async (e) => {
@@ -1528,6 +1599,14 @@
         scheduleSave();
         return;
       }
+      const ig = normIG(text);
+      if (ig && text.trim().length <= 300) {
+        insertHtmlAtCaret(box, igBlockHtml(ig));
+        hydrateIG(box);
+        collectFromUI(); scheduleSave();
+        toast("인스타 게시물을 넣었어요. 이미지와 캡션이 잠시 뒤 표시됩니다.");
+        return;
+      }
       insertTextAtCaret(box, text);
     });
 
@@ -1541,13 +1620,14 @@
 
     box.addEventListener("input", scheduleSave);
     box.addEventListener("blur", () => { if (!isViewMode) { collectFromUI(); } });
-  });
+  }
 
   document.querySelectorAll("[data-upload]").forEach(btn => {
     btn.onclick = () => {
       const picker = document.getElementById("filePicker");
       picker.onchange = async () => {
-        await handleFiles(document.getElementById(btn.dataset.upload), picker.files);
+        const b = getBoxById(btn.dataset.upload);
+        if (b) await handleFiles(b, picker.files);
         picker.value = "";
       };
       picker.click();
@@ -1574,11 +1654,315 @@
       if (!activeImg) return;
       const s = b.dataset.size;
       if (s === "del") activeImg.remove();
-      else { activeImg.className = s === "100" ? "" : ("w-" + s); }
+      else {
+        activeImg.className = s === "100" ? "" : ("w-" + s);
+        activeImg.style.width = ""; activeImg.style.height = "";
+      }
       imgTool.style.display = "none"; activeImg = null;
-      scheduleSave();
+      collectFromUI(); scheduleSave();
     };
   });
+
+  /* ---------- 표 행·열 / 이미지 크기 드래그 조절 ---------- */
+  const EDGE = 6, IMG_EDGE = 16;
+
+  function ensureColgroup(table) {
+    const cols = table.rows[0] ? table.rows[0].cells.length : 0;
+    let cg = null;
+    for (const c of table.children) if (c.tagName === "COLGROUP") { cg = c; break; }
+    if (!cg) {
+      cg = document.createElement("colgroup");
+      [...table.rows[0].cells].forEach(cell => {
+        const col = document.createElement("col");
+        col.style.width = Math.round(cell.getBoundingClientRect().width) + "px";
+        cg.appendChild(col);
+      });
+      table.insertBefore(cg, table.firstChild);
+    }
+    while (cg.children.length < cols) {
+      const col = document.createElement("col");
+      col.style.width = "120px";
+      cg.appendChild(col);
+    }
+    table.style.tableLayout = "fixed";
+    table.style.width = "auto";
+    return cg;
+  }
+
+  function bindRichResize(box) {
+    let hot = null, dragging = false;
+
+    box.addEventListener("mousemove", (e) => {
+      if (dragging || isViewMode) return;
+      hot = null; box.style.cursor = ""; box.classList.remove("hot-img");
+      const el = e.target;
+      if (el && el.tagName === "IMG") {
+        const r = el.getBoundingClientRect();
+        if (r.right - e.clientX <= IMG_EDGE && r.bottom - e.clientY <= IMG_EDGE) {
+          hot = { t: "img", el: el }; box.classList.add("hot-img");
+        }
+        return;
+      }
+      const cell = el && el.closest ? el.closest("td,th") : null;
+      if (!cell || !box.contains(cell)) return;
+      const r = cell.getBoundingClientRect();
+      const prevCell = cell.previousElementSibling;
+      const prevRow  = cell.parentNode.previousElementSibling
+                    || (cell.parentNode.parentNode.previousElementSibling
+                        ? cell.parentNode.parentNode.previousElementSibling.lastElementChild : null);
+      if (Math.abs(e.clientX - r.right) <= EDGE) { hot = { t: "col", el: cell }; box.style.cursor = "col-resize"; }
+      else if (e.clientX - r.left <= EDGE && prevCell) { hot = { t: "col", el: prevCell }; box.style.cursor = "col-resize"; }
+      else if (Math.abs(e.clientY - r.bottom) <= EDGE) { hot = { t: "row", el: cell }; box.style.cursor = "row-resize"; }
+      else if (e.clientY - r.top <= EDGE && prevRow) { hot = { t: "row", el: prevRow.cells ? prevRow.cells[0] : prevRow }; box.style.cursor = "row-resize"; }
+    });
+
+    box.addEventListener("mouseleave", () => {
+      if (!dragging) { hot = null; box.style.cursor = ""; box.classList.remove("hot-img"); }
+    });
+
+    box.addEventListener("mousedown", (e) => {
+      if (!hot || isViewMode || e.button !== 0) return;
+      e.preventDefault(); e.stopPropagation();
+      const sx = e.clientX, sy = e.clientY;
+      let onMove;
+
+      if (hot.t === "col") {
+        const table = hot.el.closest("table");
+        if (!table || !table.rows[0]) return;
+        const cg = ensureColgroup(table);
+        const col = cg.children[hot.el.cellIndex];
+        if (!col) return;
+        const w0 = parseFloat(col.style.width) || hot.el.getBoundingClientRect().width;
+        onMove = ev => { col.style.width = Math.max(44, Math.round(w0 + ev.clientX - sx)) + "px"; };
+      } else if (hot.t === "row") {
+        const tr = hot.el.tagName === "TR" ? hot.el : hot.el.parentNode;
+        if (!tr || tr.tagName !== "TR") return;
+        const h0 = tr.getBoundingClientRect().height;
+        onMove = ev => { tr.style.height = Math.max(26, Math.round(h0 + ev.clientY - sy)) + "px"; };
+      } else {
+        const img = hot.el;
+        const w0 = img.getBoundingClientRect().width;
+        img.className = "";
+        onMove = ev => {
+          img.style.width = Math.max(60, Math.round(w0 + ev.clientX - sx)) + "px";
+          img.style.height = "auto";
+        };
+      }
+
+      dragging = true;
+      const mv = ev => { ev.preventDefault(); onMove(ev); };
+      const up = () => {
+        document.removeEventListener("mousemove", mv);
+        document.removeEventListener("mouseup", up);
+        dragging = false; hot = null; box.style.cursor = ""; box.classList.remove("hot-img");
+        collectFromUI(); scheduleSave();
+      };
+      document.addEventListener("mousemove", mv);
+      document.addEventListener("mouseup", up);
+    });
+  }
+
+  function bindRichBox(box) {
+    if (box._bound) return;
+    box._bound = true;
+    bindRichEdit(box);
+    bindRichResize(box);
+  }
+  document.querySelectorAll(".rich-box").forEach(bindRichBox);
+
+  /* ---------- 주요 성과: 탭 ---------- */
+  let activeSumTab = null;
+
+  function activeSummaryBox() {
+    if (!activeSumTab) return null;
+    return document.querySelector('#sumTabBody .tab-box[data-tab="' + activeSumTab + '"]');
+  }
+  function getBoxById(id) {
+    if (id === "secSummary") return activeSummaryBox() || document.getElementById(id);
+    return document.getElementById(id);
+  }
+
+  function renderSumTabs() {
+    const bar = document.getElementById("sumTabBar");
+    const body = document.getElementById("sumTabBody");
+    if (!bar || !body) return;
+    const tabs = report.summaryTabs || (report.summaryTabs = []);
+    if (!tabs.length) tabs.push({ id: nid("st"), name: "전체", html: "" });
+    if (!tabs.some(t => t.id === activeSumTab)) activeSumTab = tabs[0].id;
+
+    bar.innerHTML = tabs.map(t =>
+      `<button type="button" class="tab-pill ${t.id === activeSumTab ? "active" : ""}" data-tab="${esc(t.id)}">
+         ${esc(t.name)}${tabs.length > 1 ? `<span class="x" data-del="${esc(t.id)}" title="탭 삭제">✕</span>` : ""}
+       </button>`).join("") +
+      `<button type="button" class="tab-add" id="sumTabAdd">＋ 탭 추가</button>`;
+
+    body.innerHTML = "";
+    tabs.forEach(t => {
+      const d = document.createElement("div");
+      d.className = "rich-box tab-box";
+      d.dataset.tab = t.id;
+      d.setAttribute("data-placeholder",
+        `${t.name} 성과를 적어주세요. 캡처 이미지 · 표 · 인스타 링크를 그대로 붙여넣을 수 있어요.`);
+      if (t.id !== activeSumTab) d.style.display = "none";
+      d.innerHTML = sanitize(t.html || "");
+      body.appendChild(d);
+      bindRichBox(d);
+      hydrateIG(d);
+    });
+  }
+
+  const sumBar = document.getElementById("sumTabBar");
+  if (sumBar) {
+    sumBar.addEventListener("click", (e) => {
+      if (isViewMode) return;
+      const del = e.target.closest("[data-del]");
+      if (del) {
+        e.stopPropagation();
+        const id = del.dataset.del;
+        const t = (report.summaryTabs || []).find(x => x.id === id);
+        if ((report.summaryTabs || []).length <= 1) { toast("탭은 최소 1개 있어야 해요."); return; }
+        if (!confirm(`'${t ? t.name : ""}' 탭을 삭제할까요? 안에 쓴 내용도 같이 지워집니다.`)) return;
+        collectFromUI();
+        report.summaryTabs = report.summaryTabs.filter(x => x.id !== id);
+        if (activeSumTab === id) activeSumTab = report.summaryTabs[0].id;
+        renderSumTabs(); scheduleSave();
+        return;
+      }
+      if (e.target.closest("#sumTabAdd")) {
+        const name = prompt("탭 이름을 적어주세요.\n예) 지지뷰티, 마이크로, 체험단, 앰배서더");
+        if (!name || !name.trim()) return;
+        collectFromUI();
+        const t = { id: nid("st"), name: name.trim(), html: "" };
+        report.summaryTabs.push(t);
+        activeSumTab = t.id;
+        renderSumTabs(); scheduleSave();
+        return;
+      }
+      const pill = e.target.closest(".tab-pill");
+      if (pill) { collectFromUI(); activeSumTab = pill.dataset.tab; renderSumTabs(); }
+    });
+
+    sumBar.addEventListener("dblclick", (e) => {
+      if (isViewMode) return;
+      const pill = e.target.closest(".tab-pill");
+      if (!pill) return;
+      const t = (report.summaryTabs || []).find(x => x.id === pill.dataset.tab);
+      if (!t) return;
+      const nm = prompt("탭 이름", t.name);
+      if (!nm || !nm.trim()) return;
+      collectFromUI(); t.name = nm.trim();
+      renderSumTabs(); scheduleSave();
+    });
+  }
+
+  /* ---------- 인스타그램 임베드 ---------- */
+  const IG_RE = /instagram\.com\/(p|reel|reels|tv)\/([A-Za-z0-9_-]+)/i;
+  function normIG(u) {
+    const m = String(u || "").match(IG_RE);
+    if (!m) return null;
+    const kind = m[1].toLowerCase() === "reels" ? "reel" : m[1].toLowerCase();
+    return "https://www.instagram.com/" + kind + "/" + m[2] + "/";
+  }
+  function igBlockHtml(u) {
+    return `<div class="ig-embed" data-ig="${esc(u)}" contenteditable="false"></div><p><br></p>`;
+  }
+
+  let igState = 0;  /* 0 없음, 1 로딩중, 2 준비됨 */
+  function processIG() {
+    if (igState === 2) { try { window.instgrm.Embeds.process(); } catch (e) {} return; }
+    if (igState === 1) return;
+    igState = 1;
+    const sc = document.createElement("script");
+    sc.async = true;
+    sc.src = "https://www.instagram.com/embed.js";
+    sc.onload = () => { igState = 2; try { window.instgrm.Embeds.process(); } catch (e) {} };
+    sc.onerror = () => { igState = 0; };
+    document.body.appendChild(sc);
+  }
+
+  /* 저장에는 링크만 남기고, 화면에 붙일 때만 인스타 위젯을 채워 넣습니다 */
+  function hydrateIG(root) {
+    if (!root) return;
+    const list = root.querySelectorAll(".ig-embed[data-ig]");
+    if (!list.length) return;
+    let added = 0;
+    list.forEach(el => {
+      if (el._igDone) return;
+      const u = normIG(el.dataset.ig);
+      if (!u) return;
+      el.setAttribute("contenteditable", "false");
+      el.innerHTML =
+        `<blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="${esc(u)}" data-instgrm-version="14"` +
+        ` style="background:#fff; border:0; border-radius:10px; box-shadow:0 0 1px 0 rgba(0,0,0,.5),0 1px 10px 0 rgba(0,0,0,.15);` +
+        ` margin:0; max-width:540px; min-width:280px; padding:0; width:100%;">` +
+        `<a href="${esc(u)}" target="_blank" rel="noopener" style="font-size:12px; color:#0f766e; display:block; padding:12px;">${esc(u)}</a>` +
+        `</blockquote>`;
+      el._igDone = true;
+      added++;
+    });
+    if (added) processIG();
+  }
+
+  /* 인스타 위젯은 화면용이라, 저장할 때는 다시 링크만 남깁니다 */
+  function serializeBox(box) {
+    const d = document.createElement("div");
+    d.innerHTML = box.innerHTML;
+    d.querySelectorAll(".ig-embed").forEach(el => {
+      const u = normIG(el.getAttribute("data-ig"));
+      if (!u) { el.remove(); return; }
+      el.innerHTML = "";
+      el.setAttribute("data-ig", u);
+      el.setAttribute("contenteditable", "false");
+    });
+    d.querySelectorAll("blockquote.instagram-media").forEach(bq => {
+      if (bq.closest(".ig-embed")) return;
+      const u = normIG(bq.getAttribute("data-instgrm-permalink"));
+      const holder = document.createElement("div");
+      holder.className = "ig-embed";
+      if (u) { holder.setAttribute("data-ig", u); bq.replaceWith(holder); } else bq.remove();
+    });
+    return sanitize(d.innerHTML);
+  }
+
+  document.querySelectorAll("[data-insta]").forEach(btn => {
+    btn.onclick = () => {
+      const box = getBoxById(btn.dataset.insta);
+      if (!box) return;
+      const raw = prompt("인스타그램 게시물 / 릴스 주소를 붙여넣어 주세요.\n(공개 계정 게시물만 이미지·캡션이 보입니다)");
+      if (!raw) return;
+      const u = normIG(raw);
+      if (!u) { toast("인스타그램 게시물 주소가 아닌 것 같아요."); return; }
+      box.focus();
+      insertHtmlAtCaret(box, igBlockHtml(u));
+      hydrateIG(box);
+      collectFromUI(); scheduleSave();
+      toast("인스타 게시물을 넣었어요. 이미지와 캡션이 잠시 뒤 표시됩니다.");
+    };
+  });
+
+  /* ---------- 스케줄러 연동 영역 접었다 펴기 ---------- */
+  const tTaskBtn = document.getElementById("toggleTaskCard");
+  if (tTaskBtn) tTaskBtn.onclick = (e) => {
+    e.stopPropagation();
+    const c = document.getElementById("cardTasks");
+    const on = c.style.display === "none";
+    c.style.display = on ? "" : "none";
+    tTaskBtn.textContent = on ? "📋 스케줄러 업무 숨기기" : "📋 스케줄러 업무 불러오기";
+    if (on) c.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const tNextBtn = document.getElementById("toggleNextCard");
+  if (tNextBtn) tNextBtn.onclick = (e) => {
+    e.stopPropagation();
+    const lab = document.getElementById("autoNextLabel");
+    const tb  = document.getElementById("nextToolbar");
+    const pv  = document.getElementById("nextPreview");
+    const on = lab.style.display === "none";
+    lab.style.display = on ? "flex" : "none";
+    tb.style.display  = on ? "flex" : "none";
+    pv.style.display  = on ? "block" : "none";
+    tNextBtn.textContent = on ? "📋 스케줄러 일정 숨기기" : "📋 스케줄러 일정 불러오기";
+  };
 
   /* ---------- inputs ---------- */
   ["fTitle","fWriter","fTo"].forEach(id => {
