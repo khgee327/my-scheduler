@@ -240,7 +240,9 @@
   }
   .rich-box table td, .pv-body table td { border: 1px solid #e8cfd9; padding: 7px 9px; vertical-align: top; }
   .pv-body table th, .pv-body table td { word-break: break-word; }
-  .rich-box table td:focus, .rich-box table th:focus { background: #fff5f9; outline: none; }
+  .rich-box table td:focus, .rich-box table th:focus { outline: none; }
+  .rich-box table th[style*="background"], .pv-body table th[style*="background"] { color: var(--text); }
+  .rich-box table td[style*="background"], .pv-body table td[style*="background"] { color: inherit; }
   .table-tools { display: flex; gap: 5px; flex-wrap: wrap; }
 
   /* 성과 탭 */
@@ -1539,9 +1541,10 @@
 
   /* ---------- 본문 표 (엑셀 형식) ---------- */
   function makeTableHtml(cols, rows, headers) {
+    const HB = ' style="background-color:#fdf2f8;"';
     const th = (headers || []).length
-      ? headers.map(h => `<th>${esc(h)}</th>`).join("")
-      : Array.from({ length: cols }, (_, i) => `<th>항목 ${i + 1}</th>`).join("");
+      ? headers.map(h => `<th${HB}>${esc(h)}</th>`).join("")
+      : Array.from({ length: cols }, (_, i) => `<th${HB}>항목 ${i + 1}</th>`).join("");
     const body = (rows && rows.length)
       ? rows.map(r => `<tr>${Array.from({ length: cols }, (_, i) => `<td>${esc(r[i] || "")}</td>`).join("")}</tr>`).join("")
       : Array.from({ length: 2 }, () => `<tr>${Array.from({ length: cols }, () => "<td><br></td>").join("")}</tr>`).join("");
@@ -1592,8 +1595,13 @@
         else body.appendChild(tr);
       } else if (act === "col") {
         [...tbl.rows].forEach((r, i) => {
-          const cell = document.createElement(r.parentNode.tagName === "THEAD" ? "th" : "td");
-          cell.innerHTML = r.parentNode.tagName === "THEAD" ? "항목" : "<br>";
+          const isHead = r.parentNode.tagName === "THEAD";
+          const cell = document.createElement(isHead ? "th" : "td");
+          cell.innerHTML = isHead ? "항목" : "<br>";
+          if (isHead) {
+            const ref = r.cells[r.cells.length - 1];
+            cell.style.backgroundColor = (ref && ref.style.backgroundColor) || "#fdf2f8";
+          }
           r.appendChild(cell);
         });
         if (tbl.querySelector("colgroup")) ensureColgroup(tbl);
@@ -2045,7 +2053,11 @@
     '<span class="fmt-sep"></span>' +
     '<label class="fmt-color" title="글씨 색">글자<input type="color" data-cmd="foreColor" value="#e11d48"></label>' +
     '<label class="fmt-color" title="글씨 배경색(형광펜)">형광<input type="color" data-cmd="hiliteColor" value="#fff3a3"></label>' +
-    '<button type="button" class="fmt-btn" data-cmd="removeFormat" title="서식 지우기">서식 지우기</button>';
+    '<span class="fmt-sep"></span>' +
+    '<label class="fmt-color" title="표 칸 배경색 — 칸을 클릭하거나 드래그로 여러 칸 선택 후">칸색<input type="color" data-cmd="cellBg" value="#fde8ef"></label>' +
+    '<button type="button" class="fmt-btn" data-cmd="cellClear" title="표 칸 배경색 지우기 (제목행 색도 이걸로 뺄 수 있어요)">칸색 빼기</button>' +
+    '<span class="fmt-sep"></span>' +
+    '<button type="button" class="fmt-btn" data-cmd="removeFormat" title="글자 서식 지우기">서식 지우기</button>';
 
   let lastRange = null, lastFmtBox = null;
   document.addEventListener("selectionchange", () => {
@@ -2057,10 +2069,36 @@
     if (box) { lastRange = sel.getRangeAt(0).cloneRange(); lastFmtBox = box; }
   });
   function restoreSel(box) {
-    box.focus();
-    if (lastFmtBox !== box || !lastRange) return;
     const sel = window.getSelection();
-    try { sel.removeAllRanges(); sel.addRange(lastRange); } catch (e) {}
+    let inBox = false;
+    try {
+      inBox = !!(sel && sel.rangeCount && box.contains(sel.getRangeAt(0).commonAncestorContainer));
+    } catch (e) {}
+    if (lastFmtBox === box && lastRange) {
+      box.focus();
+      try { sel.removeAllRanges(); sel.addRange(lastRange); } catch (e) {}
+      return;
+    }
+    if (!inBox) box.focus();     /* 이미 박스 안을 선택 중이면 건드리지 않습니다 */
+  }
+  /* 커서가 놓인 칸, 또는 드래그로 걸친 칸들을 모두 찾아 줍니다 */
+  function selectedCells(box) {
+    const out = [];
+    const sel = window.getSelection();
+    let range = null;
+    if (sel && sel.rangeCount) range = sel.getRangeAt(0);
+    else if (lastFmtBox === box && lastRange) range = lastRange;
+    if (!range) return out;
+    box.querySelectorAll("td, th").forEach(c => {
+      try { if (range.intersectsNode(c)) out.push(c); } catch (e) {}
+    });
+    if (!out.length) {
+      let n = range.startContainer;
+      if (n && n.nodeType === 3) n = n.parentElement;
+      const c = n && n.closest ? n.closest("td, th") : null;
+      if (c && box.contains(c)) out.push(c);
+    }
+    return out;
   }
   function curFontPx() {
     const sel = window.getSelection();
@@ -2093,7 +2131,13 @@
     restoreSel(box);
     try { document.execCommand("styleWithCSS", false, true); } catch (e) {}
     try {
-      if (cmd === "fontUp") stepFont(box, 1);
+      if (cmd === "cellBg" || cmd === "cellClear") {
+        const cells = selectedCells(box);
+        if (!cells.length) { toast("표 안의 칸을 클릭하거나, 드래그로 여러 칸을 선택한 뒤 눌러주세요."); return; }
+        cells.forEach(c => { c.style.backgroundColor = (cmd === "cellBg") ? val : "transparent"; });
+        toast(cmd === "cellBg" ? `${cells.length}칸에 색을 넣었어요.` : `${cells.length}칸의 색을 뺐어요.`);
+      }
+      else if (cmd === "fontUp") stepFont(box, 1);
       else if (cmd === "fontDown") stepFont(box, -1);
       else if (cmd === "hiliteColor") {
         if (!document.execCommand("hiliteColor", false, val)) document.execCommand("backColor", false, val);
