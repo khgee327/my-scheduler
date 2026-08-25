@@ -315,6 +315,10 @@
   .yt-ch { font-size: 11.5px; color: var(--text-soft); font-weight: 600; margin-bottom: 8px; }
   .yt-stats { font-size: 13px; font-weight: 800; color: var(--accent-dark); }
   .yt-asof { font-size: 10.5px; color: var(--text-soft); margin-top: 5px; }
+  .yt-row { display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0; align-items: flex-start; }
+  .yt-row > .yt-card { margin: 0; max-width: none; flex: 0 0 calc((100% - 12px) / 2); }
+  .yt-row[data-cols="3"] > .yt-card { flex: 0 0 calc((100% - 24px) / 3); }
+  .yt-row .yt-card img { width: 150px; }
 
   #toast {
     position: fixed; left: 50%; bottom: 34px; transform: translateX(-50%) translateY(12px);
@@ -480,15 +484,15 @@
     </div>
   </div>
 
-  <!-- 주요 성과 -->
+  <!-- 인플루언서 -->
   <div class="card">
     <div class="card-header">
-      <h2><span class="dot"></span>주요 성과 및 진행 현황</h2>
-      <span class="card-sub">인플루언서 · 마이크로 · 체험단처럼 탭으로 나눠 쓰세요</span>
+      <h2><span class="dot"></span>인플루언서</h2>
+      <span class="card-sub">인플루언서별로 탭을 나눠 정리하세요</span>
     </div>
     <div class="tab-bar edit-only" id="sumTabBar"></div>
     <div class="tab-hint edit-only" style="margin-bottom:10px;">
-      💡 탭 이름을 <b>더블클릭</b>하면 이름을 바꿀 수 있어요. 내용을 쓴 탭만 보고서에 나갑니다.
+      💡 탭 이름을 <b>더블클릭</b>하면 바꿀 수 있어요. 내용을 쓴 탭만 보고서에 나갑니다.
     </div>
     <div id="sumTabBody"></div>
     <div class="editor-foot edit-only">
@@ -503,6 +507,87 @@
         <button class="mini-btn" data-table="secSummary" data-act="col">열 추가</button>
         <button class="mini-btn" data-table="secSummary" data-act="delrow">행 삭제</button>
         <button class="mini-btn" data-upload="secSummary">이미지 첨부</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SNS -->
+  <div class="card">
+    <div class="card-header">
+      <h2><span class="dot"></span>SNS</h2>
+      <span class="card-sub">채널별로 탭을 나눠 정리하세요</span>
+    </div>
+    <div class="tab-bar edit-only" id="snsTabBar"></div>
+    <div class="tab-hint edit-only" style="margin-bottom:10px;">
+      💡 탭 이름을 <b>더블클릭</b>하면 바꿀 수 있어요. 내용을 쓴 탭만 보고서에 나갑니다.
+    </div>
+    <div id="snsTabBody"></div>
+    <div class="editor-foot edit-only">
+      <span class="editor-hint">📸 Ctrl+V 붙여넣기 · ↔️ 표 선·이미지 모서리를 끌면 크기 조절 · ⌨️ Ctrl+B 굵게, Ctrl+] / Ctrl+[ 글씨 크기</span>
+      <div class="table-tools">
+        <button class="mini-btn" data-link="secSns">🔗 링크</button>
+        <button class="mini-btn" data-yt="secSns">▶️ 유튜브 링크</button>
+        <button class="mini-btn" data-ytsync="secSns">🔄 유튜브 수치 갱신</button>
+        <button class="mini-btn" data-insta="secSns">📷 인스타 링크</button>
+        <button class="mini-btn" data-table="secSns" data-act="insert">표 넣기</button>
+        <button class="mini-btn" data-table="secSns" data-act="row">행 추가</button>
+        <button class="mini-btn" data-table="secSns" data-act="col">열 추가</button>
+        <button class="mini-btn" data-table="secSns" data-act="delrow">행 삭제</button>
+        <button class="mini-btn" data-upload="secSns">이미지 첨부</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 체험단 -->
+  <div class="card">
+    <div class="card-header">
+      <h2><span class="dot"></span>체험단</h2>
+      <span class="card-sub">진행 건별로 탭을 나눠 정리하세요</span>
+    </div>
+    <div class="tab-bar edit-only" id="trlTabBar"></div>
+    <div class="tab-hint edit-only" style="margin-bottom:10px;">
+      💡 탭 이름을 <b>더블클릭</b>하면 바꿀 수 있어요. 내용을 쓴 탭만 보고서에 나갑니다.
+    </div>
+    <div id="trlTabBody"></div>
+    <div class="editor-foot edit-only">
+      <span class="editor-hint">📸 Ctrl+V 붙여넣기 · ↔️ 표 선·이미지 모서리를 끌면 크기 조절 · ⌨️ Ctrl+B 굵게, Ctrl+] / Ctrl+[ 글씨 크기</span>
+      <div class="table-tools">
+        <button class="mini-btn" data-link="secTrial">🔗 링크</button>
+        <button class="mini-btn" data-yt="secTrial">▶️ 유튜브 링크</button>
+        <button class="mini-btn" data-ytsync="secTrial">🔄 유튜브 수치 갱신</button>
+        <button class="mini-btn" data-insta="secTrial">📷 인스타 링크</button>
+        <button class="mini-btn" data-table="secTrial" data-act="insert">표 넣기</button>
+        <button class="mini-btn" data-table="secTrial" data-act="row">행 추가</button>
+        <button class="mini-btn" data-table="secTrial" data-act="col">열 추가</button>
+        <button class="mini-btn" data-table="secTrial" data-act="delrow">행 삭제</button>
+        <button class="mini-btn" data-upload="secTrial">이미지 첨부</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 크리에이터 -->
+  <div class="card">
+    <div class="card-header">
+      <h2><span class="dot"></span>크리에이터</h2>
+      <span class="card-sub">크리에이터별로 탭을 나눠 정리하세요</span>
+    </div>
+    <div class="tab-bar edit-only" id="crtTabBar"></div>
+    <div class="tab-hint edit-only" style="margin-bottom:10px;">
+      💡 탭 이름을 <b>더블클릭</b>하면 바꿀 수 있어요. 내용을 쓴 탭만 보고서에 나갑니다.
+    </div>
+    <div id="crtTabBody"></div>
+    <div class="editor-foot edit-only">
+      <span class="editor-hint">📸 Ctrl+V 붙여넣기 · ↔️ 표 선·이미지 모서리를 끌면 크기 조절 · ⌨️ Ctrl+B 굵게, Ctrl+] / Ctrl+[ 글씨 크기</span>
+      <div class="table-tools">
+        <button class="mini-btn" data-link="secCreator">🔗 링크</button>
+        <button class="mini-btn" data-yt="secCreator">▶️ 유튜브 링크</button>
+        <button class="mini-btn" data-ytsync="secCreator">🔄 유튜브 수치 갱신</button>
+        <button class="mini-btn" data-insta="secCreator">📷 인스타 링크</button>
+        <button class="mini-btn" data-table="secCreator" data-act="insert">표 넣기</button>
+        <button class="mini-btn" data-table="secCreator" data-act="row">행 추가</button>
+        <button class="mini-btn" data-table="secCreator" data-act="col">열 추가</button>
+        <button class="mini-btn" data-table="secCreator" data-act="delrow">행 삭제</button>
+        <button class="mini-btn" data-upload="secCreator">이미지 첨부</button>
       </div>
     </div>
   </div>
@@ -635,6 +720,32 @@
   };
   const DOW = ["일","월","화","수","목","금","토"];
 
+  /* 탭으로 굴러가는 섹션들 — yt 는 유튜브 카드를 가로 몇 개까지 붙일지 */
+  const TAB_SECTIONS = [
+    { key:"pplTabs",     bar:"pplTabBar", body:"pplTabBody", tool:"secPpl",     title:"PPL 성과 (인플루언서별)", pre:"pt",  yt:1,
+      addHint:"예) 인플루언서 1, 마이크로, 체험단", addPre:"인플루언서 " },
+    { key:"summaryTabs", bar:"sumTabBar", body:"sumTabBody", tool:"secSummary", title:"인플루언서",   pre:"st",  yt:2,
+      addHint:"예) 지지뷰티, 마이크로 릴스, 마이크로 유튜브", addPre:"인플루언서 " },
+    { key:"snsTabs",     bar:"snsTabBar", body:"snsTabBody", tool:"secSns",     title:"SNS",        pre:"sns", yt:2,
+      addHint:"예) 온살 인스타, 루메아카이브 인스타, 블로그", addPre:"채널 " },
+    { key:"trialTabs",   bar:"trlTabBar", body:"trlTabBody", tool:"secTrial",   title:"체험단",      pre:"trl", yt:2,
+      addHint:"예) 파우더룸, 글로우픽, 인스타 피드", addPre:"체험단 " },
+    { key:"creatorTabs", bar:"crtTabBar", body:"crtTabBody", tool:"secCreator", title:"크리에이터",   pre:"crt", yt:2,
+      addHint:"예) 유튜브, 틱톡, 숏폼", addPre:"크리에이터 " }
+  ];
+  const activeTab = {};
+  function secByTool(t) { return TAB_SECTIONS.find(x => x.tool === t); }
+  function tabList(sec) {
+    const l = report[sec.key] || (report[sec.key] = []);
+    if (!l.length) l.push({ id: nid(sec.pre), name: "전체", html: "" });
+    if (!l.some(t => t.id === activeTab[sec.key])) activeTab[sec.key] = l[0].id;
+    return l;
+  }
+  function activeBox(sec) {
+    if (!activeTab[sec.key]) return null;
+    return document.querySelector("#" + sec.body + ' .tab-box[data-tab="' + activeTab[sec.key] + '"]');
+  }
+
   const params = new URLSearchParams(location.search);
   const isViewMode = params.get("mode") === "view";
   if (isViewMode) document.body.classList.add("readonly-mode");
@@ -683,10 +794,12 @@
   function weekKey() { return fmtDate(mondayOf(anchor)); }
 
   function blankReport() {
-    return { title:"", writer:"", to:"", weekSummary:"", summary:"", summaryTabs:[], issues:"", nextPlan:"", requests:"", pplTabs:[],
+    const r = { title:"", writer:"", to:"", weekSummary:"", summary:"", issues:"", nextPlan:"", requests:"",
              notes:{}, labels:{}, merges:[], extras:[], excluded:[],
              included:[], nextIncluded:[], v:2, autoNext:true,
              ppl:{ rows:[] } };
+    TAB_SECTIONS.forEach(sc => { r[sc.key] = []; });
+    return r;
   }
   function normalizeReport(r) {
     r.notes = r.notes || {}; r.labels = r.labels || {};
@@ -694,19 +807,24 @@
     r.included = r.included || []; r.nextIncluded = r.nextIncluded || [];
     r.ppl = r.ppl || { rows: [] };
     r.ppl.rows = r.ppl.rows || [];
-    if (!Array.isArray(r.summaryTabs) || !r.summaryTabs.length) {
+    TAB_SECTIONS.forEach(sc => { if (!Array.isArray(r[sc.key])) r[sc.key] = []; });
+    if (!r.summaryTabs.length) {
       r.summaryTabs = [{ id: nid("st"), name: "전체", html: r.summary || "" }];
       r.summary = "";                       // 옛 방식 내용은 첫 탭으로 옮김
     }
-    r.summaryTabs.forEach(t => { t.id = t.id || nid("st"); t.name = t.name || "전체"; t.html = t.html || ""; });
-    if (!Array.isArray(r.pplTabs) || !r.pplTabs.length) {
+    if (!r.pplTabs.length) {
       r.pplTabs = [{ id: nid("pt"), name: "전체", rows: (r.ppl && r.ppl.rows) ? r.ppl.rows : [] }];
       r.ppl = { rows: [] };                 // 옛 방식 표는 첫 탭으로 옮김
     }
     r.pplTabs.forEach(t => {
-      t.id = t.id || nid("pt"); t.name = t.name || "전체"; t.rows = t.rows || [];
-      if (typeof t.html !== "string") t.html = pplRowsToHtml(t.rows);   // 옛 표는 편집 가능한 표로 변환
+      t.rows = t.rows || [];
+      if (typeof t.html !== "string") t.html = pplRowsToHtml(t.rows);
       if (t.html) t.rows = [];
+    });
+    TAB_SECTIONS.forEach(sc => {
+      const l = r[sc.key];
+      if (!l.length) l.push({ id: nid(sc.pre), name: "전체", html: "" });
+      l.forEach(t => { t.id = t.id || nid(sc.pre); t.name = t.name || "전체"; t.html = t.html || ""; });
     });
     return r;
   }
@@ -936,13 +1054,11 @@
     document.querySelectorAll(".rich-box[data-key]").forEach(box => {
       report[box.dataset.key] = serializeBox(box);
     });
-    document.querySelectorAll("#sumTabBody .tab-box").forEach(box => {
-      const t = (report.summaryTabs || []).find(x => x.id === box.dataset.tab);
-      if (t) t.html = serializeBox(box);
-    });
-    document.querySelectorAll("#pplTabBody .tab-box").forEach(box => {
-      const t = (report.pplTabs || []).find(x => x.id === box.dataset.tab);
-      if (t) t.html = serializeBox(box);
+    TAB_SECTIONS.forEach(sc => {
+      document.querySelectorAll("#" + sc.body + " .tab-box").forEach(box => {
+        const t = (report[sc.key] || []).find(x => x.id === box.dataset.tab);
+        if (t) t.html = serializeBox(box);
+      });
     });
   }
 
@@ -1060,11 +1176,10 @@
       linkifyBox(box);
       hydrateIG(box);
     });
-    renderSumTabs();
+    renderAllTabs();
 
     migrateSelection();
     renderTasks();
-    renderPPL();
     renderNextPreview();
     updatePeeks();
     if (document.getElementById("viewPane").style.display !== "none") renderPreview();
@@ -1191,65 +1306,15 @@
     { k:"note",    h:"비고",     w:"150px", type:"text" }
   ];
 
-  let activePplTab = null;
-  function pplTabList() {
-    const l = report.pplTabs || (report.pplTabs = []);
-    if (!l.length) l.push({ id: nid("pt"), name: "전체", rows: [] });
-    if (!l.some(t => t.id === activePplTab)) activePplTab = l[0].id;
-    return l;
-  }
-  function pplActive() { const l = pplTabList(); return l.find(t => t.id === activePplTab) || l[0]; }
-  function pplRows() { return pplActive().rows; }
   function allPplRows() { return (report.pplTabs || []).reduce((a, t) => a.concat(t.rows || []), []); }
-
   function pplTotals(rowsIn) {
     const t = { reach:0, clicks:0, orders:0, revenue:0 };
-    (rowsIn || pplRows()).forEach(r => {
+    (rowsIn || []).forEach(r => {
       t.reach += parseNum(r.reach); t.clicks += parseNum(r.clicks);
       t.orders += parseNum(r.orders); t.revenue += parseNum(r.revenue);
     });
     t.cvr = t.clicks ? (t.orders / t.clicks * 100) : 0;
     return t;
-  }
-  function rowCvr(r) {
-    const c = parseNum(r.clicks), o = parseNum(r.orders);
-    return c ? (o / c * 100) : null;
-  }
-
-  function activePplBox() {
-    if (!activePplTab) return null;
-    return document.querySelector('#pplTabBody .tab-box[data-tab="' + activePplTab + '"]');
-  }
-
-  function renderPPL() {
-    const bar = document.getElementById("pplTabBar");
-    const body = document.getElementById("pplTabBody");
-    if (!bar || !body) return;
-    const tabs = pplTabList();
-
-    bar.innerHTML = tabs.map(t =>
-      `<button type="button" class="tab-pill ${t.id === activePplTab ? "active" : ""}" data-tab="${esc(t.id)}">
-         ${esc(t.name)}${tabs.length > 1 ? `<span class="x" data-del="${esc(t.id)}" title="탭 삭제">✕</span>` : ""}
-       </button>`).join("") +
-      `<button type="button" class="tab-add" id="pplTabAdd">＋ 탭 추가</button>`;
-
-    body.innerHTML = "";
-    tabs.forEach(t => {
-      const pane = document.createElement("div");
-      pane.className = "tab-pane";
-      if (t.id !== activePplTab) pane.style.display = "none";
-      const d = document.createElement("div");
-      d.className = "rich-box tab-box";
-      d.dataset.tab = t.id;
-      d.setAttribute("data-placeholder",
-        `${t.name} PPL 성과를 적어주세요. 대시보드·엑셀 표, 캡처 이미지, 인스타 링크를 그대로 붙여넣을 수 있어요.`);
-      d.innerHTML = sanitize(t.html || "");
-      linkifyBox(d);
-      pane.appendChild(d);
-      body.appendChild(pane);
-      bindRichBox(d);
-      hydrateIG(d);
-    });
   }
 
   function renderNextPreview() {
@@ -1303,16 +1368,6 @@
       </tr>`;
     }).join("");
 
-    /* --- PPL 성과 (탭별) --- */
-    const pplGroups = (report.pplTabs || []).filter(t => hasContent(t.html));
-    const pplPlain = pplGroups.length === 1 && /^(전체|기본)$/.test((pplGroups[0].name || "").trim());
-    let pplSection = "";
-    if (pplGroups.length) {
-      pplSection = pplPlain
-        ? `<div class="pv-body">${pplGroups[0].html}</div>`
-        : pplGroups.map(g => `<div class="pv-sub"><div class="pv-sub-title">${esc(g.name)}</div><div class="pv-body">${g.html}</div></div>`).join("");
-    }
-
     /* --- 다음 주 --- */
     let nextAuto = "";
     if (report.autoNext) {
@@ -1359,18 +1414,18 @@
       </div>`;
     }
 
-    let pplBlock = "";
-    if (pplSection) { n++; pplBlock = `<div class="pv-sec"><h3>${n}. PPL 성과 (인플루언서별)</h3>${pplSection}</div>`; }
-
-    /* --- 주요 성과: 탭별로 소제목을 붙여 쌓아서 출력 --- */
-    const sumTabs = (report.summaryTabs || []).filter(t => hasContent(t.html));
-    const plain = sumTabs.length === 1 && /^(전체|기본|성과)$/.test((sumTabs[0].name || "").trim());
-    const sumStack = plain ? "" : sumTabs.map(t =>
-      `<div class="pv-sub"><div class="pv-sub-title">${esc(t.name)}</div><div class="pv-body">${t.html}</div></div>`
-    ).join("");
-    const sumSec = plain
-      ? sec("주요 성과 및 진행 현황", sumTabs[0].html)
-      : sec("주요 성과 및 진행 현황", "", sumStack);
+    /* --- 탭 섹션들: 탭 이름을 소제목으로 붙여 차례대로 --- */
+    const tabSecHtml = (sc) => {
+      const g = (report[sc.key] || []).filter(t => hasContent(t.html));
+      if (!g.length) return "";
+      n++;
+      const plain = g.length === 1 && /^(전체|기본|성과)$/.test((g[0].name || "").trim());
+      const inner = plain
+        ? `<div class="pv-body">${g[0].html}</div>`
+        : g.map(x => `<div class="pv-sub"><div class="pv-sub-title">${esc(x.name)}</div><div class="pv-body">${x.html}</div></div>`).join("");
+      return `<div class="pv-sec"><h3>${n}. ${esc(sc.title)}</h3>${inner}</div>`;
+    };
+    const tabBlocks = TAB_SECTIONS.map(tabSecHtml).join("");
 
     document.getElementById("previewRoot").innerHTML = `
       <div class="pv-title">${esc(report.title || "마케팅 주간 업무 보고")}</div>
@@ -1378,8 +1433,7 @@
       <div class="pv-meta">${report.writer ? "작성자 · " + esc(report.writer) : ""}${report.writer && report.to ? "&nbsp;&nbsp;|&nbsp;&nbsp;" : ""}${report.to ? "보고 대상 · " + esc(report.to) : ""}</div>
       <div class="pv-rule"></div>
       ${summarySec}
-      ${pplBlock}
-      ${sumSec}
+      ${tabBlocks}
       ${sec("이슈 및 특이사항", report.issues)}
       ${sec("다음 주 계획", report.nextPlan, nextAuto)}
       ${sec("요청 및 공유 사항", report.requests)}
@@ -1626,9 +1680,9 @@
       const h2 = card.querySelector("h2");
       const peek = card.querySelector(".collapse-peek");
       if (!h2 || !peek) return;
-      const t = h2.textContent;
+      const t = h2.textContent.replace(peek.textContent || "", "").trim();
       if (t.indexOf("수행 업무") !== -1 && t.indexOf("요약") === -1) peek.textContent = `  · ${items.length}건`;
-      else if (t.indexOf("PPL") !== -1) peek.textContent = `  · ${(report.pplTabs || []).filter(x => (x.html || "").trim()).length}개 탭`;
+      else { const sc = TAB_SECTIONS.find(x => x.title === t.trim()); if (sc) peek.textContent = `  · ${(report[sc.key] || []).filter(x => (x.html || "").trim()).length}개 탭`; }
     });
   }
 
@@ -1891,142 +1945,93 @@
     bindRichResize(box);
     attachFormatBar(box);
   }
-  /* ---------- 주요 성과: 탭 ---------- */
-  let activeSumTab = null;
-
-  function activeSummaryBox() {
-    if (!activeSumTab) return null;
-    return document.querySelector('#sumTabBody .tab-box[data-tab="' + activeSumTab + '"]');
-  }
+  /* ---------- 탭 섹션 (PPL · 인플루언서 · SNS · 체험단 · 크리에이터) ---------- */
   function getBoxById(id) {
-    if (id === "secSummary") return activeSummaryBox() || document.getElementById(id);
-    if (id === "secPpl") return activePplBox();
+    const sec = secByTool(id);
+    if (sec) return activeBox(sec);
     return document.getElementById(id);
   }
 
-  function renderSumTabs() {
-    const bar = document.getElementById("sumTabBar");
-    const body = document.getElementById("sumTabBody");
+  function renderTabSection(sec) {
+    const bar = document.getElementById(sec.bar);
+    const body = document.getElementById(sec.body);
     if (!bar || !body) return;
-    const tabs = report.summaryTabs || (report.summaryTabs = []);
-    if (!tabs.length) tabs.push({ id: nid("st"), name: "전체", html: "" });
-    if (!tabs.some(t => t.id === activeSumTab)) activeSumTab = tabs[0].id;
+    const tabs = tabList(sec);
 
     bar.innerHTML = tabs.map(t =>
-      `<button type="button" class="tab-pill ${t.id === activeSumTab ? "active" : ""}" data-tab="${esc(t.id)}">
+      `<button type="button" class="tab-pill ${t.id === activeTab[sec.key] ? "active" : ""}" data-tab="${esc(t.id)}">
          ${esc(t.name)}${tabs.length > 1 ? `<span class="x" data-del="${esc(t.id)}" title="탭 삭제">✕</span>` : ""}
        </button>`).join("") +
-      `<button type="button" class="tab-add" id="sumTabAdd">＋ 탭 추가</button>`;
+      `<button type="button" class="tab-add" data-add="1">＋ 탭 추가</button>`;
 
     body.innerHTML = "";
     tabs.forEach(t => {
       const pane = document.createElement("div");
       pane.className = "tab-pane";
-      if (t.id !== activeSumTab) pane.style.display = "none";
+      if (t.id !== activeTab[sec.key]) pane.style.display = "none";
       const d = document.createElement("div");
       d.className = "rich-box tab-box";
       d.dataset.tab = t.id;
       d.setAttribute("data-placeholder",
-        `${t.name} 성과를 적어주세요. 캡처 이미지 · 표 · 인스타 링크를 그대로 붙여넣을 수 있어요.`);
+        `${t.name} 내용을 적어주세요. 표 · 캡처 이미지 · 인스타/유튜브 링크를 그대로 붙여넣을 수 있어요.`);
       d.innerHTML = sanitize(t.html || "");
       linkifyBox(d);
       pane.appendChild(d);
       body.appendChild(pane);
       bindRichBox(d);
       hydrateIG(d);
+      groupYT(d, sec.yt);
     });
   }
+  function renderAllTabs() { TAB_SECTIONS.forEach(renderTabSection); }
 
-  const sumBar = document.getElementById("sumTabBar");
-  if (sumBar) {
-    sumBar.addEventListener("click", (e) => {
+  TAB_SECTIONS.forEach(sec => {
+    const bar = document.getElementById(sec.bar);
+    if (!bar) return;
+
+    bar.addEventListener("click", (e) => {
       if (isViewMode) return;
       const del = e.target.closest("[data-del]");
       if (del) {
         e.stopPropagation();
         const id = del.dataset.del;
-        const t = (report.summaryTabs || []).find(x => x.id === id);
-        if ((report.summaryTabs || []).length <= 1) { toast("탭은 최소 1개 있어야 해요."); return; }
+        const list = report[sec.key] || [];
+        const t = list.find(x => x.id === id);
+        if (list.length <= 1) { toast("탭은 최소 1개 있어야 해요."); return; }
         if (!confirm(`'${t ? t.name : ""}' 탭을 삭제할까요? 안에 쓴 내용도 같이 지워집니다.`)) return;
         collectFromUI();
-        report.summaryTabs = report.summaryTabs.filter(x => x.id !== id);
-        if (activeSumTab === id) activeSumTab = report.summaryTabs[0].id;
-        renderSumTabs(); scheduleSave();
+        report[sec.key] = list.filter(x => x.id !== id);
+        if (activeTab[sec.key] === id) activeTab[sec.key] = report[sec.key][0].id;
+        renderTabSection(sec); scheduleSave();
         return;
       }
-      if (e.target.closest("#sumTabAdd")) {
-        const name = prompt("탭 이름을 적어주세요.\n예) 지지뷰티, 마이크로, 체험단, 앰배서더",
-          "인플루언서 " + ((report.summaryTabs || []).length));
+      if (e.target.closest("[data-add]")) {
+        const name = prompt("탭 이름을 적어주세요.\n" + sec.addHint,
+          sec.addPre + ((report[sec.key] || []).length));
         if (!name || !name.trim()) return;
         collectFromUI();
-        const t = { id: nid("st"), name: name.trim(), html: "" };
-        report.summaryTabs.push(t);
-        activeSumTab = t.id;
-        renderSumTabs(); scheduleSave();
+        const t = { id: nid(sec.pre), name: name.trim(), html: "" };
+        report[sec.key].push(t);
+        activeTab[sec.key] = t.id;
+        renderTabSection(sec); scheduleSave();
         return;
       }
       const pill = e.target.closest(".tab-pill");
-      if (pill) { collectFromUI(); activeSumTab = pill.dataset.tab; renderSumTabs(); }
+      if (pill) { collectFromUI(); activeTab[sec.key] = pill.dataset.tab; renderTabSection(sec); }
     });
 
-    sumBar.addEventListener("dblclick", (e) => {
+    bar.addEventListener("dblclick", (e) => {
       if (isViewMode) return;
       const pill = e.target.closest(".tab-pill");
       if (!pill) return;
-      const t = (report.summaryTabs || []).find(x => x.id === pill.dataset.tab);
+      const t = (report[sec.key] || []).find(x => x.id === pill.dataset.tab);
       if (!t) return;
       const nm = prompt("탭 이름", t.name);
       if (!nm || !nm.trim()) return;
       collectFromUI(); t.name = nm.trim();
-      renderSumTabs(); scheduleSave();
+      renderTabSection(sec); scheduleSave();
     });
-  }
-
-  /* ---------- PPL 성과: 탭 ---------- */
-  const pplBar = document.getElementById("pplTabBar");
-  if (pplBar) {
-    pplBar.addEventListener("click", (e) => {
-      if (isViewMode) return;
-      const del = e.target.closest("[data-del]");
-      if (del) {
-        e.stopPropagation();
-        const id = del.dataset.del;
-        const t = (report.pplTabs || []).find(x => x.id === id);
-        if ((report.pplTabs || []).length <= 1) { toast("탭은 최소 1개 있어야 해요."); return; }
-        if (!confirm(`'${t ? t.name : ""}' 탭을 삭제할까요? 안에 쓴 내용도 같이 지워집니다.`)) return;
-        collectFromUI();
-        report.pplTabs = report.pplTabs.filter(x => x.id !== id);
-        if (activePplTab === id) activePplTab = report.pplTabs[0].id;
-        renderPPL(); scheduleSave();
-        return;
-      }
-      if (e.target.closest("#pplTabAdd")) {
-        const name = prompt("탭 이름을 적어주세요.\n예) 인플루언서 1, 마이크로, 체험단",
-          "인플루언서 " + ((report.pplTabs || []).length));
-        if (!name || !name.trim()) return;
-        collectFromUI();
-        const t = { id: nid("pt"), name: name.trim(), rows: [], html: "" };
-        report.pplTabs.push(t);
-        activePplTab = t.id;
-        renderPPL(); scheduleSave();
-        return;
-      }
-      const pill = e.target.closest(".tab-pill");
-      if (pill) { collectFromUI(); activePplTab = pill.dataset.tab; renderPPL(); }
-    });
-
-    pplBar.addEventListener("dblclick", (e) => {
-      if (isViewMode) return;
-      const pill = e.target.closest(".tab-pill");
-      if (!pill) return;
-      const t = (report.pplTabs || []).find(x => x.id === pill.dataset.tab);
-      if (!t) return;
-      const nm = prompt("탭 이름", t.name);
-      if (!nm || !nm.trim()) return;
-      collectFromUI(); t.name = nm.trim();
-      renderPPL(); scheduleSave();
-    });
-  }
+  });
 
   /* ---------- 글자 서식 (굵게 / 크기 / 색 / 배경색) ---------- */
   const FONT_SCALE = [10, 11.5, 13.5, 16, 19, 23, 28, 34];
@@ -2171,6 +2176,60 @@
     root.querySelectorAll(".ig-row").forEach(r => { if (!r.querySelector(".ig-embed")) r.remove(); });
   }
 
+  /* 유튜브 카드도 가로로 붙여 줍니다 (섹션마다 개수가 달라요) */
+  function nextYtRow(el) {
+    const junk = [];
+    let n = el.nextElementSibling;
+    while (n) {
+      if (n.classList && n.classList.contains("yt-row")) return { row: n, junk: junk };
+      const empty = !n.textContent.trim() && !n.querySelector("img, table, .ig-embed, .yt-card");
+      if (!empty) return null;
+      junk.push(n);
+      n = n.nextElementSibling;
+    }
+    return null;
+  }
+  function ytColsOf(box) {
+    const sec = TAB_SECTIONS.find(x => {
+      const b = document.getElementById(x.body);
+      return b && b.contains(box);
+    });
+    return sec ? sec.yt : 1;
+  }
+  function groupYT(root, cols) {
+    if (!root) return;
+    const n = cols || 1;
+    if (n < 2) {                       /* 1개짜리 섹션은 줄 묶음을 풀어 둡니다 */
+      root.querySelectorAll(".yt-row").forEach(row => {
+        while (row.firstElementChild) row.parentNode.insertBefore(row.firstElementChild, row);
+        row.remove();
+      });
+      return;
+    }
+    [...root.querySelectorAll(".yt-card")].forEach(el => {
+      const par = el.parentElement;
+      if (par && par.classList.contains("yt-row")) return;
+      const row = document.createElement("div");
+      row.className = "yt-row";
+      row.dataset.cols = String(n);
+      el.parentNode.insertBefore(row, el);
+      row.appendChild(el);
+    });
+    let guard = 0;
+    [...root.querySelectorAll(".yt-row")].forEach(row => {
+      if (!row.isConnected) return;
+      row.dataset.cols = String(n);
+      while (row.children.length < n && guard++ < 300) {
+        const nx = nextYtRow(row);
+        if (!nx || !nx.row.firstElementChild) break;
+        nx.junk.forEach(j => j.remove());
+        row.appendChild(nx.row.firstElementChild);
+        if (!nx.row.children.length) nx.row.remove();
+      }
+    });
+    root.querySelectorAll(".yt-row").forEach(r => { if (!r.querySelector(".yt-card")) r.remove(); });
+  }
+
   let igState = 0;  /* 0 없음, 1 로딩중, 2 준비됨 */
   function processIG() {
     if (igState === 2) { try { window.instgrm.Embeds.process(); } catch (e) {} return; }
@@ -2301,6 +2360,7 @@
       if (!items.length) { toast("영상을 찾지 못했어요. 비공개 영상인지 확인해 주세요."); return; }
       box.focus();
       insertHtmlAtCaret(box, ytCardHtml(items[0]) + "<p><br></p>");
+      groupYT(box, ytColsOf(box));
       collectFromUI(); scheduleSave();
       toast("유튜브 정보를 넣었어요.");
     } catch (e) {
@@ -2328,6 +2388,7 @@
         c.replaceWith(tmp.firstElementChild);
         done++;
       });
+      groupYT(box, ytColsOf(box));
       collectFromUI(); scheduleSave();
       toast(`${done}건 갱신했어요.`);
     } catch (e) {
@@ -2569,8 +2630,7 @@
       && Object.keys(r.notes || {}).length === 0 && Object.keys(r.labels || {}).length === 0
       && (r.excluded || []).length === 0 && (r.merges || []).length === 0
       && (r.extras || []).length === 0
-      && !(r.summaryTabs || []).some(t => (t.html || "").trim())
-      && (r.pplTabs || []).every(t => !(t.rows || []).length && !(t.html || "").trim())
+      && TAB_SECTIONS.every(sc => (r[sc.key] || []).every(t => !(t.html || "").trim() && !(t.rows || []).length))
       && (r.ppl && r.ppl.rows ? r.ppl.rows.length : 0) === 0;
   }
 
