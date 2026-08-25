@@ -288,12 +288,33 @@
     background: var(--accent); padding: 3px 12px; border-radius: 999px; margin-bottom: 8px;
   }
 
-  /* 인스타그램 임베드 */
+  /* 인스타그램 임베드 — 가로 3개까지 */
+  .ig-row { display: flex; flex-wrap: wrap; gap: 12px; margin: 12px 0; align-items: flex-start; }
+  .ig-row .ig-embed { flex: 0 0 calc((100% - 24px) / 3); max-width: calc((100% - 24px) / 3); margin: 0; }
   .ig-embed { max-width: 540px; margin: 10px 0; }
-  .ig-embed blockquote { margin: 0 !important; }
+  .ig-embed blockquote { margin: 0 !important; min-width: 0 !important; max-width: 100% !important; }
   .ig-embed:empty:before {
     content: "인스타그램 게시물을 불러오는 중..."; font-size: 12px; color: var(--text-soft);
   }
+  .ig-note {
+    margin-top: 6px; font-size: 12px; font-weight: 600; color: var(--text);
+    background: var(--accent-soft); border: 1px solid var(--border); border-radius: 8px;
+    padding: 6px 9px; outline: none; line-height: 1.5;
+  }
+  .ig-note:empty:before { content: attr(data-ph); color: #c9b6be; font-weight: 500; }
+  body.readonly-mode .ig-note:empty, .pv-body .ig-note:empty { display: none; }
+
+  /* 유튜브 카드 */
+  .yt-card {
+    display: flex; gap: 14px; align-items: flex-start; margin: 12px 0; padding: 12px;
+    border: 1px solid var(--border); border-radius: 12px; background: #fff; max-width: 720px;
+  }
+  .yt-card img { width: 200px; max-width: 40%; border-radius: 8px; display: block; margin: 0; border: none; }
+  .yt-meta { flex: 1; min-width: 0; }
+  .yt-title { font-size: 14px; font-weight: 800; color: var(--text) !important; text-decoration: none !important; display: block; margin-bottom: 4px; line-height: 1.4; }
+  .yt-ch { font-size: 11.5px; color: var(--text-soft); font-weight: 600; margin-bottom: 8px; }
+  .yt-stats { font-size: 13px; font-weight: 800; color: var(--accent-dark); }
+  .yt-asof { font-size: 10.5px; color: var(--text-soft); margin-top: 5px; }
 
   #toast {
     position: fixed; left: 50%; bottom: 34px; transform: translateX(-50%) translateY(12px);
@@ -395,6 +416,8 @@
       <span class="editor-hint">📸 캡처 붙여넣기 · ↔️ 표 선·이미지 모서리를 끌면 크기 조절 · ⌨️ Ctrl+B 굵게, Ctrl+] / Ctrl+[ 글씨 크기</span>
       <div class="table-tools">
         <button class="mini-btn" data-link="secWeekSummary">🔗 링크</button>
+        <button class="mini-btn" data-yt="secWeekSummary">▶️ 유튜브 링크</button>
+        <button class="mini-btn" data-ytsync="secWeekSummary">🔄 유튜브 수치 갱신</button>
         <button class="mini-btn" data-insta="secWeekSummary">📷 인스타 링크</button>
         <button class="mini-btn" data-table="secWeekSummary" data-act="insert">표 넣기</button>
         <button class="mini-btn" data-table="secWeekSummary" data-act="row">행 추가</button>
@@ -445,6 +468,8 @@
       <span class="editor-hint">📸 Ctrl+V 붙여넣기 · ↔️ 표 선·이미지 모서리를 끌면 크기 조절 · ⌨️ Ctrl+B 굵게, Ctrl+] / Ctrl+[ 글씨 크기</span>
       <div class="table-tools">
         <button class="mini-btn" data-link="secPpl">🔗 링크</button>
+        <button class="mini-btn" data-yt="secPpl">▶️ 유튜브 링크</button>
+        <button class="mini-btn" data-ytsync="secPpl">🔄 유튜브 수치 갱신</button>
         <button class="mini-btn" data-insta="secPpl">📷 인스타 링크</button>
         <button class="mini-btn" data-table="secPpl" data-act="insert">표 넣기</button>
         <button class="mini-btn" data-table="secPpl" data-act="row">행 추가</button>
@@ -470,6 +495,8 @@
       <span class="editor-hint">📸 Ctrl+V 붙여넣기 · ↔️ 표 선·이미지 모서리를 끌면 크기 조절 · ⌨️ Ctrl+B 굵게, Ctrl+] / Ctrl+[ 글씨 크기</span>
       <div class="table-tools">
         <button class="mini-btn" data-link="secSummary">🔗 링크</button>
+        <button class="mini-btn" data-yt="secSummary">▶️ 유튜브 링크</button>
+        <button class="mini-btn" data-ytsync="secSummary">🔄 유튜브 수치 갱신</button>
         <button class="mini-btn" data-insta="secSummary">📷 인스타 링크</button>
         <button class="mini-btn" data-table="secSummary" data-act="insert">표 넣기</button>
         <button class="mini-btn" data-table="secSummary" data-act="row">행 추가</button>
@@ -491,6 +518,8 @@
       <span class="editor-hint">📸 캡처 붙여넣기 · ↔️ 표 선·이미지 모서리를 끌면 크기 조절 · ⌨️ Ctrl+B 굵게, Ctrl+] / Ctrl+[ 글씨 크기</span>
       <div class="table-tools">
         <button class="mini-btn" data-link="secIssues">🔗 링크</button>
+        <button class="mini-btn" data-yt="secIssues">▶️ 유튜브 링크</button>
+        <button class="mini-btn" data-ytsync="secIssues">🔄 유튜브 수치 갱신</button>
         <button class="mini-btn" data-insta="secIssues">📷 인스타 링크</button>
         <button class="mini-btn" data-table="secIssues" data-act="insert">표 넣기</button>
         <button class="mini-btn" data-table="secIssues" data-act="row">행 추가</button>
@@ -523,6 +552,8 @@
       <span class="editor-hint">📸 캡처 붙여넣기 · ↔️ 표 선·이미지 모서리를 끌면 크기 조절 · ⌨️ Ctrl+B 굵게, Ctrl+] / Ctrl+[ 글씨 크기</span>
       <div class="table-tools">
         <button class="mini-btn" data-link="secNext">🔗 링크</button>
+        <button class="mini-btn" data-yt="secNext">▶️ 유튜브 링크</button>
+        <button class="mini-btn" data-ytsync="secNext">🔄 유튜브 수치 갱신</button>
         <button class="mini-btn" data-insta="secNext">📷 인스타 링크</button>
         <button class="mini-btn" data-table="secNext" data-act="insert">표 넣기</button>
         <button class="mini-btn" data-table="secNext" data-act="row">행 추가</button>
@@ -544,6 +575,8 @@
       <span class="editor-hint">📸 캡처 붙여넣기 · ↔️ 표 선·이미지 모서리를 끌면 크기 조절 · ⌨️ Ctrl+B 굵게, Ctrl+] / Ctrl+[ 글씨 크기</span>
       <div class="table-tools">
         <button class="mini-btn" data-link="secRequests">🔗 링크</button>
+        <button class="mini-btn" data-yt="secRequests">▶️ 유튜브 링크</button>
+        <button class="mini-btn" data-ytsync="secRequests">🔄 유튜브 수치 갱신</button>
         <button class="mini-btn" data-insta="secRequests">📷 인스타 링크</button>
         <button class="mini-btn" data-table="secRequests" data-act="insert">표 넣기</button>
         <button class="mini-btn" data-table="secRequests" data-act="row">행 추가</button>
@@ -1660,6 +1693,11 @@
         scheduleSave();
         return;
       }
+      const yid = ytId(text);
+      let ytk = "";
+      try { ytk = localStorage.getItem(YT_KEY_STORE) || ""; } catch (er) {}
+      if (yid && ytk && text.trim().length <= 300) { insertYT(box, text.trim()); return; }
+
       const ig = normIG(text);
       if (ig && text.trim().length <= 300) {
         insertHtmlAtCaret(box, igBlockHtml(ig));
@@ -2091,7 +2129,46 @@
     return "https://www.instagram.com/" + kind + "/" + m[2] + "/";
   }
   function igBlockHtml(u) {
-    return `<div class="ig-embed" data-ig="${esc(u)}" contenteditable="false"></div><p><br></p>`;
+    return `<div class="ig-embed" data-ig="${esc(u)}" data-note="" contenteditable="false"></div><p><br></p>`;
+  }
+
+  /* 연달아 붙은 인스타 게시물을 가로 3개씩 한 줄로 묶어 줍니다 */
+  function nextIgRow(el) {
+    const junk = [];
+    let n = el.nextElementSibling;
+    while (n) {
+      if (n.classList && n.classList.contains("ig-row")) return { row: n, junk: junk };
+      const empty = !n.textContent.trim() && !n.querySelector("img, table, .ig-embed, .yt-card");
+      if (!empty) return null;
+      junk.push(n);
+      n = n.nextElementSibling;
+    }
+    return null;
+  }
+  function groupIG(root) {
+    /* 1) 아직 줄에 안 들어간 게시물을 각자 한 줄로 감쌉니다 */
+    [...root.querySelectorAll(".ig-embed")].forEach(el => {
+      const par = el.parentElement;
+      if (par && par.classList.contains("ig-row")) return;
+      const row = document.createElement("div");
+      row.className = "ig-row";
+      el.parentNode.insertBefore(row, el);
+      row.appendChild(el);
+    });
+    /* 2) 바로 이어진 줄끼리 최대 3개까지 합칩니다 */
+    let guard = 0;
+    [...root.querySelectorAll(".ig-row")].forEach(row => {
+      if (!row.isConnected) return;
+      while (row.children.length < 3 && guard++ < 300) {
+        const nx = nextIgRow(row);
+        if (!nx || !nx.row.firstElementChild) break;
+        nx.junk.forEach(j => j.remove());
+        row.appendChild(nx.row.firstElementChild);
+        if (!nx.row.children.length) nx.row.remove();
+      }
+    });
+    /* 3) 빈 줄 정리 */
+    root.querySelectorAll(".ig-row").forEach(r => { if (!r.querySelector(".ig-embed")) r.remove(); });
   }
 
   let igState = 0;  /* 0 없음, 1 로딩중, 2 준비됨 */
@@ -2110,20 +2187,22 @@
   /* 저장에는 링크만 남기고, 화면에 붙일 때만 인스타 위젯을 채워 넣습니다 */
   function hydrateIG(root) {
     if (!root) return;
-    const list = root.querySelectorAll(".ig-embed[data-ig]");
-    if (!list.length) return;
+    if (!root.querySelector(".ig-embed[data-ig]")) return;
+    groupIG(root);
     let added = 0;
-    list.forEach(el => {
+    root.querySelectorAll(".ig-embed[data-ig]").forEach(el => {
       if (el._igDone) return;
       const u = normIG(el.dataset.ig);
       if (!u) return;
+      const note = el.getAttribute("data-note") || "";
       el.setAttribute("contenteditable", "false");
       el.innerHTML =
         `<blockquote class="instagram-media" data-instgrm-captioned data-instgrm-permalink="${esc(u)}" data-instgrm-version="14"` +
         ` style="background:#fff; border:0; border-radius:10px; box-shadow:0 0 1px 0 rgba(0,0,0,.5),0 1px 10px 0 rgba(0,0,0,.15);` +
-        ` margin:0; max-width:540px; min-width:280px; padding:0; width:100%;">` +
+        ` margin:0; max-width:100%; min-width:0; padding:0; width:100%;">` +
         `<a href="${esc(u)}" target="_blank" rel="noopener" style="font-size:12px; color:#0f766e; display:block; padding:12px;">${esc(u)}</a>` +
-        `</blockquote>`;
+        `</blockquote>` +
+        `<div class="ig-note"${isViewMode ? "" : ' contenteditable="true"'} data-ph="조회수 · 좋아요 · 댓글 직접 입력">${esc(note)}</div>`;
       el._igDone = true;
       added++;
     });
@@ -2137,10 +2216,14 @@
     d.querySelectorAll(".ig-embed").forEach(el => {
       const u = normIG(el.getAttribute("data-ig"));
       if (!u) { el.remove(); return; }
+      const noteEl = el.querySelector(".ig-note");
+      const note = noteEl ? noteEl.textContent.trim() : (el.getAttribute("data-note") || "");
       el.innerHTML = "";
       el.setAttribute("data-ig", u);
+      el.setAttribute("data-note", note);
       el.setAttribute("contenteditable", "false");
     });
+    d.querySelectorAll(".ig-row").forEach(r => { if (!r.querySelector(".ig-embed")) r.remove(); });
     d.querySelectorAll("blockquote.instagram-media").forEach(bq => {
       if (bq.closest(".ig-embed")) return;
       const u = normIG(bq.getAttribute("data-instgrm-permalink"));
@@ -2150,6 +2233,124 @@
     });
     return sanitize(d.innerHTML);
   }
+
+  /* ---------- 유튜브: 썸네일 · 제목 · 조회수 · 좋아요 · 댓글 ---------- */
+  const YT_RE = /(?:youtube\.com\/(?:watch\?[^\s]*?v=|shorts\/|live\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/i;
+  const YT_KEY_STORE = "wr_yt_key";
+  function ytId(u) { const m = String(u || "").match(YT_RE); return m ? m[1] : null; }
+  function ytUrl(id) { return "https://www.youtube.com/watch?v=" + id; }
+
+  function ytKey(force) {
+    let k = "";
+    try { k = localStorage.getItem(YT_KEY_STORE) || ""; } catch (e) {}
+    if (k && !force) return k;
+    const k2 = prompt(
+      "유튜브 수치를 불러오려면 YouTube Data API 키가 한 번 필요해요.\n\n" +
+      "① console.cloud.google.com 에서 프로젝트 생성\n" +
+      "② 'YouTube Data API v3' 사용 설정\n" +
+      "③ 사용자 인증 정보 → API 키 만들기\n" +
+      "④ 그 키를 아래에 붙여넣기\n\n" +
+      "키는 이 브라우저에만 저장되고 보고서·깃허브에는 올라가지 않습니다.", k || "");
+    if (!k2 || !k2.trim()) return "";
+    try { localStorage.setItem(YT_KEY_STORE, k2.trim()); } catch (e) {}
+    return k2.trim();
+  }
+
+  async function fetchYT(ids, key) {
+    const url = "https://www.googleapis.com/youtube/v3/videos?part=snippet,statistics&id=" +
+      encodeURIComponent(ids.join(",")) + "&key=" + encodeURIComponent(key);
+    const res = await fetch(url);
+    const j = await res.json();
+    if (j.error) throw new Error((j.error.message || "API 오류"));
+    return j.items || [];
+  }
+
+  function ytCardHtml(v) {
+    const sn = v.snippet || {}, st = v.statistics || {};
+    const th = (sn.thumbnails && (sn.thumbnails.medium || sn.thumbnails.high || sn.thumbnails.default)) || {};
+    const thumb = th.url || ("https://i.ytimg.com/vi/" + v.id + "/mqdefault.jpg");
+    const u = ytUrl(v.id);
+    const bits = [];
+    if (st.viewCount != null) bits.push("조회수 " + nfmt(parseNum(st.viewCount)));
+    if (st.likeCount != null) bits.push("좋아요 " + nfmt(parseNum(st.likeCount)));
+    if (st.commentCount != null) bits.push("댓글 " + nfmt(parseNum(st.commentCount)));
+    return `<div class="yt-card" data-ytid="${esc(v.id)}" contenteditable="false">` +
+      `<a href="${esc(u)}" target="_blank" rel="noopener noreferrer"><img src="${esc(thumb)}" alt=""></a>` +
+      `<div class="yt-meta">` +
+        `<a class="yt-title" href="${esc(u)}" target="_blank" rel="noopener noreferrer">${esc(sn.title || "제목 없음")}</a>` +
+        `<div class="yt-ch">${esc(sn.channelTitle || "")}${sn.publishedAt ? " · 게시 " + esc(sn.publishedAt.slice(0, 10)) : ""}</div>` +
+        `<div class="yt-stats">${bits.length ? bits.join("  ·  ") : "수치 비공개"}</div>` +
+        `<div class="yt-asof">${fmtDate(new Date())} 기준</div>` +
+      `</div></div>`;
+  }
+
+  async function insertYT(box, rawUrl) {
+    const id = ytId(rawUrl);
+    if (!id) { toast("유튜브 주소가 아닌 것 같아요."); return; }
+    const key = ytKey();
+    if (!key) {
+      box.focus();
+      insertHtmlAtCaret(box, `<a href="${esc(ytUrl(id))}" target="_blank" rel="noopener noreferrer">${esc(ytUrl(id))}</a>&nbsp;`);
+      collectFromUI(); scheduleSave();
+      toast("API 키가 없어 링크만 넣었어요.");
+      return;
+    }
+    toast("유튜브 수치를 불러오는 중...");
+    try {
+      const items = await fetchYT([id], key);
+      if (!items.length) { toast("영상을 찾지 못했어요. 비공개 영상인지 확인해 주세요."); return; }
+      box.focus();
+      insertHtmlAtCaret(box, ytCardHtml(items[0]) + "<p><br></p>");
+      collectFromUI(); scheduleSave();
+      toast("유튜브 정보를 넣었어요.");
+    } catch (e) {
+      toast("불러오기 실패 · " + e.message);
+    }
+  }
+
+  async function syncYT(box) {
+    const cards = [...box.querySelectorAll(".yt-card[data-ytid]")];
+    if (!cards.length) { toast("이 탭에 유튜브 카드가 없어요."); return; }
+    const key = ytKey();
+    if (!key) return;
+    toast(`유튜브 ${cards.length}건 갱신 중...`);
+    try {
+      const ids = cards.map(c => c.dataset.ytid);
+      const items = await fetchYT(ids.slice(0, 50), key);
+      const byId = {};
+      items.forEach(v => { byId[v.id] = v; });
+      let done = 0;
+      cards.forEach(c => {
+        const v = byId[c.dataset.ytid];
+        if (!v) return;
+        const tmp = document.createElement("div");
+        tmp.innerHTML = ytCardHtml(v);
+        c.replaceWith(tmp.firstElementChild);
+        done++;
+      });
+      collectFromUI(); scheduleSave();
+      toast(`${done}건 갱신했어요.`);
+    } catch (e) {
+      toast("갱신 실패 · " + e.message);
+    }
+  }
+
+  document.querySelectorAll("[data-yt]").forEach(btn => {
+    btn.onclick = (ev) => {
+      const box = getBoxById(btn.dataset.yt);
+      if (!box) return;
+      if (ev.altKey) { ytKey(true); toast("API 키를 다시 저장했어요."); return; }
+      const raw = prompt("유튜브 영상 / 쇼츠 주소를 붙여넣어 주세요.\n(Alt를 누른 채 이 버튼을 누르면 API 키를 다시 설정할 수 있어요)");
+      if (!raw) return;
+      insertYT(box, raw);
+    };
+  });
+  document.querySelectorAll("[data-ytsync]").forEach(btn => {
+    btn.onclick = () => {
+      const box = getBoxById(btn.dataset.ytsync);
+      if (box) syncYT(box);
+    };
+  });
 
   document.querySelectorAll("[data-link]").forEach(btn => {
     btn.onclick = () => {
