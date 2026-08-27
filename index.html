@@ -110,13 +110,17 @@
     border-radius: 4px; display: inline-flex; align-items: center; justify-content: center;
   }
   .memo-card button.del:hover { background: var(--accent-soft); }
-  .memo-card .memo-actions { display: flex; gap: 2px; flex-shrink: 0; }
-  .memo-card button.edit {
-    border: none; background: transparent; color: var(--accent-dark); cursor: pointer; padding: 2px;
-    border-radius: 4px; display: inline-flex; align-items: center; justify-content: center;
+  .memo-card .memo-actions { display: flex; gap: 4px; align-items: center; flex-shrink: 0; }
+  .memo-card button.edit, .memo-card button.del {
+    border: none; background: transparent; color: var(--accent-dark); cursor: pointer;
+    padding: 3px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center;
+    transition: background 0.15s, color 0.15s;
   }
-  .memo-card button.edit:hover { background: var(--accent-soft); }
-  .memo-card button.edit svg, .memo-card button.del svg { width: 15px; height: 15px; }
+  .memo-card button.edit:hover, .memo-card button.del:hover { background: var(--accent-soft); color: var(--accent-2); }
+  .memo-card button.edit svg, .memo-card button.del svg {
+    width: 14px; height: 14px; stroke: currentColor; fill: none;
+    stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+  }
   .memo-card.editing { flex-direction: column; align-items: stretch; gap: 8px; }
   .memo-edit-area {
     width: 100%; border: 1px solid var(--accent); border-radius: 8px; padding: 9px 10px;
