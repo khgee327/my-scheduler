@@ -942,11 +942,31 @@
     catch (e) { return null; }
   }
 
+  // 스케줄러 데이터는 여러 조각(sch_0, sch_1 ...)으로 나뉘어 저장됩니다.
+  // 조각이 있으면 이어 붙여 읽고, 없으면 예전 방식(한 칸에 통째로)으로 읽습니다.
+  function readScheduler(rows) {
+    if (!Array.isArray(rows)) return null;
+    try {
+      const meta = rowJson(rows.find(r => r.key === "schmeta"));
+      if (meta && meta.parts > 0) {
+        let str = "";
+        for (let i = 0; i < meta.parts; i++) {
+          const part = rowJson(rows.find(r => r.key === "sch_" + i));
+          if (!part || typeof part.c !== "string") { str = null; break; }
+          str += part.c;
+        }
+        if (str) return JSON.parse(str);
+      }
+    } catch (e) { console.warn("스케줄러 조각 읽기 실패", e); }
+    const old = rowJson(rows.find(r => r.key === PRIMARY_KEY
+      || r.key === "my_main_scheduler_data" || r.key === "global_dashboard_data"));
+    return (old && old.taskList) ? old : null;
+  }
+
   async function loadAll() {
     try {
       const rows = await fetchRows();
-      const main = rowJson(Array.isArray(rows) ? rows.find(r => r.key === PRIMARY_KEY
-        || r.key === "my_main_scheduler_data" || r.key === "global_dashboard_data") : null);
+      const main = readScheduler(rows);
       if (main && Array.isArray(main.taskList)) taskList = main.taskList;
       window._rows = rows;
       loadReportFor(weekKey(), rows);
@@ -1024,7 +1044,7 @@
       const res = await fetch(SHEET_API_URL);
       const rows = await res.json();
       if (!Array.isArray(rows)) throw new Error("bad rows");
-      const hasScheduler = rows.some(r => r && r.key === PRIMARY_KEY);
+      const hasScheduler = rows.some(r => r && (r.key === PRIMARY_KEY || r.key === "schmeta" || r.key === "sch_0"));
       if (!hasScheduler) {
         setSync("스케줄러 데이터를 찾지 못해 저장을 멈췄어요", true);
         toast("서버에서 스케줄러 데이터를 못 찾았어요. 덮어쓰기를 막았습니다.");
@@ -2729,8 +2749,7 @@
     try {
       const rows = await fetchRows();
       window._rows = rows;
-      const main = rowJson(rows.find(r => r.key === PRIMARY_KEY
-        || r.key === "my_main_scheduler_data" || r.key === "global_dashboard_data"));
+      const main = readScheduler(rows);
       if (main && Array.isArray(main.taskList)) taskList = main.taskList;
       loadReportFor(weekKey(), rows);
       cloudLoadOk = true;
