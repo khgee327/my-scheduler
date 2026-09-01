@@ -371,6 +371,8 @@
 
   const SHEET_API_URL = "https://script.google.com/macros/s/AKfycbyjLXPILrFl3pbgXQldCbDPTRufIeEXUhpewlt3unU_P9uZ16dj6FL-Q4Zbet9cWLPh1Q/exec";
   const PRIMARY_KEY = "global_shared_scheduler_data";
+  const SCH_CHUNK = 35000;          // 구글 시트 셀 한도(5만 자)를 넘지 않게 쪼개는 단위
+  let schLoadedParts = 0;           // 지금 서버에 올라가 있는 조각 개수
   
   const CATEGORIES = ["PPL","택배","SNS","디자인","서류","품의","지결","인플루언서","크리에이터","체험단","이벤트","촬영","컨펌","미팅","엠버서더","무엠버서더","기타"];
   
@@ -436,15 +438,38 @@
       
       let loadedData = null;
       if (Array.isArray(rows) && rows.length > 0) {
-        let target = rows.find(r => r.key === PRIMARY_KEY || r.key === "my_main_scheduler_data" || r.key === "global_dashboard_data");
-        if (!target) target = rows.find(r => {
-          try {
-            const o = typeof r.json === 'string' ? JSON.parse(r.json) : r.json;
-            return o && (o.taskList || o.dailyTasks || o.memoCards);
-          } catch (e) { return false; }
-        });
-        if (target && target.json) {
-          loadedData = typeof target.json === 'string' ? JSON.parse(target.json) : target.json;
+        const rj = (row) => {
+          if (!row) return null;
+          try { return typeof row.json === 'string' ? JSON.parse(row.json) : row.json; }
+          catch (e) { return null; }
+        };
+
+        // (1) 새 방식 — 여러 조각으로 나눠 저장된 데이터를 먼저 찾습니다.
+        try {
+          const meta = rj(rows.find(r => r.key === "schmeta"));
+          if (meta && meta.parts > 0) {
+            let str = "";
+            for (let i = 0; i < meta.parts; i++) {
+              const part = rj(rows.find(r => r.key === "sch_" + i));
+              if (!part || typeof part.c !== 'string') { str = null; break; }
+              str += part.c;
+            }
+            if (str) { loadedData = JSON.parse(str); schLoadedParts = meta.parts; }
+          }
+        } catch (e) { console.warn("조각 읽기 실패", e); }
+
+        // (2) 예전 방식 — 한 칸에 통째로 저장된 데이터 (조각이 없을 때만)
+        if (!loadedData) {
+          let target = rows.find(r => r.key === PRIMARY_KEY || r.key === "my_main_scheduler_data" || r.key === "global_dashboard_data");
+          let parsed = rj(target);
+          if (!parsed || !(parsed.taskList || parsed.dailyTasks || parsed.memoCards)) {
+            const alt = rows.find(r => {
+              const o = rj(r);
+              return o && (o.taskList || o.dailyTasks || o.memoCards);
+            });
+            if (alt) parsed = rj(alt);
+          }
+          if (parsed) loadedData = parsed;
         }
       }
 
@@ -518,32 +543,45 @@
     }
     updateSyncUI("저장 중...");
 
-    const mine = {
-      key: PRIMARY_KEY,
-      json: JSON.stringify({
-        taskList: state.taskList,
-        memoCards: state.memoCards,
-        customCategories: state.customCategories
-      })
-    };
-    try { localStorage.setItem('sched_backup', JSON.stringify({ data: JSON.parse(mine.json), at: Date.now() })); } catch (e) {}
+    const dataStr = JSON.stringify({
+      taskList: state.taskList,
+      memoCards: state.memoCards,
+      customCategories: state.customCategories
+    });
+    try { localStorage.setItem('sched_backup', JSON.stringify({ data: JSON.parse(dataStr), at: Date.now() })); } catch (e) {}
+
+    // 셀 한도(5만 자)를 넘지 않게 조각내어 여러 행에 나눠 담습니다.
+    const chunks = [];
+    for (let i = 0; i < dataStr.length; i += SCH_CHUNK) chunks.push(dataStr.slice(i, i + SCH_CHUNK));
+
+    const mine = [
+      { key: "schmeta", json: JSON.stringify({ parts: chunks.length, updated: new Date().toISOString() }) },
+      // 예전 방식으로 읽는 페이지가 있어도 깨지지 않도록 표시만 남겨 둡니다.
+      { key: PRIMARY_KEY, json: JSON.stringify({ chunked: true, parts: chunks.length }) }
+    ];
+    chunks.forEach((c, i) => mine.push({ key: "sch_" + i, json: JSON.stringify({ c }) }));
+    // 지난번보다 조각이 줄었으면 남은 행은 비웁니다.
+    for (let i = chunks.length; i < schLoadedParts; i++) mine.push({ key: "sch_" + i, json: JSON.stringify({ c: "" }) });
 
     // 다른 페이지(주간보고 등)가 저장해 둔 행이 지워지지 않도록 전부 함께 다시 보냅니다.
-    let payload = [mine];
+    const mineKeys = {};
+    mine.forEach(r => { mineKeys[r.key] = 1; });
+    let payload = mine;
     try {
       const res = await fetch(SHEET_API_URL);
       const rows = await res.json();
       if (Array.isArray(rows)) {
         const others = rows
-          .filter(r => r && r.key && r.key !== PRIMARY_KEY)
+          .filter(r => r && r.key && !mineKeys[r.key])
           .map(r => ({ key: r.key, json: typeof r.json === 'string' ? r.json : JSON.stringify(r.json) }));
-        payload = [mine].concat(others);
+        payload = mine.concat(others);
       }
     } catch (e) {
       console.error(e);
       updateSyncUI("서버 확인 실패 · 저장을 멈췄어요", true);
       return;
     }
+    schLoadedParts = chunks.length;
 
     try {
       const res = await fetch(SHEET_API_URL, {
