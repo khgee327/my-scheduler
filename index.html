@@ -373,6 +373,51 @@
   const PRIMARY_KEY = "global_shared_scheduler_data";
   const SCH_CHUNK = 35000;          // 구글 시트 셀 한도(5만 자)를 넘지 않게 쪼개는 단위
   let schLoadedParts = 0;           // 지금 서버에 올라가 있는 조각 개수
+  const SNAP_KEY = 'sched_snaps';   // 시점 백업(최근 10개)
+  const SNAP_MAX = 10;
+  let lastSeenUpdated = null;       // 내가 마지막으로 읽은 서버 저장 시각
+
+  // 저장·불러오기 때마다 그 시점 상태를 따로 쌓아 둡니다. (덮어써도 되돌릴 수 있게)
+  function pushSnapshot(data, why) {
+    try {
+      let arr = JSON.parse(localStorage.getItem(SNAP_KEY) || '[]');
+      const last = arr[arr.length - 1];
+      const now = JSON.stringify(data);
+      if (last && JSON.stringify(last.data) === now) return;   // 내용이 같으면 안 쌓음
+      arr.push({ at: Date.now(), why: why || '', data: data });
+      while (arr.length > SNAP_MAX) arr.shift();
+      localStorage.setItem(SNAP_KEY, JSON.stringify(arr));
+    } catch (e) { console.warn('시점 백업 실패(용량 초과일 수 있어요)', e); }
+  }
+
+  // 콘솔에서 schSnaps() 로 목록 보기, schRestore(n) 으로 되돌리기
+  window.schSnaps = function () {
+    let arr = [];
+    try { arr = JSON.parse(localStorage.getItem(SNAP_KEY) || '[]'); } catch (e) {}
+    if (!arr.length) { console.log('시점 백업이 아직 없어요.'); return; }
+    console.log('저장된 시점 ' + arr.length + '개 — schRestore(번호) 로 되돌립니다.');
+    arr.forEach((s, i) => console.log(
+      '  [' + i + '] ' + new Date(s.at).toLocaleString('ko-KR') +
+      ' · 업무 ' + (s.data.taskList || []).length +
+      ' · 메모 ' + (s.data.memoCards || []).length +
+      (s.why ? ' · ' + s.why : '')));
+    return arr.length;
+  };
+  window.schRestore = function (n) {
+    let arr = [];
+    try { arr = JSON.parse(localStorage.getItem(SNAP_KEY) || '[]'); } catch (e) {}
+    const s = arr[n];
+    if (!s) { console.log('그 번호의 시점이 없어요. schSnaps() 로 먼저 확인하세요.'); return; }
+    if (!confirm(new Date(s.at).toLocaleString('ko-KR') + ' 시점으로 되돌립니다.\n\n' +
+      '업무 ' + (s.data.taskList || []).length + '건 · 메모 ' + (s.data.memoCards || []).length + '건\n' +
+      '지금 화면의 내용은 사라집니다. 진행할까요?')) return;
+    state.taskList = s.data.taskList || [];
+    state.memoCards = s.data.memoCards || [];
+    state.customCategories = s.data.customCategories || state.customCategories;
+    renderAll();
+    saveData();
+    console.log('되돌렸습니다. 화면을 확인하세요.');
+  };
   
   const CATEGORIES = ["PPL","택배","SNS","디자인","서류","품의","지결","인플루언서","크리에이터","체험단","이벤트","촬영","컨펌","미팅","엠버서더","무엠버서더","기타"];
   
@@ -494,7 +539,13 @@
 
       if (loadedData) {
         dataLoaded = true;
+        try {
+          const mt = rows.find(r => r.key === "schmeta");
+          const mj = mt ? (typeof mt.json === 'string' ? JSON.parse(mt.json) : mt.json) : null;
+          lastSeenUpdated = mj ? mj.updated : null;
+        } catch (e) { lastSeenUpdated = null; }
         try { localStorage.setItem('sched_backup', JSON.stringify({ data: loadedData, at: Date.now() })); } catch (e) {}
+        pushSnapshot(loadedData, '불러옴');
       } else {
         let backup = null;
         try { backup = JSON.parse(localStorage.getItem('sched_backup') || 'null'); } catch (e) {}
@@ -549,6 +600,7 @@
       customCategories: state.customCategories
     });
     try { localStorage.setItem('sched_backup', JSON.stringify({ data: JSON.parse(dataStr), at: Date.now() })); } catch (e) {}
+    pushSnapshot(JSON.parse(dataStr), '저장');
 
     // 셀 한도(5만 자)를 넘지 않게 조각내어 여러 행에 나눠 담습니다.
     const chunks = [];
@@ -571,6 +623,39 @@
       const res = await fetch(SHEET_API_URL);
       const rows = await res.json();
       if (Array.isArray(rows)) {
+        // 내가 읽은 뒤 다른 기기·탭에서 저장한 게 있는지 확인합니다.
+        let serverUpdated = null, serverTasks = null;
+        try {
+          const mt = rows.find(r => r.key === "schmeta");
+          const mj = mt ? (typeof mt.json === 'string' ? JSON.parse(mt.json) : mt.json) : null;
+          serverUpdated = mj ? mj.updated : null;
+          if (mj && mj.parts > 0) {
+            let str = "";
+            for (let i = 0; i < mj.parts; i++) {
+              const p = rows.find(r => r.key === "sch_" + i);
+              const pj = p ? (typeof p.json === 'string' ? JSON.parse(p.json) : p.json) : null;
+              if (!pj || typeof pj.c !== 'string') { str = null; break; }
+              str += pj.c;
+            }
+            if (str) serverTasks = (JSON.parse(str).taskList || []).length;
+          }
+        } catch (e) {}
+
+        if (serverUpdated && lastSeenUpdated && serverUpdated !== lastSeenUpdated) {
+          const when = new Date(serverUpdated).toLocaleString('ko-KR');
+          const ok = confirm(
+            '⚠️ 다른 기기(또는 다른 탭)에서 먼저 저장한 내용이 있어요.\n\n' +
+            '  · 서버 저장 시각 : ' + when +
+            (serverTasks != null ? '\n  · 서버 업무 : ' + serverTasks + '건' : '') +
+            '\n  · 지금 화면 업무 : ' + state.taskList.length + '건\n\n' +
+            '[확인] 지금 화면 내용으로 덮어쓰기\n' +
+            '[취소] 저장하지 않기 (새로고침하면 서버 내용을 받아옵니다)');
+          if (!ok) {
+            updateSyncUI('저장 취소 · 새로고침 후 다시 작업하세요', true);
+            return;
+          }
+        }
+
         const others = rows
           .filter(r => r && r.key && !mineKeys[r.key])
           .map(r => ({ key: r.key, json: typeof r.json === 'string' ? r.json : JSON.stringify(r.json) }));
@@ -598,6 +683,7 @@
         return;
       }
       const nowTime = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
+      try { lastSeenUpdated = JSON.parse(mine[0].json).updated; } catch (e) {}
       updateSyncUI(`동기화 완료 (${nowTime})`);
     } catch (e) {
       console.error(e);
@@ -1178,6 +1264,32 @@
   document.getElementById("todoEndDate").value = todayStr;
 
   loadData();
+
+  // ── 다른 기기·탭에서 바뀐 내용을 자동으로 가져옵니다 ──────────
+  // (폰과 회사 PC를 오가며 쓸 때, 오래된 화면으로 덮어쓰는 걸 막아 줍니다)
+  let refreshing = false;
+  async function refreshIfStale(reason) {
+    if (refreshing || !dataLoaded || isViewMode) return;
+    refreshing = true;
+    try {
+      const rows = await (await fetch(SHEET_API_URL)).json();
+      const mt = Array.isArray(rows) ? rows.find(r => r.key === "schmeta") : null;
+      const mj = mt ? (typeof mt.json === 'string' ? JSON.parse(mt.json) : mt.json) : null;
+      const up = mj ? mj.updated : null;
+      if (up && lastSeenUpdated && up !== lastSeenUpdated) {
+        console.log('[동기화] 다른 곳에서 저장된 내용을 가져옵니다 ·', reason);
+        updateSyncUI('새 내용 확인 · 불러오는 중...');
+        await loadData();
+        renderAll();
+      }
+    } catch (e) { /* 네트워크 일시 오류는 조용히 넘어갑니다 */ }
+    refreshing = false;
+  }
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') refreshIfStale('탭 복귀');
+  });
+  window.addEventListener('focus', () => refreshIfStale('창 활성화'));
+  setInterval(() => { if (document.visibilityState === 'visible') refreshIfStale('주기 확인'); }, 180000);
 })();
 </script>
 </body>
