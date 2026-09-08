@@ -1403,17 +1403,6 @@
     const done = items.filter(i => i.status === "완료").length;
     const rate = items.length ? Math.round(done / items.length * 100) : 0;
 
-    const rows = items.map(i => {
-      const c = catColor(i.category);
-      return `<tr>
-        <td class="c"><span style="background:${c.bg};color:${c.fg};padding:2px 7px;border-radius:999px;font-size:11px;font-weight:700;">${esc(i.category)}</span></td>
-        <td>${esc(itemLabel(i))}</td>
-        <td class="c">${esc(i.period)}</td>
-        <td class="c">${esc(i.status)}</td>
-        <td>${esc(i.note)}</td>
-      </tr>`;
-    }).join("");
-
     /* --- 다음 주 --- */
     let nextAuto = "";
     if (report.autoNext) {
@@ -1445,18 +1434,13 @@
       </div>`;
     };
 
+    // 보고서에는 요약 글만 내보냅니다. (스케줄러 업무 표는 보고서에 넣지 않음)
     let summarySec = "";
-    if (hasContent(report.weekSummary) || items.length) {
+    if (hasContent(report.weekSummary)) {
       n++;
       summarySec = `<div class="pv-sec">
         <h3>${n}. 금주 주간 업무 요약</h3>
-        ${hasContent(report.weekSummary) ? `<div class="pv-body"${items.length ? ' style="margin-bottom:14px;"' : ""}>${report.weekSummary}</div>` : ""}
-        ${items.length ? `<table class="pv-table">
-          <thead><tr>
-            <th style="width:96px;">구분</th><th>업무 내용</th>
-            <th style="width:88px;">일정</th><th style="width:70px;">진행</th><th style="width:30%;">비고 / 성과</th>
-          </tr></thead>
-          <tbody>${rows}</tbody></table>` : ""}
+        <div class="pv-body">${report.weekSummary}</div>
       </div>`;
     }
 
