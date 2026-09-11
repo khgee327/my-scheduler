@@ -390,6 +390,52 @@
     } catch (e) { console.warn('시점 백업 실패(용량 초과일 수 있어요)', e); }
   }
 
+  // 두 쪽 데이터를 id 기준으로 합칩니다. 겹치면 "지금 화면" 쪽을 씁니다.
+  function mergeById(mine, theirs) {
+    const m = new Map();
+    (theirs || []).forEach(x => { if (x && x.id) m.set(x.id, x); });
+    (mine   || []).forEach(x => { if (x && x.id) m.set(x.id, x); });
+    return [...m.values()];
+  }
+  function mergeMemos(mine, theirs) {
+    const seen = new Set(), out = [];
+    [...(mine || []), ...(theirs || [])].forEach(x => {
+      const k = typeof x === 'string' ? x : JSON.stringify(x);
+      if (!seen.has(k)) { seen.add(k); out.push(x); }
+    });
+    return out;
+  }
+
+  // 충돌 시 세 가지 중에 고르게 합니다 (합치기 / 덮어쓰기 / 취소)
+  function askConflict(info) {
+    return new Promise(resolve => {
+      const wrap = document.createElement('div');
+      wrap.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+      wrap.innerHTML =
+        '<div style="background:#fff;border-radius:16px;max-width:440px;width:100%;padding:24px;font-family:inherit;box-shadow:0 12px 40px rgba(0,0,0,.25);">' +
+        '<div style="font-size:16px;font-weight:800;margin-bottom:12px;">다른 곳에서 먼저 저장한 내용이 있어요</div>' +
+        '<div style="font-size:13px;line-height:1.7;color:#555;margin-bottom:8px;">' +
+        '· 서버 저장 : <b>' + info.when + '</b><br>' +
+        '· 서버 업무 : <b>' + info.serverTasks + '건</b><br>' +
+        '· 지금 화면 : <b>' + info.myTasks + '건</b></div>' +
+        '<div style="font-size:12.5px;line-height:1.6;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px;margin-bottom:16px;color:#166534;">' +
+        '<b>합치기</b>를 누르면 양쪽 내용을 모두 살립니다.<br>' +
+        '<span style="color:#65807a;">(단, 이 화면에서 지운 항목이 다시 살아날 수 있어요)</span></div>' +
+        '<div style="display:flex;flex-direction:column;gap:7px;">' +
+        '<button data-v="merge" style="border:none;background:#16a34a;color:#fff;padding:11px;border-radius:9px;font-size:13.5px;font-weight:800;cursor:pointer;font-family:inherit;">합치기 (권장)</button>' +
+        '<button data-v="over" style="border:1px solid #f5dbe4;background:#fff;color:#db2777;padding:10px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">지금 화면으로 덮어쓰기</button>' +
+        '<button data-v="cancel" style="border:none;background:transparent;color:#8a7480;padding:8px;border-radius:9px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;">저장하지 않기</button>' +
+        '</div></div>';
+      wrap.addEventListener('click', e => {
+        const b = e.target.closest('button[data-v]');
+        if (!b) return;
+        wrap.remove();
+        resolve(b.dataset.v);
+      });
+      document.body.appendChild(wrap);
+    });
+  }
+
   // 콘솔에서 schSnaps() 로 목록 보기, schRestore(n) 으로 되돌리기
   window.schSnaps = function () {
     let arr = [];
@@ -594,29 +640,33 @@
     }
     updateSyncUI("저장 중...");
 
-    const dataStr = JSON.stringify({
-      taskList: state.taskList,
-      memoCards: state.memoCards,
-      customCategories: state.customCategories
-    });
-    try { localStorage.setItem('sched_backup', JSON.stringify({ data: JSON.parse(dataStr), at: Date.now() })); } catch (e) {}
-    pushSnapshot(JSON.parse(dataStr), '저장');
+    // 지금 화면 상태를 서버에 보낼 행들로 만듭니다. (합치기 후 다시 부를 수 있게 함수로)
+    function buildRows() {
+      const dataStr = JSON.stringify({
+        taskList: state.taskList,
+        memoCards: state.memoCards,
+        customCategories: state.customCategories
+      });
+      try { localStorage.setItem('sched_backup', JSON.stringify({ data: JSON.parse(dataStr), at: Date.now() })); } catch (e) {}
+      pushSnapshot(JSON.parse(dataStr), '저장');
 
-    // 셀 한도(5만 자)를 넘지 않게 조각내어 여러 행에 나눠 담습니다.
-    const chunks = [];
-    for (let i = 0; i < dataStr.length; i += SCH_CHUNK) chunks.push(dataStr.slice(i, i + SCH_CHUNK));
+      // 셀 한도(5만 자)를 넘지 않게 조각내어 여러 행에 나눠 담습니다.
+      const chunks = [];
+      for (let i = 0; i < dataStr.length; i += SCH_CHUNK) chunks.push(dataStr.slice(i, i + SCH_CHUNK));
 
-    const mine = [
-      { key: "schmeta", json: JSON.stringify({ parts: chunks.length, updated: new Date().toISOString() }) },
-      // 예전 방식으로 읽는 페이지가 있어도 깨지지 않도록 표시만 남겨 둡니다.
-      { key: PRIMARY_KEY, json: JSON.stringify({ chunked: true, parts: chunks.length }) }
-    ];
-    chunks.forEach((c, i) => mine.push({ key: "sch_" + i, json: JSON.stringify({ c }) }));
-    // 지난번보다 조각이 줄었으면 남은 행은 비웁니다.
-    for (let i = chunks.length; i < schLoadedParts; i++) mine.push({ key: "sch_" + i, json: JSON.stringify({ c: "" }) });
+      const arr = [
+        { key: "schmeta", json: JSON.stringify({ parts: chunks.length, updated: new Date().toISOString() }) },
+        // 예전 방식으로 읽는 페이지가 있어도 깨지지 않도록 표시만 남겨 둡니다.
+        { key: PRIMARY_KEY, json: JSON.stringify({ chunked: true, parts: chunks.length }) }
+      ];
+      chunks.forEach((c, i) => arr.push({ key: "sch_" + i, json: JSON.stringify({ c }) }));
+      // 지난번보다 조각이 줄었으면 남은 행은 비웁니다.
+      for (let i = chunks.length; i < schLoadedParts; i++) arr.push({ key: "sch_" + i, json: JSON.stringify({ c: "" }) });
+      return arr;
+    }
 
-    // 다른 페이지(주간보고 등)가 저장해 둔 행이 지워지지 않도록 전부 함께 다시 보냅니다.
-    const mineKeys = {};
+    let mine = buildRows();
+    let mineKeys = {};
     mine.forEach(r => { mineKeys[r.key] = 1; });
     let payload = mine;
     try {
@@ -624,7 +674,7 @@
       const rows = await res.json();
       if (Array.isArray(rows)) {
         // 내가 읽은 뒤 다른 기기·탭에서 저장한 게 있는지 확인합니다.
-        let serverUpdated = null, serverTasks = null;
+        let serverUpdated = null, serverTasks = null, serverData = null;
         try {
           const mt = rows.find(r => r.key === "schmeta");
           const mj = mt ? (typeof mt.json === 'string' ? JSON.parse(mt.json) : mt.json) : null;
@@ -637,22 +687,36 @@
               if (!pj || typeof pj.c !== 'string') { str = null; break; }
               str += pj.c;
             }
-            if (str) serverTasks = (JSON.parse(str).taskList || []).length;
+            if (str) { serverData = JSON.parse(str); serverTasks = (serverData.taskList || []).length; }
           }
         } catch (e) {}
 
         if (serverUpdated && lastSeenUpdated && serverUpdated !== lastSeenUpdated) {
-          const when = new Date(serverUpdated).toLocaleString('ko-KR');
-          const ok = confirm(
-            '⚠️ 다른 기기(또는 다른 탭)에서 먼저 저장한 내용이 있어요.\n\n' +
-            '  · 서버 저장 시각 : ' + when +
-            (serverTasks != null ? '\n  · 서버 업무 : ' + serverTasks + '건' : '') +
-            '\n  · 지금 화면 업무 : ' + state.taskList.length + '건\n\n' +
-            '[확인] 지금 화면 내용으로 덮어쓰기\n' +
-            '[취소] 저장하지 않기 (새로고침하면 서버 내용을 받아옵니다)');
-          if (!ok) {
-            updateSyncUI('저장 취소 · 새로고침 후 다시 작업하세요', true);
+          const choice = await askConflict({
+            when: new Date(serverUpdated).toLocaleString('ko-KR'),
+            serverTasks: serverTasks != null ? serverTasks : '?',
+            myTasks: state.taskList.length
+          });
+          if (choice === 'cancel') {
+            updateSyncUI('저장 취소 · 새로고침하면 서버 내용을 받아옵니다', true);
             return;
+          }
+          if (choice === 'merge') {
+            if (!serverData) {
+              alert('서버 내용을 읽지 못해 합칠 수 없어요. 새로고침 후 다시 시도해 주세요.');
+              updateSyncUI('합치기 실패 · 저장하지 않았어요', true);
+              return;
+            }
+            const before = state.taskList.length;
+            state.taskList = mergeById(state.taskList, serverData.taskList);
+            state.memoCards = mergeMemos(state.memoCards, serverData.memoCards);
+            if (!(state.customCategories || []).length) state.customCategories = serverData.customCategories || [];
+            renderAll();
+            console.log('[합치기] 업무 ' + before + ' + 서버 ' + (serverData.taskList || []).length +
+                        ' → ' + state.taskList.length + '건');
+            mine = buildRows();                 // 합친 내용으로 보낼 행을 다시 만듭니다
+            mineKeys = {};
+            mine.forEach(r => { mineKeys[r.key] = 1; });
           }
         }
 
@@ -1289,7 +1353,7 @@
     if (document.visibilityState === 'visible') refreshIfStale('탭 복귀');
   });
   window.addEventListener('focus', () => refreshIfStale('창 활성화'));
-  setInterval(() => { if (document.visibilityState === 'visible') refreshIfStale('주기 확인'); }, 180000);
+  setInterval(() => { if (document.visibilityState === 'visible') refreshIfStale('주기 확인'); }, 60000);
 })();
 </script>
 </body>
