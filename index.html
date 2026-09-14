@@ -374,20 +374,27 @@
   const SCH_CHUNK = 35000;          // 구글 시트 셀 한도(5만 자)를 넘지 않게 쪼개는 단위
   let schLoadedParts = 0;           // 지금 서버에 올라가 있는 조각 개수
   const SNAP_KEY = 'sched_snaps';   // 시점 백업(최근 10개)
-  const SNAP_MAX = 10;
+  const SNAP_MAX = 30;
   let lastSeenUpdated = null;       // 내가 마지막으로 읽은 서버 저장 시각
+  let unsaved = false;              // 서버에 못 올라간 변경이 있는지
 
   // 저장·불러오기 때마다 그 시점 상태를 따로 쌓아 둡니다. (덮어써도 되돌릴 수 있게)
   function pushSnapshot(data, why) {
-    try {
-      let arr = JSON.parse(localStorage.getItem(SNAP_KEY) || '[]');
-      const last = arr[arr.length - 1];
-      const now = JSON.stringify(data);
-      if (last && JSON.stringify(last.data) === now) return;   // 내용이 같으면 안 쌓음
-      arr.push({ at: Date.now(), why: why || '', data: data });
-      while (arr.length > SNAP_MAX) arr.shift();
-      localStorage.setItem(SNAP_KEY, JSON.stringify(arr));
-    } catch (e) { console.warn('시점 백업 실패(용량 초과일 수 있어요)', e); }
+    let arr = [];
+    try { arr = JSON.parse(localStorage.getItem(SNAP_KEY) || '[]'); } catch (e) {}
+    const now = JSON.stringify(data);
+    const last = arr[arr.length - 1];
+    if (last && JSON.stringify(last.data) === now) return;     // 내용이 같으면 안 쌓음
+    arr.push({ at: Date.now(), why: why || '', data: data });
+    while (arr.length > SNAP_MAX) arr.shift();
+    // 저장 공간이 모자라면 오래된 것부터 버려 가며 다시 시도합니다.
+    for (let tries = 0; tries < 40; tries++) {
+      try { localStorage.setItem(SNAP_KEY, JSON.stringify(arr)); return; }
+      catch (e) {
+        if (arr.length <= 2) { console.warn('시점 백업 실패 · 저장 공간 부족', e); return; }
+        arr.splice(0, Math.max(1, Math.floor(arr.length / 4)));
+      }
+    }
   }
 
   // 두 쪽 데이터를 id 기준으로 합칩니다. 겹치면 "지금 화면" 쪽을 씁니다.
@@ -406,34 +413,22 @@
     return out;
   }
 
-  // 충돌 시 세 가지 중에 고르게 합니다 (합치기 / 덮어쓰기 / 취소)
-  function askConflict(info) {
-    return new Promise(resolve => {
-      const wrap = document.createElement('div');
-      wrap.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
-      wrap.innerHTML =
-        '<div style="background:#fff;border-radius:16px;max-width:440px;width:100%;padding:24px;font-family:inherit;box-shadow:0 12px 40px rgba(0,0,0,.25);">' +
-        '<div style="font-size:16px;font-weight:800;margin-bottom:12px;">다른 곳에서 먼저 저장한 내용이 있어요</div>' +
-        '<div style="font-size:13px;line-height:1.7;color:#555;margin-bottom:8px;">' +
-        '· 서버 저장 : <b>' + info.when + '</b><br>' +
-        '· 서버 업무 : <b>' + info.serverTasks + '건</b><br>' +
-        '· 지금 화면 : <b>' + info.myTasks + '건</b></div>' +
-        '<div style="font-size:12.5px;line-height:1.6;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:10px;margin-bottom:16px;color:#166534;">' +
-        '<b>합치기</b>를 누르면 양쪽 내용을 모두 살립니다.<br>' +
-        '<span style="color:#65807a;">(단, 이 화면에서 지운 항목이 다시 살아날 수 있어요)</span></div>' +
-        '<div style="display:flex;flex-direction:column;gap:7px;">' +
-        '<button data-v="merge" style="border:none;background:#16a34a;color:#fff;padding:11px;border-radius:9px;font-size:13.5px;font-weight:800;cursor:pointer;font-family:inherit;">합치기 (권장)</button>' +
-        '<button data-v="over" style="border:1px solid #f5dbe4;background:#fff;color:#db2777;padding:10px;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">지금 화면으로 덮어쓰기</button>' +
-        '<button data-v="cancel" style="border:none;background:transparent;color:#8a7480;padding:8px;border-radius:9px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:inherit;">저장하지 않기</button>' +
-        '</div></div>';
-      wrap.addEventListener('click', e => {
-        const b = e.target.closest('button[data-v]');
-        if (!b) return;
-        wrap.remove();
-        resolve(b.dataset.v);
-      });
-      document.body.appendChild(wrap);
-    });
+  // 화면 아래에 잠깐 뜨는 알림
+  function toastSync(msg, bad) {
+    let t = document.getElementById('schToast');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'schToast';
+      t.style.cssText = 'position:fixed;left:50%;bottom:26px;transform:translateX(-50%);z-index:99999;' +
+        'padding:12px 20px;border-radius:10px;font-size:13.5px;font-weight:700;color:#fff;' +
+        'box-shadow:0 6px 20px rgba(0,0,0,.25);opacity:0;transition:opacity .2s;pointer-events:none;';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.style.background = bad ? '#dc2626' : '#16a34a';
+    t.style.opacity = '1';
+    clearTimeout(t._h);
+    t._h = setTimeout(() => { t.style.opacity = '0'; }, bad ? 7000 : 3000);
   }
 
   // 콘솔에서 schSnaps() 로 목록 보기, schRestore(n) 으로 되돌리기
@@ -635,6 +630,7 @@
   async function saveData() {
     if (isViewMode) return;
     if (!dataLoaded) {
+      unsaved = true; toastSync('⚠️ 서버를 못 읽어 저장이 막혔어요 · 새로고침 필요', true);
       updateSyncUI("불러오기 실패 상태 · 저장을 막았어요", true);
       return;
     }
@@ -691,33 +687,21 @@
           }
         } catch (e) {}
 
-        if (serverUpdated && lastSeenUpdated && serverUpdated !== lastSeenUpdated) {
-          const choice = await askConflict({
-            when: new Date(serverUpdated).toLocaleString('ko-KR'),
-            serverTasks: serverTasks != null ? serverTasks : '?',
-            myTasks: state.taskList.length
-          });
-          if (choice === 'cancel') {
-            updateSyncUI('저장 취소 · 새로고침하면 서버 내용을 받아옵니다', true);
-            return;
-          }
-          if (choice === 'merge') {
-            if (!serverData) {
-              alert('서버 내용을 읽지 못해 합칠 수 없어요. 새로고침 후 다시 시도해 주세요.');
-              updateSyncUI('합치기 실패 · 저장하지 않았어요', true);
-              return;
-            }
-            const before = state.taskList.length;
-            state.taskList = mergeById(state.taskList, serverData.taskList);
-            state.memoCards = mergeMemos(state.memoCards, serverData.memoCards);
-            if (!(state.customCategories || []).length) state.customCategories = serverData.customCategories || [];
-            renderAll();
-            console.log('[합치기] 업무 ' + before + ' + 서버 ' + (serverData.taskList || []).length +
-                        ' → ' + state.taskList.length + '건');
-            mine = buildRows();                 // 합친 내용으로 보낼 행을 다시 만듭니다
-            mineKeys = {};
-            mine.forEach(r => { mineKeys[r.key] = 1; });
-          }
+        // 다른 기기에서 먼저 저장한 게 있으면 묻지 않고 자동으로 합칩니다.
+        // (확인창을 띄우면 그 창이 떠 있는 동안 저장이 멈춰, 작업분이 서버에 못 올라갑니다)
+        if (serverUpdated && lastSeenUpdated && serverUpdated !== lastSeenUpdated && serverData) {
+          const before = state.taskList.length;
+          state.taskList = mergeById(state.taskList, serverData.taskList);
+          state.memoCards = mergeMemos(state.memoCards, serverData.memoCards);
+          if (!(state.customCategories || []).length) state.customCategories = serverData.customCategories || [];
+          const added = state.taskList.length - before;
+          renderAll();
+          console.log('[자동 합치기] 내 ' + before + '건 + 서버 ' + (serverData.taskList || []).length +
+                      '건 → ' + state.taskList.length + '건');
+          if (added > 0) toastSync('다른 기기에서 추가된 ' + added + '건을 합쳤어요');
+          mine = buildRows();                 // 합친 내용으로 보낼 행을 다시 만듭니다
+          mineKeys = {};
+          mine.forEach(r => { mineKeys[r.key] = 1; });
         }
 
         const others = rows
@@ -727,6 +711,7 @@
       }
     } catch (e) {
       console.error(e);
+      unsaved = true; toastSync('⚠️ 서버 확인 실패 — 저장되지 않았어요', true);
       updateSyncUI("서버 확인 실패 · 저장을 멈췄어요", true);
       return;
     }
@@ -742,15 +727,18 @@
       try { result = await res.json(); } catch (err) { result = null; }
       if (result && result.status && result.status !== 'success') {
         updateSyncUI("저장 실패 · 서버가 거부했어요", true);
+        unsaved = true; toastSync('⚠️ 저장 실패 — 창을 닫지 마세요', true);
         alert("⚠️ 저장에 실패했습니다.\n\n사유: " + (result.message || '알 수 없음') +
               "\n\n작성한 내용은 이 기기에 백업돼 있으니 창을 닫지 마시고 알려주세요.");
         return;
       }
       const nowTime = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
       try { lastSeenUpdated = JSON.parse(mine[0].json).updated; } catch (e) {}
+      unsaved = false;
       updateSyncUI(`동기화 완료 (${nowTime})`);
     } catch (e) {
       console.error(e);
+      unsaved = true; toastSync('⚠️ 저장 실패 — 창을 닫지 마세요', true);
       updateSyncUI("저장 실패 · 창을 닫지 마세요", true);
       alert("⚠️ 서버에 저장하지 못했습니다.\n작성한 내용은 이 기기에 백업돼 있습니다. 네트워크 확인 후 다시 시도해 주세요.");
     }
@@ -1328,6 +1316,11 @@
   document.getElementById("todoEndDate").value = todayStr;
 
   loadData();
+
+  // 서버에 못 올린 변경이 있는 채로 창을 닫으려 하면 붙잡습니다.
+  window.addEventListener('beforeunload', (e) => {
+    if (unsaved && !isViewMode) { e.preventDefault(); e.returnValue = ''; return ''; }
+  });
 
   // ── 다른 기기·탭에서 바뀐 내용을 자동으로 가져옵니다 ──────────
   // (폰과 회사 PC를 오가며 쓸 때, 오래된 화면으로 덮어쓰는 걸 막아 줍니다)
