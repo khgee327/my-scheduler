@@ -413,6 +413,17 @@
     return out;
   }
 
+  // 저장이 실패하면 될 때까지 자동으로 다시 시도합니다. (모바일은 네트워크가 자주 끊깁니다)
+  let retryTimer = null, retryCount = 0;
+  function scheduleRetry(why) {
+    retryCount++;
+    const wait = Math.min(30000, 2000 * retryCount);
+    toastSync('⚠️ ' + why + ' — ' + Math.round(wait / 1000) + '초 뒤 다시 시도합니다 (' + retryCount + '회)', true);
+    updateSyncUI('저장 대기 중 · 자동 재시도 ' + retryCount + '회', true);
+    clearTimeout(retryTimer);
+    retryTimer = setTimeout(() => { if (unsaved) saveData(); }, wait);
+  }
+
   // 화면 아래에 잠깐 뜨는 알림
   function toastSync(msg, bad) {
     let t = document.getElementById('schToast');
@@ -687,9 +698,9 @@
           }
         } catch (e) {}
 
-        // 다른 기기에서 먼저 저장한 게 있으면 묻지 않고 자동으로 합칩니다.
-        // (확인창을 띄우면 그 창이 떠 있는 동안 저장이 멈춰, 작업분이 서버에 못 올라갑니다)
-        if (serverUpdated && lastSeenUpdated && serverUpdated !== lastSeenUpdated && serverData) {
+        // 조건 없이 언제나 서버 내용을 합친 뒤 저장합니다.
+        // (시각 비교로 판단하면 어긋날 때 그냥 덮어써서 다른 기기 작업분이 사라집니다)
+        if (serverData) {
           const before = state.taskList.length;
           state.taskList = mergeById(state.taskList, serverData.taskList);
           state.memoCards = mergeMemos(state.memoCards, serverData.memoCards);
@@ -711,8 +722,8 @@
       }
     } catch (e) {
       console.error(e);
-      unsaved = true; toastSync('⚠️ 서버 확인 실패 — 저장되지 않았어요', true);
-      updateSyncUI("서버 확인 실패 · 저장을 멈췄어요", true);
+      unsaved = true;
+      scheduleRetry('서버 확인 실패');
       return;
     }
     schLoadedParts = chunks.length;
@@ -727,7 +738,7 @@
       try { result = await res.json(); } catch (err) { result = null; }
       if (result && result.status && result.status !== 'success') {
         updateSyncUI("저장 실패 · 서버가 거부했어요", true);
-        unsaved = true; toastSync('⚠️ 저장 실패 — 창을 닫지 마세요', true);
+        unsaved = true; scheduleRetry('서버가 거부');
         alert("⚠️ 저장에 실패했습니다.\n\n사유: " + (result.message || '알 수 없음') +
               "\n\n작성한 내용은 이 기기에 백업돼 있으니 창을 닫지 마시고 알려주세요.");
         return;
@@ -735,11 +746,12 @@
       const nowTime = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
       try { lastSeenUpdated = JSON.parse(mine[0].json).updated; } catch (e) {}
       unsaved = false;
+      retryCount = 0; clearTimeout(retryTimer);
       updateSyncUI(`동기화 완료 (${nowTime})`);
     } catch (e) {
       console.error(e);
-      unsaved = true; toastSync('⚠️ 저장 실패 — 창을 닫지 마세요', true);
-      updateSyncUI("저장 실패 · 창을 닫지 마세요", true);
+      unsaved = true;
+      scheduleRetry('저장 실패');
       alert("⚠️ 서버에 저장하지 못했습니다.\n작성한 내용은 이 기기에 백업돼 있습니다. 네트워크 확인 후 다시 시도해 주세요.");
     }
   }
@@ -1333,11 +1345,29 @@
       const mt = Array.isArray(rows) ? rows.find(r => r.key === "schmeta") : null;
       const mj = mt ? (typeof mt.json === 'string' ? JSON.parse(mt.json) : mt.json) : null;
       const up = mj ? mj.updated : null;
-      if (up && lastSeenUpdated && up !== lastSeenUpdated) {
-        console.log('[동기화] 다른 곳에서 저장된 내용을 가져옵니다 ·', reason);
-        updateSyncUI('새 내용 확인 · 불러오는 중...');
-        await loadData();
-        renderAll();
+      if (up && lastSeenUpdated && up !== lastSeenUpdated && mj.parts > 0) {
+        // 화면을 통째로 갈아엎지 않고, 서버 내용을 "합쳐 넣습니다".
+        // (저장에 실패한 작업분이 남아 있어도 사라지지 않게)
+        let str = "";
+        for (let i = 0; i < mj.parts; i++) {
+          const p = rows.find(r => r.key === "sch_" + i);
+          const pj = p ? (typeof p.json === 'string' ? JSON.parse(p.json) : p.json) : null;
+          if (!pj || typeof pj.c !== 'string') { str = null; break; }
+          str += pj.c;
+        }
+        if (str) {
+          const sd = JSON.parse(str);
+          const before = state.taskList.length;
+          state.taskList = mergeById(state.taskList, sd.taskList);
+          state.memoCards = mergeMemos(state.memoCards, sd.memoCards);
+          if (!(state.customCategories || []).length) state.customCategories = sd.customCategories || [];
+          lastSeenUpdated = up;
+          renderAll();
+          const added = state.taskList.length - before;
+          console.log('[동기화] 다른 곳 내용 합침 · +' + added + '건 ·', reason);
+          if (added > 0) toastSync('다른 기기에서 추가된 ' + added + '건을 가져왔어요');
+          if (unsaved || added > 0) saveData();   // 합친 결과를 서버에도 반영
+        }
       }
     } catch (e) { /* 네트워크 일시 오류는 조용히 넘어갑니다 */ }
     refreshing = false;
@@ -1346,6 +1376,7 @@
     if (document.visibilityState === 'visible') refreshIfStale('탭 복귀');
   });
   window.addEventListener('focus', () => refreshIfStale('창 활성화'));
+  window.addEventListener('online', () => { if (unsaved) { toastSync('연결 복구 · 저장을 다시 시도합니다'); saveData(); } });
   setInterval(() => { if (document.visibilityState === 'visible') refreshIfStale('주기 확인'); }, 60000);
 })();
 </script>
