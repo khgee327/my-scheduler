@@ -1403,22 +1403,8 @@
     const done = items.filter(i => i.status === "완료").length;
     const rate = items.length ? Math.round(done / items.length * 100) : 0;
 
-    /* --- 다음 주 --- */
-    let nextAuto = "";
-    if (report.autoNext) {
-      const nextAll = uniqueTasks(weekTasks(addDays(mon, 7))).filter(t => isNextIncluded(t.id));
-      if (nextAll.length) {
-        nextAuto = `<table class="pv-table" style="margin-bottom:12px;">
-          <thead><tr><th style="width:110px;">구분</th><th>예정 업무</th><th style="width:90px;">일자</th></tr></thead>
-          <tbody>${nextAll.map(t => {
-            const c = catColor(t.category);
-            return `<tr>
-              <td class="c"><span style="background:${c.bg};color:${c.fg};padding:2px 7px;border-radius:999px;font-size:11px;font-weight:700;">${esc(t.category || "기타")}</span></td>
-              <td>${esc(t.text)}</td>
-              <td class="c">${t.startDate.slice(5).replace("-", "/")}</td>
-            </tr>`; }).join("")}</tbody></table>`;
-      }
-    }
+    // 스케줄러 일정 표는 보고서에 넣지 않습니다. (직접 쓴 내용만 나갑니다)
+    const nextAuto = "";
 
     let n = 0;
     /* 내용이 없는 섹션은 보고서에서 통째로 빠집니다 */
