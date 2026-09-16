@@ -639,6 +639,15 @@
   }
 
   async function saveData() {
+    try { return await _saveData(); }
+    catch (e) {
+      console.error('[저장 중 오류]', e);
+      unsaved = true;
+      toastSync('⚠️ 저장 오류: ' + (e && e.message ? e.message : e), true);
+      scheduleRetry('오류: ' + (e && e.message ? e.message : '알 수 없음'));
+    }
+  }
+  async function _saveData() {
     if (isViewMode) return;
     if (!dataLoaded) {
       unsaved = true; toastSync('⚠️ 서버를 못 읽어 저장이 막혔어요 · 새로고침 필요', true);
@@ -726,7 +735,7 @@
       scheduleRetry('서버 확인 실패');
       return;
     }
-    schLoadedParts = chunks.length;
+    schLoadedParts = mine.filter(r => /^sch_\d+$/.test(r.key) && JSON.parse(r.json).c !== "").length;
 
     try {
       const res = await fetch(SHEET_API_URL, {
