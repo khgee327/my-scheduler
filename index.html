@@ -398,9 +398,51 @@
   }
 
   // 두 쪽 데이터를 id 기준으로 합칩니다. 겹치면 "지금 화면" 쪽을 씁니다.
+  // ── 삭제 기록 ──────────────────────────────────────────────
+  // 지운 업무의 id를 남겨 둡니다. 합칠 때 이 목록은 되살아나지 않습니다.
+  // (기록이 없으면 서버에 남아 있는 옛 항목이 저장 때마다 다시 끌려옵니다)
+  const TOMB_KEY = 'sched_deleted';
+  const TOMB_DAYS = 60;
+  let serverTomb = {};              // 서버에 저장된 삭제 기록 (다른 기기에서 지운 것)
+  function prune(o) {
+    const cut = Date.now() - TOMB_DAYS * 86400000;
+    Object.keys(o).forEach(k => { if (!o[k] || o[k] < cut) delete o[k]; });
+    return o;
+  }
+  function loadTomb() {
+    let o = {};
+    try { o = JSON.parse(localStorage.getItem(TOMB_KEY) || '{}'); } catch (e) {}
+    prune(o);
+    try { localStorage.setItem(TOMB_KEY, JSON.stringify(o)); } catch (e) {}
+    // 이 기기 기록 + 다른 기기가 서버에 남긴 기록을 함께 씁니다.
+    return Object.assign({}, prune(Object.assign({}, serverTomb)), o);
+  }
+  function localTomb() {
+    let o = {};
+    try { o = JSON.parse(localStorage.getItem(TOMB_KEY) || '{}'); } catch (e) {}
+    return prune(o);
+  }
+  function markDeleted(ids) {
+    const o = loadTomb();
+    (Array.isArray(ids) ? ids : [ids]).forEach(id => { if (id) o[id] = Date.now(); });
+    try { localStorage.setItem(TOMB_KEY, JSON.stringify(o)); } catch (e) {}
+  }
+  window.schDeleted = function () {
+    const l = localTomb(), sv = prune(Object.assign({}, serverTomb));
+    console.log('삭제 기록 — 이 기기 ' + Object.keys(l).length +
+                '건 · 다른 기기(서버) ' + Object.keys(sv).length +
+                '건 · 합계 ' + Object.keys(loadTomb()).length + '건 (60일 보관)');
+    return Object.keys(loadTomb()).length;
+  };
+  window.schClearDeleted = function () {
+    localStorage.removeItem(TOMB_KEY);
+    console.log('삭제 기록을 비웠습니다. 다음 합치기부터 서버 항목이 다시 들어올 수 있어요.');
+  };
+
   function mergeById(mine, theirs) {
+    const tomb = loadTomb();
     const m = new Map();
-    (theirs || []).forEach(x => { if (x && x.id) m.set(x.id, x); });
+    (theirs || []).forEach(x => { if (x && x.id && !tomb[x.id]) m.set(x.id, x); });
     (mine   || []).forEach(x => { if (x && x.id) m.set(x.id, x); });
     return [...m.values()];
   }
@@ -589,6 +631,11 @@
         }
       }
 
+      if (loadedData && loadedData.deleted) serverTomb = prune(Object.assign({}, serverTomb, loadedData.deleted));
+      if (loadedData && Array.isArray(loadedData.taskList)) {
+        const tb0 = loadTomb();
+        loadedData.taskList = loadedData.taskList.filter(t => !tb0[t.id]);
+      }
       if (loadedData) {
         dataLoaded = true;
         try {
@@ -661,7 +708,8 @@
       const dataStr = JSON.stringify({
         taskList: state.taskList,
         memoCards: state.memoCards,
-        customCategories: state.customCategories
+        customCategories: state.customCategories,
+        deleted: prune(Object.assign({}, serverTomb, localTomb()))   // 삭제 기록도 함께
       });
       try { localStorage.setItem('sched_backup', JSON.stringify({ data: JSON.parse(dataStr), at: Date.now() })); } catch (e) {}
       pushSnapshot(JSON.parse(dataStr), '저장');
@@ -710,8 +758,10 @@
         // 조건 없이 언제나 서버 내용을 합친 뒤 저장합니다.
         // (시각 비교로 판단하면 어긋날 때 그냥 덮어써서 다른 기기 작업분이 사라집니다)
         if (serverData) {
+          if (serverData.deleted) serverTomb = prune(Object.assign({}, serverTomb, serverData.deleted));
           const before = state.taskList.length;
-          state.taskList = mergeById(state.taskList, serverData.taskList);
+          const tb = loadTomb();
+          state.taskList = mergeById(state.taskList, serverData.taskList).filter(t => !tb[t.id]);
           state.memoCards = mergeMemos(state.memoCards, serverData.memoCards);
           if (!(state.customCategories || []).length) state.customCategories = serverData.customCategories || [];
           const added = state.taskList.length - before;
@@ -1024,6 +1074,7 @@
   };
 
   window.deleteTask = function(id) {
+    markDeleted(id);
     state.taskList = state.taskList.filter(t => t.id !== id);
     renderAll();
     saveData();
@@ -1366,8 +1417,10 @@
         }
         if (str) {
           const sd = JSON.parse(str);
+          if (sd.deleted) serverTomb = prune(Object.assign({}, serverTomb, sd.deleted));
           const before = state.taskList.length;
-          state.taskList = mergeById(state.taskList, sd.taskList);
+          const tb2 = loadTomb();
+          state.taskList = mergeById(state.taskList, sd.taskList).filter(t => !tb2[t.id]);
           state.memoCards = mergeMemos(state.memoCards, sd.memoCards);
           if (!(state.customCategories || []).length) state.customCategories = sd.customCategories || [];
           lastSeenUpdated = up;
