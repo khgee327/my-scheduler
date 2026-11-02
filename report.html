@@ -325,6 +325,25 @@
   .yt-row[data-cols="3"] > .yt-card { flex: 0 0 calc((100% - 24px) / 3); }
   .yt-row .yt-card img { width: 150px; }
 
+  /* 월간보고 */
+  .mode-btn.on { background: #7c3aed; }
+  body.month-mode .weekly-only { display: none !important; }
+  .imp-row {
+    display: flex; align-items: center; gap: 10px; padding: 9px 12px; background: #fdf7f9;
+    border: 1px solid var(--border); border-radius: 10px; margin-bottom: 7px; flex-wrap: wrap;
+  }
+  .imp-row.off { opacity: .45; }
+  .imp-row input[type=checkbox] { width: 17px; height: 17px; accent-color: #7c3aed; cursor: pointer; }
+  .imp-wk { font-size: 13.5px; font-weight: 700; min-width: 190px; }
+  .imp-meta { font-size: 11.5px; color: var(--text-soft); }
+  .imp-mode { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; font-weight: 600; color: var(--text-soft); }
+  .imp-mode label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+  .imp-mode input { accent-color: #7c3aed; }
+  .pv-week-tag {
+    display: inline-block; font-size: 12px; font-weight: 800; color: #fff;
+    background: #7c3aed; padding: 3px 12px; border-radius: 999px; margin: 14px 0 6px;
+  }
+
   #toast {
     position: fixed; left: 50%; bottom: 34px; transform: translateX(-50%) translateY(12px);
     background: #2b2430; color: #fff; padding: 11px 18px; border-radius: 10px; font-size: 13px; font-weight: 600;
@@ -363,11 +382,12 @@
 <header>
   <div class="header-top">
     <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-      <h1>📊 마케터 주간보고</h1>
+      <h1 id="appTitle">📊 마케터 주간보고</h1>
       <span class="sync-badge" id="syncStatus">🔄 데이터 로딩 중...</span>
     </div>
     <div class="btn-group">
       <button class="action-btn ghost" onclick="goScheduler()">← 스케줄러</button>
+      <button class="action-btn mode-btn edit-only" id="modeToggle">📅 월간보고로 전환</button>
       <button class="action-btn secondary" onclick="copyReportLink()">🔒 보고용 링크 복사</button>
       <button class="action-btn teal" onclick="copyReportBody()">📋 보고서 통째로 복사</button>
       <button class="action-btn" onclick="window.print()">🖨️ 인쇄 / PDF 저장</button>
@@ -386,7 +406,7 @@
   <!-- 주차 선택 + 기본 정보 -->
   <div class="card">
     <div class="card-header">
-      <h2><span class="dot"></span>보고 주차</h2>
+      <h2><span class="dot"></span><span id="periodCardTitle">보고 주차</span></h2>
       <div class="week-nav">
         <button id="wPrev">‹ 지난주</button>
         <button id="wThis">이번주</button>
@@ -413,11 +433,39 @@
     </div>
   </div>
 
+  <!-- 주간보고 불러오기 (월간보고 전용) -->
+  <div class="card edit-only" id="cardImport" style="display:none;">
+    <div class="card-header">
+      <h2><span class="dot"></span>주간보고 불러오기</h2>
+      <span class="card-sub">저장된 주간보고를 골라 월간보고로 합칩니다</span>
+    </div>
+    <div class="editor-hint" style="margin-bottom:10px;">
+      💡 체크한 주차의 내용이 <b>섹션별로 이어붙여집니다.</b> 합친 뒤에는 아래 칸에서 자유롭게 고치시면 돼요.<br>
+      주간보고 원본은 그대로 남아 있고, 월간보고는 따로 저장됩니다.
+    </div>
+    <div class="toolbar">
+      <button class="mini-btn" id="impAll">전체 선택</button>
+      <button class="mini-btn" id="impNone">전체 해제</button>
+      <button class="mini-btn" id="impThisMonth">이번 달만</button>
+      <button class="mini-btn" id="impReload">목록 새로고침</button>
+      <span class="sel-info" id="impInfo"></span>
+    </div>
+    <div class="imp-mode" style="margin-bottom:10px;">
+      <label><input type="radio" name="impMode" value="append" checked> 지금 내용 뒤에 붙이기</label>
+      <label><input type="radio" name="impMode" value="replace"> 지금 내용 지우고 새로 채우기</label>
+      <label><input type="checkbox" id="impTag" checked> 주차 머리말 넣기 (10/5~10/9)</label>
+    </div>
+    <div id="impList"></div>
+    <div style="margin-top:12px;">
+      <button class="action-btn secondary" id="impRun">선택한 주차 불러오기</button>
+    </div>
+  </div>
+
   <!-- 이번주 수행 업무 -->
   <div class="card">
     <div class="card-header">
-      <h2><span class="dot"></span>금주 주간 업무 요약</h2>
-      <div class="btn-group edit-only">
+      <h2><span class="dot"></span><span id="sumCardTitle">금주 주간 업무 요약</span></h2>
+      <div class="btn-group edit-only" id="sumCardBtns">
         <button class="mini-btn" id="toggleTaskCard">📋 스케줄러 업무 불러오기</button>
         <button class="mini-btn" id="autoSummaryBtn">✨ 자동으로 요약 만들기</button>
       </div>
@@ -440,7 +488,7 @@
     </div>
   </div>
 
-  <div class="card" id="cardTasks" style="display:none;">
+  <div class="card weekly-only" id="cardTasks" style="display:none;">
     <div class="card-header">
       <h2><span class="dot"></span>이번 주 수행 업무</h2>
       <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
@@ -632,12 +680,12 @@
   <!-- 다음주 계획 -->
   <div class="card">
     <div class="card-header">
-      <h2><span class="dot"></span>다음 주 계획</h2>
+      <h2><span class="dot"></span><span id="nextCardTitle">다음 주 계획</span></h2>
       <div class="head-right">
         <label class="card-sub edit-only" id="autoNextLabel" style="display:none; align-items:center; gap:6px; cursor:pointer;">
           <input type="checkbox" id="autoNext" style="accent-color:var(--accent);"> 선택한 다음 주 일정 보고서에 포함
         </label>
-        <button class="mini-btn edit-only" id="toggleNextCard">📋 스케줄러 일정 불러오기</button>
+        <button class="mini-btn edit-only weekly-only" id="toggleNextCard">📋 스케줄러 일정 불러오기</button>
       </div>
     </div>
     <div class="toolbar edit-only" id="nextToolbar" style="margin-bottom:8px; display:none;">
@@ -768,10 +816,21 @@
 
   let taskList = [];
   let anchor = new Date();
-  if (params.get("week")) {
+
+  /* ── 주간 / 월간 모드 ──────────────────────────────────
+     월간보고는 주간보고와 완전히 다른 행(mrmeta_, mr_)에 저장됩니다.
+     주간보고·스케줄러 데이터는 전혀 건드리지 않습니다. */
+  let curMode = "week";
+  if (params.get("month")) {
+    const m = String(params.get("month")).match(/^(\d{4})-(\d{2})$/);
+    if (m) { curMode = "month"; anchor = new Date(+m[1], +m[2] - 1, 1); }
+  } else if (params.get("week")) {
     const d = new Date(params.get("week"));
     if (!isNaN(d)) anchor = d;
+  } else {
+    try { if (localStorage.getItem("wr_mode") === "month") curMode = "month"; } catch (e) {}
   }
+  const isMonth = () => curMode === "month";
   let groupByDay = true;
   let loadedParts = 0;
   let saveTimer = null;
@@ -808,6 +867,27 @@
     el.style.color = err ? "#ef4444" : "#059669";
   }
   function weekKey() { return fmtDate(mondayOf(anchor)); }
+  function monthKey() { return anchor.getFullYear() + "-" + String(anchor.getMonth() + 1).padStart(2, "0"); }
+  function periodKey() { return isMonth() ? monthKey() : weekKey(); }
+  function metaKey(k) { return (isMonth() ? "mrmeta_" : "wrmeta_") + k; }
+  function partKey(k, i) { return (isMonth() ? "mr_" : "wr_") + k + "_" + i; }
+  function localKey(k) { return (isMonth() ? "mr_local_" : "wr_local_") + k; }
+  function weekRangeLabel(wk) {
+    const mon = new Date(wk + "T00:00:00");
+    if (isNaN(mon)) return wk;
+    const fri = addDays(mon, 4);
+    return `${mon.getMonth() + 1}/${mon.getDate()}~${fri.getMonth() + 1}/${fri.getDate()}`;
+  }
+  /* 모드에 따라 달라지는 문구 */
+  function LBL() {
+    return isMonth()
+      ? { app:"📊 마케터 월간보고", card:"보고 월", sum:"금월 월간 업무 요약",
+          next:"다음 달 계획", title:"마케팅 월간 업무 보고",
+          prev:"‹ 지난달", cur:"이번달", nextBtn:"다음달 ›", unit:"월별" }
+      : { app:"📊 마케터 주간보고", card:"보고 주차", sum:"금주 주간 업무 요약",
+          next:"다음 주 계획", title:"마케팅 주간 업무 보고",
+          prev:"‹ 지난주", cur:"이번주", nextBtn:"다음주 ›", unit:"주차별" };
+  }
 
   function blankReport() {
     const r = { title:"", writer:"", to:"", weekSummary:"", summary:"", issues:"", nextPlan:"", requests:"",
@@ -969,14 +1049,14 @@
       const main = readScheduler(rows);
       if (main && Array.isArray(main.taskList)) taskList = main.taskList;
       window._rows = rows;
-      loadReportFor(weekKey(), rows);
+      loadReportFor(periodKey(), rows);
       cloudLoadOk = true;
       setSync("동기화 완료 (" + new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"}) + ")");
     } catch (e) {
       console.error(e);
       cloudLoadOk = false;
       setSync("불러오기 실패 · 저장 잠금", true);
-      loadReportFor(weekKey(), []);
+      loadReportFor(periodKey(), []);
     }
     renderAll();
   }
@@ -985,11 +1065,11 @@
     report = blankReport(); loadedParts = 0;
     let loaded = null;
     try {
-      const meta = rowJson((rows||[]).find(r => r.key === "wrmeta_" + wk));
+      const meta = rowJson((rows||[]).find(r => r.key === metaKey(wk)));
       if (meta && meta.parts > 0) {
         let s = "";
         for (let i = 0; i < meta.parts; i++) {
-          const part = rowJson((rows||[]).find(r => r.key === "wr_" + wk + "_" + i));
+          const part = rowJson((rows||[]).find(r => r.key === partKey(wk, i)));
           if (!part || typeof part.c !== "string") { s = null; break; }
           s += part.c;
         }
@@ -999,7 +1079,7 @@
 
     let local = null;
     try {
-      const raw = localStorage.getItem("wr_local_" + wk);
+      const raw = localStorage.getItem(localKey(wk));
       if (raw) local = JSON.parse(raw);
     } catch (e) {}
     if (local && (!loaded || (local._ts || 0) > (loaded._ts || 0))) loaded = local;
@@ -1017,9 +1097,9 @@
   async function saveNow() {
     if (isViewMode) return;
     collectFromUI();
-    const wk = weekKey();
+    const wk = periodKey();
     report._ts = Date.now();
-    try { localStorage.setItem("wr_local_" + wk, JSON.stringify(report)); } catch (e) {}
+    try { localStorage.setItem(localKey(wk), JSON.stringify(report)); } catch (e) {}
 
     if (!cloudLoadOk) {
       setSync("불러오기 실패 상태 · 이 기기에만 임시 저장했어요", true);
@@ -1032,9 +1112,9 @@
     const chunks = [];
     for (let i = 0; i < json.length; i += CHUNK) chunks.push(json.slice(i, i + CHUNK));
 
-    const mine = [{ key: "wrmeta_" + wk, json: JSON.stringify({ parts: chunks.length, updated: new Date().toISOString() }) }];
-    chunks.forEach((c, i) => mine.push({ key: "wr_" + wk + "_" + i, json: JSON.stringify({ c }) }));
-    for (let i = chunks.length; i < loadedParts; i++) mine.push({ key: "wr_" + wk + "_" + i, json: JSON.stringify({ c: "" }) });
+    const mine = [{ key: metaKey(wk), json: JSON.stringify({ parts: chunks.length, updated: new Date().toISOString() }) }];
+    chunks.forEach((c, i) => mine.push({ key: partKey(wk, i), json: JSON.stringify({ c }) }));
+    for (let i = chunks.length; i < loadedParts; i++) mine.push({ key: partKey(wk, i), json: JSON.stringify({ c: "" }) });
 
     // 스케줄러 등 다른 행이 지워지지 않도록, 서버의 모든 행을 함께 다시 보냅니다.
     const mineKeys = {};
@@ -1070,7 +1150,7 @@
       setSync("저장 완료 (" + new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"}) + ")");
       const kb = Math.round(json.length / 1024);
       document.getElementById("saveInfo").textContent =
-        `주차별로 보관 중 · 현재 보고서 용량 ${kb.toLocaleString()}KB (이미지 포함)`;
+        `${LBL().unit}로 보관 중 · 현재 보고서 용량 ${kb.toLocaleString()}KB (이미지 포함)`;
     } catch (e) {
       console.error(e);
       setSync("저장 실패 · 이 기기에는 임시 저장됨", true);
@@ -1207,11 +1287,19 @@
 
   /* ---------- render ---------- */
   function renderAll() {
-    const mon = mondayOf(anchor), fri = addDays(mon, 4);
-    document.getElementById("weekTitle").textContent =
-      `${mon.getFullYear()}년 ${mon.getMonth()+1}월 ${weekOfMonth(mon)}주차`;
-    document.getElementById("weekSub").textContent =
-      `${fmtDate(mon)}(월) ~ ${fmtDate(fri)}(금)`;
+    if (isMonth()) {
+      const last = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0);
+      document.getElementById("weekTitle").textContent =
+        `${anchor.getFullYear()}년 ${anchor.getMonth() + 1}월`;
+      document.getElementById("weekSub").textContent =
+        `${anchor.getFullYear()}-${String(anchor.getMonth()+1).padStart(2,"0")}-01 ~ ${fmtDate(last)}`;
+    } else {
+      const mon = mondayOf(anchor), fri = addDays(mon, 4);
+      document.getElementById("weekTitle").textContent =
+        `${mon.getFullYear()}년 ${mon.getMonth()+1}월 ${weekOfMonth(mon)}주차`;
+      document.getElementById("weekSub").textContent =
+        `${fmtDate(mon)}(월) ~ ${fmtDate(fri)}(금)`;
+    }
 
     document.getElementById("fTitle").value = report.title;
     document.getElementById("fWriter").value = report.writer;
@@ -1224,9 +1312,11 @@
     });
     renderAllTabs();
 
-    migrateSelection();
-    renderTasks();
-    renderNextPreview();
+    if (!isMonth()) {
+      migrateSelection();
+      renderTasks();
+      renderNextPreview();
+    }
     updatePeeks();
     if (document.getElementById("viewPane").style.display !== "none") renderPreview();
   }
@@ -1398,10 +1488,11 @@
       return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim().length > 0;
     };
 
+    const L = LBL();
     const mon = mondayOf(anchor), fri = addDays(mon, 4);
-    const items = buildItems();
-    const done = items.filter(i => i.status === "완료").length;
-    const rate = items.length ? Math.round(done / items.length * 100) : 0;
+    const periodText = isMonth()
+      ? `${anchor.getFullYear()}년 ${anchor.getMonth() + 1}월`
+      : `${fmtDate(mon)}(월) ~ ${fmtDate(fri)}(금)`;
 
     // 스케줄러 일정 표는 보고서에 넣지 않습니다. (직접 쓴 내용만 나갑니다)
     const nextAuto = "";
@@ -1425,7 +1516,7 @@
     if (hasContent(report.weekSummary)) {
       n++;
       summarySec = `<div class="pv-sec">
-        <h3>${n}. 금주 주간 업무 요약</h3>
+        <h3>${n}. ${L.sum}</h3>
         <div class="pv-body">${report.weekSummary}</div>
       </div>`;
     }
@@ -1444,14 +1535,14 @@
     const tabBlocks = TAB_SECTIONS.map(tabSecHtml).join("");
 
     document.getElementById("previewRoot").innerHTML = `
-      <div class="pv-title">${esc(report.title || "마케팅 주간 업무 보고")}</div>
-      <div class="pv-meta">보고 기간 · ${fmtDate(mon)}(월) ~ ${fmtDate(fri)}(금)</div>
+      <div class="pv-title">${esc(report.title || L.title)}</div>
+      <div class="pv-meta">보고 기간 · ${periodText}</div>
       <div class="pv-meta">${report.writer ? "작성자 · " + esc(report.writer) : ""}${report.writer && report.to ? "&nbsp;&nbsp;|&nbsp;&nbsp;" : ""}${report.to ? "보고 대상 · " + esc(report.to) : ""}</div>
       <div class="pv-rule"></div>
       ${summarySec}
       ${tabBlocks}
       ${sec("이슈 및 특이사항", report.issues)}
-      ${sec("다음 주 계획", report.nextPlan, nextAuto)}
+      ${sec(L.next, report.nextPlan, nextAuto)}
       ${sec("요청 및 공유 사항", report.requests)}
     `;
     hydrateIG(document.getElementById("previewRoot"));
@@ -2708,32 +2799,83 @@
       && (r.ppl && r.ppl.rows ? r.ppl.rows.length : 0) === 0;
   }
 
-  async function moveWeek(delta) {
-    if (!isViewMode) {
-      collectFromUI();
-      clearTimeout(saveTimer);
-      if (!isEmptyReport() || loadedParts > 0) await saveNow();
-    }
-    anchor = delta === 0 ? new Date() : addDays(mondayOf(anchor), delta * 7);
+  /* 지금 보고 있는 보고서를 저장한 뒤, 서버에서 다시 불러옵니다 */
+  async function saveThenReload() {
     setSync("불러오는 중...");
     try {
       const rows = await fetchRows();
       window._rows = rows;
       const main = readScheduler(rows);
       if (main && Array.isArray(main.taskList)) taskList = main.taskList;
-      loadReportFor(weekKey(), rows);
+      loadReportFor(periodKey(), rows);
       cloudLoadOk = true;
       setSync("동기화 완료 (" + new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"}) + ")");
     } catch (e) {
-      loadReportFor(weekKey(), window._rows || []);
+      loadReportFor(periodKey(), window._rows || []);
       cloudLoadOk = false;
       setSync("불러오기 실패 · 저장 잠금", true);
     }
     renderAll();
+    if (isMonth()) renderImportList();
+  }
+
+  async function moveWeek(delta) {
+    if (!isViewMode) {
+      collectFromUI();
+      clearTimeout(saveTimer);
+      if (!isEmptyReport() || loadedParts > 0) await saveNow();
+    }
+    if (isMonth()) {
+      anchor = delta === 0 ? new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+                           : new Date(anchor.getFullYear(), anchor.getMonth() + delta, 1);
+    } else {
+      anchor = delta === 0 ? new Date() : addDays(mondayOf(anchor), delta * 7);
+    }
+    await saveThenReload();
   }
   document.getElementById("wPrev").onclick = () => moveWeek(-1);
   document.getElementById("wNext").onclick = () => moveWeek(1);
   document.getElementById("wThis").onclick = () => moveWeek(0);
+
+  /* ── 모드 전환 (주간 ↔ 월간) ─────────────────────────── */
+  function applyModeUI() {
+    const L = LBL(), m = isMonth();
+    document.getElementById("appTitle").textContent = L.app;
+    document.getElementById("periodCardTitle").textContent = L.card;
+    document.getElementById("sumCardTitle").textContent = L.sum;
+    document.getElementById("nextCardTitle").textContent = L.next;
+    document.getElementById("wPrev").textContent = L.prev;
+    document.getElementById("wThis").textContent = L.cur;
+    document.getElementById("wNext").textContent = L.nextBtn;
+    const tg = document.getElementById("modeToggle");
+    if (tg) { tg.textContent = m ? "📝 주간보고로 전환" : "📅 월간보고로 전환"; tg.classList.toggle("on", m); }
+    const imp = document.getElementById("cardImport");
+    if (imp) imp.style.display = (m && !isViewMode) ? "" : "none";
+    document.body.classList.toggle("month-mode", m);   // .weekly-only 는 CSS로 숨깁니다
+    const sb = document.getElementById("sumCardBtns");   //  (인라인 display를 건드리면
+    if (sb) sb.style.display = m ? "none" : "";          //   접어둔 카드가 멋대로 펼쳐집니다)
+    document.title = m ? "마케터 월간보고" : "마케터 주간보고";
+  }
+
+  async function switchMode(to) {
+    if (to === curMode) return;
+    if (!isViewMode) {
+      collectFromUI();
+      clearTimeout(saveTimer);
+      if (!isEmptyReport() || loadedParts > 0) await saveNow();
+    }
+    curMode = to;
+    try { localStorage.setItem("wr_mode", to); } catch (e) {}
+    // 월간으로 갈 때는 이번 달 1일, 주간으로 갈 때는 그 달의 첫 주로 맞춥니다.
+    anchor = to === "month"
+      ? new Date(anchor.getFullYear(), anchor.getMonth(), 1)
+      : mondayOf(anchor);
+    applyModeUI();
+    await saveThenReload();
+    toast(to === "month" ? "월간보고로 전환했어요." : "주간보고로 전환했어요.");
+  }
+  const modeTg = document.getElementById("modeToggle");
+  if (modeTg) modeTg.onclick = () => switchMode(isMonth() ? "week" : "month");
 
   /* ---------- header actions ---------- */
   window.goScheduler = function () {
@@ -2741,9 +2883,10 @@
     location.href = base + "index.html" + (isViewMode ? "?mode=view" : "");
   };
   window.copyReportLink = function () {
-    const url = location.origin + location.pathname + "?mode=view&week=" + weekKey();
+    const url = location.origin + location.pathname +
+      (isMonth() ? "?mode=view&month=" + monthKey() : "?mode=view&week=" + weekKey());
     navigator.clipboard.writeText(url)
-      .then(() => toast("🔒 이번 주 보고서 링크를 복사했어요."))
+      .then(() => toast(isMonth() ? "🔒 이번 달 월간보고 링크를 복사했어요." : "🔒 이번 주 보고서 링크를 복사했어요."))
       .catch(() => prompt("아래 주소를 복사하세요", url));
   };
   window.copyReportBody = async function () {
@@ -2766,13 +2909,201 @@
   };
 
   window.addEventListener("beforeunload", () => {
-    if (!isViewMode && saveTimer) { collectFromUI(); try { localStorage.setItem("wr_local_" + weekKey(), JSON.stringify(report)); } catch (e) {} }
+    if (!isViewMode && saveTimer) { collectFromUI(); try { localStorage.setItem(localKey(periodKey()), JSON.stringify(report)); } catch (e) {} }
   });
+
+
+  /* ══════════ 주간보고 → 월간보고 불러오기 ══════════════════
+     주간보고 원본(wrmeta_, wr_)은 읽기만 합니다. 절대 고치지 않습니다. */
+
+  function hasHtml(h) {
+    if (!h) return false;
+    if (/<img|ig-embed|yt-card|<table/i.test(h)) return true;
+    return h.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim().length > 0;
+  }
+
+  /* 서버에 저장된 주간보고 주차 목록 (최근 순) */
+  function listWeeklyKeys(rows) {
+    const out = [];
+    (rows || []).forEach(r => {
+      if (!r || !r.key) return;
+      const m = String(r.key).match(/^wrmeta_(\d{4}-\d{2}-\d{2})$/);
+      if (!m) return;
+      const meta = rowJson(r);
+      if (!meta || !(meta.parts > 0)) return;
+      out.push({ wk: m[1], parts: meta.parts, updated: meta.updated || "" });
+    });
+    out.sort((a, b) => (a.wk < b.wk ? 1 : a.wk > b.wk ? -1 : 0));
+    return out;
+  }
+
+  /* 주간보고 한 주치를 읽어옵니다 */
+  function readWeekly(wk, rows) {
+    try {
+      const meta = rowJson((rows || []).find(r => r.key === "wrmeta_" + wk));
+      if (!meta || !(meta.parts > 0)) return null;
+      let str = "";
+      for (let i = 0; i < meta.parts; i++) {
+        const part = rowJson((rows || []).find(r => r.key === "wr_" + wk + "_" + i));
+        if (!part || typeof part.c !== "string") return null;
+        str += part.c;
+      }
+      return str ? JSON.parse(str) : null;
+    } catch (e) { console.warn("주간보고 읽기 실패", wk, e); return null; }
+  }
+
+  function inCurrentMonth(wk) {
+    const mon = new Date(wk + "T00:00:00");
+    if (isNaN(mon)) return false;
+    // 월~금 중 하루라도 이번 달에 걸치면 이번 달 주차로 봅니다.
+    for (let i = 0; i < 5; i++) {
+      const d = addDays(mon, i);
+      if (d.getFullYear() === anchor.getFullYear() && d.getMonth() === anchor.getMonth()) return true;
+    }
+    return false;
+  }
+
+  let impWeeks = [];
+  function renderImportList() {
+    const box = document.getElementById("impList");
+    if (!box) return;
+    impWeeks = listWeeklyKeys(window._rows || []);
+    if (!impWeeks.length) {
+      box.innerHTML = `<div class="empty">저장된 주간보고가 없어요.<br>주간보고를 먼저 작성·저장한 뒤 다시 열어보세요.</div>`;
+      updateImpInfo();
+      return;
+    }
+    box.innerHTML = impWeeks.map(w => {
+      const on = inCurrentMonth(w.wk);
+      const kb = Math.round(w.parts * CHUNK / 1024);
+      const up = w.updated ? new Date(w.updated).toLocaleDateString("ko-KR") : "";
+      return `<label class="imp-row ${on ? "" : "off"}">
+        <input type="checkbox" class="imp-cb" data-wk="${esc(w.wk)}" ${on ? "checked" : ""}>
+        <span class="imp-wk">${esc(w.wk)} (${esc(weekRangeLabel(w.wk))})</span>
+        <span class="imp-meta">약 ${kb}KB${up ? " · 저장 " + esc(up) : ""}</span>
+      </label>`;
+    }).join("");
+    box.querySelectorAll(".imp-cb").forEach(cb => {
+      cb.addEventListener("change", () => {
+        cb.closest(".imp-row").classList.toggle("off", !cb.checked);
+        updateImpInfo();
+      });
+    });
+    updateImpInfo();
+  }
+  function updateImpInfo() {
+    const el = document.getElementById("impInfo");
+    if (!el) return;
+    const all = document.querySelectorAll(".imp-cb").length;
+    const on = document.querySelectorAll(".imp-cb:checked").length;
+    el.textContent = all ? `${all}개 주차 중 ${on}개 선택됨` : "";
+  }
+
+  /* 고른 주차들을 월간보고로 합칩니다 */
+  async function runImport() {
+    const picked = [...document.querySelectorAll(".imp-cb:checked")].map(c => c.dataset.wk).sort();
+    if (!picked.length) { toast("불러올 주차를 먼저 체크해 주세요."); return; }
+    const mode = (document.querySelector('input[name="impMode"]:checked') || {}).value || "append";
+    const useTag = !!(document.getElementById("impTag") || {}).checked;
+
+    if (mode === "replace" && !confirm(
+      `지금 월간보고에 쓴 내용을 모두 지우고, 선택한 ${picked.length}개 주차로 새로 채웁니다.\n\n진행할까요?`)) return;
+
+    setSync("주간보고 불러오는 중...");
+    let rows;
+    try { rows = await fetchRows(); window._rows = rows; }
+    catch (e) { setSync("불러오기 실패", true); toast("서버에서 주간보고를 못 읽었어요."); return; }
+
+    collectFromUI();
+    if (mode === "replace") {
+      const keep = { title: report.title, writer: report.writer, to: report.to };
+      report = Object.assign(blankReport(), keep);
+      normalizeReport(report);
+      TAB_SECTIONS.forEach(sc => { report[sc.key] = []; });
+      normalizeReport(report);
+    }
+
+    const tagOf = (wk) => useTag
+      ? `<p><span style="display:inline-block;font-size:12px;font-weight:800;color:#fff;background:#7c3aed;padding:2px 11px;border-radius:999px;">${esc(weekRangeLabel(wk))}</span></p>`
+      : "";
+    const addPlain = (key, wk, html) => {
+      if (!hasHtml(html)) return 0;
+      const cur = report[key] || "";
+      report[key] = (cur && hasHtml(cur) ? cur + "<p><br></p>" : "") + tagOf(wk) + html;
+      return 1;
+    };
+    const addTab = (sc, wk, name, html) => {
+      if (!hasHtml(html)) return 0;
+      const list = report[sc.key] || (report[sc.key] = []);
+      let t = list.find(x => (x.name || "").trim() === (name || "").trim());
+      if (!t) { t = { id: nid(sc.pre), name: name || "전체", html: "" }; list.push(t); }
+      t.html = (t.html && hasHtml(t.html) ? t.html + "<p><br></p>" : "") + tagOf(wk) + html;
+      return 1;
+    };
+
+    let okWeeks = 0, blocks = 0, failed = [];
+    picked.forEach(wk => {
+      const w = readWeekly(wk, rows);
+      if (!w) { failed.push(wk); return; }
+      normalizeReport(w);
+      let c = 0;
+      c += addPlain("weekSummary", wk, w.weekSummary);
+      TAB_SECTIONS.forEach(sc => {
+        (w[sc.key] || []).forEach(t => { c += addTab(sc, wk, t.name, t.html); });
+      });
+      c += addPlain("issues",   wk, w.issues);
+      c += addPlain("nextPlan", wk, w.nextPlan);
+      c += addPlain("requests", wk, w.requests);
+      if (c) { okWeeks++; blocks += c; }
+    });
+
+    // 비어 있는 자리표시 탭은 정리합니다
+    TAB_SECTIONS.forEach(sc => {
+      const l = report[sc.key] || [];
+      if (l.length > 1) report[sc.key] = l.filter(t => hasHtml(t.html));
+      if (!(report[sc.key] || []).length) report[sc.key] = [{ id: nid(sc.pre), name: "전체", html: "" }];
+    });
+
+    if (!report.title) {
+      report.title = `${anchor.getFullYear()}년 ${anchor.getMonth() + 1}월 월간 업무 보고`;
+    }
+    normalizeReport(report);
+    renderAll();
+    renderImportList();
+    await saveNow();
+
+    if (!okWeeks) { toast("선택한 주차에 불러올 내용이 없었어요."); return; }
+    toast(`${okWeeks}개 주차 · ${blocks}개 항목을 합쳤어요.` + (failed.length ? ` (${failed.length}개 주차는 읽지 못했어요)` : ""));
+    if (failed.length) console.warn("읽지 못한 주차:", failed);
+  }
+
+  (function bindImport() {
+    const q = (id) => document.getElementById(id);
+    if (q("impAll"))  q("impAll").onclick  = () => { document.querySelectorAll(".imp-cb").forEach(c => { c.checked = true;  c.closest(".imp-row").classList.remove("off"); }); updateImpInfo(); };
+    if (q("impNone")) q("impNone").onclick = () => { document.querySelectorAll(".imp-cb").forEach(c => { c.checked = false; c.closest(".imp-row").classList.add("off"); }); updateImpInfo(); };
+    if (q("impThisMonth")) q("impThisMonth").onclick = () => {
+      document.querySelectorAll(".imp-cb").forEach(c => {
+        c.checked = inCurrentMonth(c.dataset.wk);
+        c.closest(".imp-row").classList.toggle("off", !c.checked);
+      });
+      updateImpInfo();
+    };
+    if (q("impReload")) q("impReload").onclick = async () => {
+      setSync("목록 새로고침...");
+      try { window._rows = await fetchRows(); setSync("동기화 완료 (" + new Date().toLocaleTimeString("ko-KR",{hour:"2-digit",minute:"2-digit"}) + ")"); }
+      catch (e) { setSync("불러오기 실패", true); }
+      renderImportList();
+    };
+    if (q("impRun")) q("impRun").onclick = runImport;
+  })();
 
   /* ---------- init ---------- */
   document.querySelectorAll(".rich-box").forEach(bindRichBox);
+  applyModeUI();
   await loadAll();
   if (!isViewMode) setupCollapsible();
+  applyModeUI();                       // 카드 접기 처리 뒤 한 번 더 맞춥니다
+  if (isMonth()) renderImportList();
   updatePeeks();
   if (isViewMode) switchTab("view");
 })();
