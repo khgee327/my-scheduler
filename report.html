@@ -50,6 +50,7 @@
   }
   body.readonly-mode .banner-readonly { display: block; }
   body.readonly-mode .edit-only { display: none !important; }
+  body.readonly-mode .tabs { display: none; }
 
   .tabs { display: flex; gap: 6px; padding: 8px 40px 0; }
   .tab-btn {
@@ -386,11 +387,11 @@
       <span class="sync-badge" id="syncStatus">🔄 데이터 로딩 중...</span>
     </div>
     <div class="btn-group">
-      <button class="action-btn ghost" onclick="goScheduler()">← 스케줄러</button>
+      <button class="action-btn ghost edit-only" onclick="goScheduler()">← 스케줄러</button>
       <button class="action-btn mode-btn edit-only" id="modeToggle">📅 월간보고로 전환</button>
-      <button class="action-btn secondary" onclick="copyReportLink()">🔒 보고용 링크 복사</button>
-      <button class="action-btn teal" onclick="copyReportBody()">📋 보고서 통째로 복사</button>
-      <button class="action-btn" onclick="window.print()">🖨️ 인쇄 / PDF 저장</button>
+      <button class="action-btn secondary edit-only" onclick="copyReportLink()">🔒 보고용 링크 복사</button>
+      <button class="action-btn teal edit-only" onclick="copyReportBody()">📋 보고서 통째로 복사</button>
+      <button class="action-btn edit-only" onclick="window.print()">🖨️ 인쇄 / PDF 저장</button>
     </div>
   </div>
 </header>
